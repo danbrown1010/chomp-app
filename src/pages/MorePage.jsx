@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 const SECTIONS = [
@@ -39,13 +37,9 @@ const SECTIONS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function MorePage() {
-  const [view, setView] = useState('more')
-
-  if (view === 'settings') return <SettingsPlaceholder onBack={() => setView('more')} />
-
+export default function MorePage({ onNavigate }) {
   const handleTap = (id) => {
-    if (id === 'settings') setView('settings')
+    if (onNavigate) onNavigate(id)
   }
 
   return (
@@ -69,31 +63,6 @@ export default function MorePage() {
             ))}
           </Section>
         ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Settings placeholder ─────────────────────────────────────────────────────
-
-function SettingsPlaceholder({ onBack }) {
-  return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 flex flex-col gap-4 pb-6">
-        <div className="pt-2 flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1c1c1c] border border-[#2a2a2a] active:opacity-70 transition-opacity"
-          >
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        </div>
-        <div className="flex-1 flex items-center justify-center py-20">
-          <p className="text-sm text-[#4b5563]">Settings coming in Phase 4</p>
-        </div>
       </div>
     </div>
   )
