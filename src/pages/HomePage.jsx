@@ -1,41 +1,57 @@
 import { useState } from 'react'
 import { useTripPhase } from '../hooks/useTripPhase'
 
-export default function HomePage() {
+export default function HomePage({ onPlanTrip }) {
   const tripPhase = useTripPhase()
 
   if (tripPhase.phase === 'pre-trip')  return <PreTripHome  {...tripPhase} />
   if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} />
   if (tripPhase.phase === 'post-trip') return <PostTripHome {...tripPhase} />
-  return <IdleHome />
+  return <IdleHome onPlanTrip={onPlanTrip} />
 }
 
 // ─── Idle (no active trip) ────────────────────────────────────────────────────
 
-function IdleHome() {
+function IdleHome({ onPlanTrip }) {
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
-      <div className="pt-2">
-        <h1 className="text-2xl font-bold tracking-tight">Good morning, Dan</h1>
-        <p className="text-sm text-[#6b7280] mt-0.5">No active trip</p>
+    <div className="relative h-full">
+      <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
+        <div className="pt-2">
+          <h1 className="text-2xl font-bold tracking-tight">Good morning, Dan</h1>
+          <p className="text-sm text-[#6b7280] mt-0.5">No active trip</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard label="Days out (YTD)" value="47" />
+          <StatCard label="Miles logged"   value="1,240" />
+          <StatCard label="Trail reports"  value="12" />
+          <StatCard label="Trips total"    value="8" />
+        </div>
+
+        <button
+          onClick={onPlanTrip}
+          className="w-full bg-[#f97316] text-white text-sm font-semibold rounded-xl py-3.5 active:bg-[#c2410c] transition-colors"
+        >
+          Plan a trip
+        </button>
+
+        <Section title="Recent trips">
+          <TripRow name="Winthrop Loop"         detail="Apr 28 · 3 days · 284 mi" />
+          <TripRow name="Teanaway Country"       detail="Apr 12 · 2 days · 190 mi" />
+          <TripRow name="Sun Lakes – Dry Falls"  detail="Mar 1 · 4 days · 410 mi" />
+        </Section>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Days out (YTD)" value="47" />
-        <StatCard label="Miles logged"   value="1,240" />
-        <StatCard label="Trail reports"  value="12" />
-        <StatCard label="Trips total"    value="8" />
-      </div>
-
-      <button className="w-full bg-[#f97316] text-white text-sm font-semibold rounded-xl py-3.5 active:bg-[#c2410c] transition-colors">
-        Plan a trip
+      {/* FAB */}
+      <button
+        onClick={onPlanTrip}
+        className="absolute bottom-4 right-4 w-14 h-14 rounded-full flex items-center justify-center active:opacity-80 transition-opacity"
+        style={{ background: '#f97316', boxShadow: '0 4px 20px rgba(249,115,22,0.45)' }}
+      >
+        <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
       </button>
-
-      <Section title="Recent trips">
-        <TripRow name="Winthrop Loop"      detail="Apr 28 · 3 days · 284 mi" />
-        <TripRow name="Teanaway Country"   detail="Apr 12 · 2 days · 190 mi" />
-        <TripRow name="Sun Lakes – Dry Falls" detail="Mar 1 · 4 days · 410 mi" />
-      </Section>
     </div>
   )
 }
