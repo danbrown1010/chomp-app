@@ -29,7 +29,6 @@ export default function BottomNav({ active, onChange }) {
           )
         })}
       </nav>
-      <div className="bg-[#111]" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </>
   )
 }
