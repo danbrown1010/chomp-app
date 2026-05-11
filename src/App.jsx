@@ -24,8 +24,7 @@ export default function App() {
 
   return (
     <AppProvider>
-      <div style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundColor: '#111' }}>
-      <div className="flex flex-col h-full bg-[#0a0a0a]" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#0a0a0a' }}>
         {showCreate ? (
           <CreateTripPage
             onClose={closeCreate}
@@ -44,7 +43,6 @@ export default function App() {
             <BottomNav active={activeTab} onChange={handleTabChange} />
           </>
         )}
-      </div>
       </div>
     </AppProvider>
   )
