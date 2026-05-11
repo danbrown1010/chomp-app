@@ -83,13 +83,15 @@ export default function RigPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-5 pb-6">
-      <RigHeader hasAlert={HAS_ALERT} />
-      <TempZones />
-      <EcoflowSection />
-      <HumiditySection />
-      <LightingSection lights={lights} onToggle={toggleLight} onBrightness={setBrightness} />
-      <ScenesSection onApply={applyScene} />
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 flex flex-col gap-5 pb-6">
+        <RigHeader hasAlert={HAS_ALERT} />
+        <TempZones />
+        <EcoflowSection />
+        <HumiditySection />
+        <LightingSection lights={lights} onToggle={toggleLight} onBrightness={setBrightness} />
+        <ScenesSection onApply={applyScene} />
+      </div>
     </div>
   )
 }
@@ -272,8 +274,7 @@ function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
             max={100}
             value={brightness}
             onChange={e => onBrightness(Number(e.target.value))}
-            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
-            style={{ accentColor: '#f97316' }}
+            className="flex-1 accent-orange-500 cursor-pointer"
           />
         </div>
       </div>
