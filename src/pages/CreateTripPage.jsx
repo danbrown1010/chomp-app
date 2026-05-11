@@ -123,7 +123,7 @@ function StepHeader({ step, onBack, onNext }) {
 function Step1Basics({ form, update }) {
   const { accent } = useAppStore()
   return (
-    <div className="p-4 flex flex-col gap-5 pb-8">
+    <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       <Field label="Trip name">
         <input
@@ -208,7 +208,7 @@ function DateCard({ label, value, onChange }) {
 
 function Step2Rig({ form, updateGear }) {
   return (
-    <div className="p-4 flex flex-col gap-5 pb-8">
+    <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       <Field label="Vehicle">
         {/* Selected vehicle */}
@@ -295,7 +295,7 @@ function FuelRow({ label, value }) {
 function Step3People() {
   const { accent } = useAppStore()
   return (
-    <div className="p-4 flex flex-col gap-5 pb-8">
+    <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       <Field label="Partners">
         <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
@@ -406,7 +406,7 @@ function Step4Review({ form, onEdit, onCreate }) {
   const gearCount = (form.gear.summer ? 42 : 0) + (form.gear.photography ? 6 : 0)
 
   return (
-    <div className="p-4 flex flex-col gap-5 pb-8">
+    <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       {/* Summary card */}
       <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden">

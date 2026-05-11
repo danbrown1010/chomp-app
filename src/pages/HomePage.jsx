@@ -17,7 +17,7 @@ function IdleHome({ onPlanTrip }) {
   const { accent } = useAppStore()
   return (
     <div className="relative h-full">
-      <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
+      <div className="flex flex-col min-h-full overflow-y-auto p-4 gap-4" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
         <div className="pt-2">
           <h1 className="text-2xl font-bold tracking-tight">Good morning, Dan</h1>
           <p className="text-sm text-[#6b7280] mt-0.5">No active trip</p>
@@ -80,7 +80,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
   const pct = Math.round((checked.length / PRE_TRIP_CHECKLIST.length) * 100)
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
+    <div className="flex flex-col min-h-full overflow-y-auto p-4 gap-4" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div className="pt-2">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: accent }}>
           Departing in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
@@ -132,7 +132,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
   const { accent } = useAppStore()
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
+    <div className="flex flex-col min-h-full overflow-y-auto p-4 gap-4" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div className="pt-2 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{activeTrip.name}</h1>
@@ -203,7 +203,7 @@ function PostTripHome({ activeTrip, totalDays }) {
   const done = checked.length === POST_TRIP_TASKS.length
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
+    <div className="flex flex-col min-h-full overflow-y-auto p-4 gap-4" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div className="pt-2">
         <p className="text-xs font-semibold text-violet-400 uppercase tracking-widest mb-1">Trip complete</p>
         <h1 className="text-2xl font-bold tracking-tight text-violet-300">{activeTrip.name}</h1>

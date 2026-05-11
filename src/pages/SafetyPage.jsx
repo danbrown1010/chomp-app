@@ -19,7 +19,7 @@ export default function SafetyPage() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
         {SEED.hasActiveAlert && <AlertStrip {...SEED.alert} />}
-        <div className="p-4 flex flex-col gap-4 pb-2">
+        <div className="p-4 flex flex-col gap-4 pb-6">
           <EvacZones     {...SEED.evac} />
           <Conditions    {...SEED.conditions} />
           <FireMapPlaceholder />

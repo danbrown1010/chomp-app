@@ -48,7 +48,7 @@ export default function SettingsPage({ onBack }) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 flex flex-col gap-5 pb-8">
+      <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
         {/* Header */}
         <div className="pt-2 flex items-center gap-3">

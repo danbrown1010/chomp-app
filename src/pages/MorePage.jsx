@@ -44,7 +44,7 @@ export default function MorePage({ onNavigate }) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 flex flex-col gap-5 pb-6">
+      <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
         <div className="pt-2">
           <h1 className="text-2xl font-bold tracking-tight">More</h1>
         </div>
