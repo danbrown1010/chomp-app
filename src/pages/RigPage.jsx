@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAppStore } from '../store/index'
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ function TempZones() {
 // ─── EcoFlow ──────────────────────────────────────────────────────────────────
 
 function EcoflowSection() {
+  const { accent } = useAppStore()
   const { name, pct, drawW, solarW, hrsRemaining, ports } = ECOFLOW
   const barColor = pct > 50 ? '#22c55e' : pct > 20 ? '#f97316' : '#ef4444'
 
@@ -177,7 +179,7 @@ function EcoflowSection() {
               className="text-xs font-semibold px-2.5 py-1 rounded-full"
               style={
                 p.active
-                  ? { background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316' }
+                  ? { background: `${accent}26`, border: `1px solid ${accent}4d`, color: accent }
                   : { background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', color: '#4b5563' }
               }
             >
@@ -256,11 +258,12 @@ function LightingSection({ lights, onToggle, onBrightness }) {
 }
 
 function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
+  const { accent } = useAppStore()
   return (
     <div className="pl-4 pr-3 py-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-white">{label}</span>
-        <Toggle on={on} onToggle={onToggle} />
+        <Toggle on={on} onToggle={onToggle} accent={accent} />
       </div>
       <div
         className="overflow-hidden transition-all duration-200"
@@ -274,7 +277,8 @@ function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
             max={100}
             value={brightness}
             onChange={e => onBrightness(Number(e.target.value))}
-            className="flex-1 accent-orange-500 cursor-pointer"
+            className="flex-1 cursor-pointer"
+            style={{ accentColor: accent }}
           />
         </div>
       </div>
@@ -282,12 +286,12 @@ function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
   )
 }
 
-function Toggle({ on, onToggle }) {
+function Toggle({ on, onToggle, accent }) {
   return (
     <div
       onClick={onToggle}
       className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
-      style={{ background: on ? '#f97316' : '#3a3a3a' }}
+      style={{ background: on ? accent : '#3a3a3a' }}
     >
       <div
         className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200"
@@ -300,6 +304,7 @@ function Toggle({ on, onToggle }) {
 // ─── Scenes ───────────────────────────────────────────────────────────────────
 
 function ScenesSection({ onApply }) {
+  const { accent } = useAppStore()
   const [active, setActive] = useState(null)
 
   const handle = (name) => {
@@ -321,7 +326,7 @@ function ScenesSection({ onApply }) {
             className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-colors"
             style={
               active === name
-                ? { background: 'rgba(249,115,22,0.15)', borderColor: 'rgba(249,115,22,0.4)', color: '#f97316' }
+                ? { background: `${accent}26`, borderColor: `${accent}66`, color: accent }
                 : { background: '#111', borderColor: '#2a2a2a', color: '#9ca3af' }
             }
           >

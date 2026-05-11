@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAppStore } from '../store/index'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -19,11 +20,7 @@ export default function SettingsPage({ onBack }) {
     if (!stored) localStorage.setItem('chomp-theme', 'dark')
     return stored || 'dark'
   })
-  const [accent, setAccent] = useState(() => {
-    const stored = localStorage.getItem('chomp-accent')
-    if (!stored) localStorage.setItem('chomp-accent', '#f97316')
-    return stored || '#f97316'
-  })
+  const { accent, setAccent } = useAppStore()
 
   const [tripToggles, setTripToggles] = useState({
     phaseAware:        true,
@@ -44,12 +41,6 @@ export default function SettingsPage({ onBack }) {
     localStorage.setItem('chomp-theme', t)
     document.documentElement.classList.remove('dark', 'light')
     document.documentElement.classList.add(t)
-  }
-
-  const applyAccent = (color) => {
-    setAccent(color)
-    localStorage.setItem('chomp-accent', color)
-    document.documentElement.style.setProperty('--color-accent', color)
   }
 
   const toggleTrip  = (k) => setTripToggles(p  => ({ ...p,  [k]: !p[k]  }))
@@ -103,7 +94,7 @@ export default function SettingsPage({ onBack }) {
               {ACCENTS.map(c => (
                 <button
                   key={c}
-                  onClick={() => applyAccent(c)}
+                  onClick={() => setAccent(c)}
                   className="w-6 h-6 rounded-full transition-transform active:scale-90"
                   style={{
                     background: c,
@@ -180,11 +171,6 @@ export default function SettingsPage({ onBack }) {
               </svg>
             </a>
           </div>
-          <div className="border-t border-[#2a2a2a]">
-            <div className="px-4 py-3">
-              <p className="text-sm text-[#4b5563]">Built with Claude</p>
-            </div>
-          </div>
         </Section>
 
       </div>
@@ -195,20 +181,21 @@ export default function SettingsPage({ onBack }) {
 // ─── Theme cards ──────────────────────────────────────────────────────────────
 
 function ThemeCard({ label, selected, onSelect, preview }) {
+  const { accent } = useAppStore()
   return (
     <button
       onClick={onSelect}
       className="flex-1 rounded-xl overflow-hidden border-2 transition-colors active:opacity-80"
-      style={{ borderColor: selected ? '#f97316' : '#2a2a2a' }}
+      style={{ borderColor: selected ? accent : '#2a2a2a' }}
     >
       {preview}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ background: '#111' }}
+        style={{ background: label === 'Light' ? '#f0f0f0' : '#111' }}
       >
-        <span className="text-xs font-semibold text-white">{label}</span>
+        <span className="text-xs font-semibold" style={{ color: label === 'Light' ? '#111111' : '#ffffff' }}>{label}</span>
         {selected && (
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" style={{ color: '#f97316' }}>
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" style={{ color: accent }}>
             <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
@@ -283,11 +270,12 @@ function AccountRow({ label, value, valueColor }) {
 }
 
 function Toggle({ on, onToggle }) {
+  const { accent } = useAppStore()
   return (
     <div
       onClick={onToggle}
       className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
-      style={{ background: on ? '#f97316' : '#3a3a3a' }}
+      style={{ background: on ? accent : '#3a3a3a' }}
     >
       <div
         className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200"

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTripPhase } from '../hooks/useTripPhase'
+import { useAppStore } from '../store/index'
 
 export default function HomePage({ onPlanTrip }) {
   const tripPhase = useTripPhase()
@@ -13,6 +14,7 @@ export default function HomePage({ onPlanTrip }) {
 // ─── Idle (no active trip) ────────────────────────────────────────────────────
 
 function IdleHome({ onPlanTrip }) {
+  const { accent } = useAppStore()
   return (
     <div className="relative h-full">
       <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
@@ -30,7 +32,8 @@ function IdleHome({ onPlanTrip }) {
 
         <button
           onClick={onPlanTrip}
-          className="w-full bg-[#f97316] text-white text-sm font-semibold rounded-xl py-3.5 active:bg-[#c2410c] transition-colors"
+          className="w-full text-white text-sm font-semibold rounded-xl py-3.5 active:opacity-80 transition-opacity"
+          style={{ background: accent }}
         >
           Plan a trip
         </button>
@@ -46,7 +49,7 @@ function IdleHome({ onPlanTrip }) {
       <button
         onClick={onPlanTrip}
         className="absolute bottom-4 right-4 w-14 h-14 rounded-full flex items-center justify-center active:opacity-80 transition-opacity"
-        style={{ background: '#f97316', boxShadow: '0 4px 20px rgba(249,115,22,0.45)' }}
+        style={{ background: accent, boxShadow: `0 4px 20px ${accent}73` }}
       >
         <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none">
           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
@@ -68,6 +71,7 @@ const PRE_TRIP_CHECKLIST = [
 ]
 
 function PreTripHome({ activeTrip, daysUntil }) {
+  const { accent } = useAppStore()
   const [checked, setChecked] = useState([])
 
   const toggle = (item) =>
@@ -78,10 +82,10 @@ function PreTripHome({ activeTrip, daysUntil }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
       <div className="pt-2">
-        <p className="text-xs font-semibold text-[#f97316] uppercase tracking-widest mb-1">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: accent }}>
           Departing in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
         </p>
-        <h1 className="text-2xl font-bold tracking-tight text-[#f97316]">{activeTrip.name}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: accent }}>{activeTrip.name}</h1>
         <p className="text-sm text-[#6b7280] mt-0.5">
           {fmt(activeTrip.departureDate)} → {fmt(activeTrip.returnDate)}
         </p>
@@ -91,12 +95,12 @@ function PreTripHome({ activeTrip, daysUntil }) {
       <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-white">Packing readiness</p>
-          <span className={`text-sm font-bold ${pct === 100 ? 'text-green-400' : 'text-[#f97316]'}`}>{pct}%</span>
+          <span className="text-sm font-bold" style={{ color: pct === 100 ? '#22c55e' : accent }}>{pct}%</span>
         </div>
         <div className="h-1.5 bg-[#2a2a2a] rounded-full mb-4 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${pct}%`, background: pct === 100 ? '#22c55e' : '#f97316' }}
+            style={{ width: `${pct}%`, background: pct === 100 ? '#22c55e' : accent }}
           />
         </div>
         <div className="flex flex-col gap-3">
@@ -106,6 +110,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
               label={item}
               checked={checked.includes(item)}
               onToggle={() => toggle(item)}
+              accent={accent}
             />
           ))}
         </div>
@@ -125,6 +130,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
 // ─── On-trip ──────────────────────────────────────────────────────────────────
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
+  const { accent } = useAppStore()
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 gap-4 pb-6">
       <div className="pt-2 flex items-start justify-between">
@@ -132,7 +138,10 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
           <h1 className="text-2xl font-bold tracking-tight">{activeTrip.name}</h1>
           <p className="text-sm text-[#6b7280] mt-0.5">{daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining</p>
         </div>
-        <span className="mt-1 bg-[#f97316]/15 text-[#f97316] text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+        <span
+          className="mt-1 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"
+          style={{ background: `${accent}26`, color: accent }}
+        >
           Day {dayOf} of {totalDays}
         </span>
       </div>
@@ -150,7 +159,10 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
         <p className="text-white font-semibold">Esmeralda Basin TH</p>
         <p className="text-xs text-[#6b7280] mt-0.5">47.4521° N · 120.8830° W · 4,200 ft</p>
         <div className="flex gap-2 mt-3">
-          <button className="flex-1 bg-[#f97316] text-white text-xs font-semibold rounded-lg py-2 active:bg-[#c2410c] transition-colors">
+          <button
+            className="flex-1 text-white text-xs font-semibold rounded-lg py-2 active:opacity-80 transition-opacity"
+            style={{ background: accent }}
+          >
             Navigate
           </button>
           <button className="flex-1 bg-[#1c1c1c] text-white text-xs font-semibold rounded-lg py-2 border border-[#2a2a2a] active:bg-[#2a2a2a] transition-colors">
@@ -161,7 +173,7 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
 
       {/* Quick log */}
       <Section title="Quick log">
-        <ActionRow label="Log shot"    sub="Tag rig, subject + GPS" accent />
+        <ActionRow label="Log shot"    sub="Tag rig, subject + GPS" accent={accent} />
         <ActionRow label="Check in"    sub="Update live location" />
         <ActionRow label="Log fuel"    sub="Track range + cost" />
         <ActionRow label="Add note"    sub="Trail conditions, camp notes" />
@@ -183,6 +195,7 @@ const POST_TRIP_TASKS = [
 
 function PostTripHome({ activeTrip, totalDays }) {
   const [checked, setChecked] = useState([])
+  const { accent } = useAppStore()
 
   const toggle = (item) =>
     setChecked((prev) => prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item])
@@ -202,7 +215,7 @@ function PostTripHome({ activeTrip, totalDays }) {
       {/* Trip stats */}
       <div className="grid grid-cols-3 gap-2">
         <StatCard label="Days"  value={String(totalDays)} />
-        <StatCard label="Miles" value="218" valueColor="#f97316" />
+        <StatCard label="Miles" value="218" valueColor={accent} />
         <StatCard label="Shots" value="340" valueColor="#a78bfa" />
       </div>
 
@@ -224,6 +237,7 @@ function PostTripHome({ activeTrip, totalDays }) {
               label={item}
               checked={checked.includes(item)}
               onToggle={() => toggle(item)}
+              accent={accent}
             />
           ))}
         </div>
@@ -263,11 +277,14 @@ function Section({ title, children }) {
   )
 }
 
-function ActionRow({ label, sub, accent = false }) {
+function ActionRow({ label, sub, accent = null }) {
   return (
-    <button className={`w-full flex items-center justify-between px-4 py-3 text-left active:bg-[#1c1c1c] transition-colors${accent ? ' border-l-2 border-l-[#f97316]' : ''}`}>
+    <button
+      className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-[#1c1c1c] transition-colors"
+      style={accent ? { borderLeft: `2px solid ${accent}` } : {}}
+    >
       <div>
-        <div className={`text-sm font-medium ${accent ? 'text-[#f97316]' : 'text-white'}`}>{label}</div>
+        <div className="text-sm font-medium" style={{ color: accent || undefined }}>{label}</div>
         <div className="text-xs text-[#6b7280]">{sub}</div>
       </div>
       <svg className="w-4 h-4 text-[#6b7280] shrink-0" viewBox="0 0 24 24" fill="none">
@@ -307,7 +324,7 @@ function IntelRow({ label, value, color = 'neutral' }) {
   )
 }
 
-function CheckItem({ label, checked, onToggle }) {
+function CheckItem({ label, checked, onToggle, accent }) {
   return (
     <button
       className="flex items-center gap-3 text-left w-full"
@@ -316,8 +333,8 @@ function CheckItem({ label, checked, onToggle }) {
       <div
         className="w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors"
         style={{
-          borderColor: checked ? '#f97316' : '#3a3a3a',
-          background:  checked ? '#f97316' : 'transparent',
+          borderColor: checked ? accent : '#3a3a3a',
+          background:  checked ? accent : 'transparent',
         }}
       >
         {checked && (

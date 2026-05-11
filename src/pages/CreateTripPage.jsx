@@ -66,6 +66,7 @@ export default function CreateTripPage({ onClose, onCreated }) {
 // ─── Shared header ────────────────────────────────────────────────────────────
 
 function StepHeader({ step, onBack, onNext }) {
+  const { accent } = useAppStore()
   return (
     <div className="px-4 pt-3 pb-0 border-b border-[#1a1a1a]">
       {/* Nav row */}
@@ -84,7 +85,7 @@ function StepHeader({ step, onBack, onNext }) {
         <button
           onClick={onNext}
           className="text-sm font-semibold active:opacity-60 transition-opacity px-1"
-          style={{ color: '#f97316' }}
+          style={{ color: accent }}
         >
           {step === 4 ? 'Create' : 'Next'}
         </button>
@@ -96,7 +97,7 @@ function StepHeader({ step, onBack, onNext }) {
           <div
             key={i}
             className="flex-1 h-1 rounded-full transition-colors duration-300"
-            style={{ background: i <= step ? '#f97316' : '#2a2a2a' }}
+            style={{ background: i <= step ? accent : '#2a2a2a' }}
           />
         ))}
       </div>
@@ -107,7 +108,7 @@ function StepHeader({ step, onBack, onNext }) {
           <p
             key={l}
             className="flex-1 text-center text-[10px] font-semibold transition-colors"
-            style={{ color: i + 1 === step ? '#f97316' : '#4b5563' }}
+            style={{ color: i + 1 === step ? accent : '#4b5563' }}
           >
             {l}
           </p>
@@ -120,6 +121,7 @@ function StepHeader({ step, onBack, onNext }) {
 // ─── Step 1 — Basics ──────────────────────────────────────────────────────────
 
 function Step1Basics({ form, update }) {
+  const { accent } = useAppStore()
   return (
     <div className="p-4 flex flex-col gap-5 pb-8">
 
@@ -130,8 +132,8 @@ function Step1Basics({ form, update }) {
           onChange={e => update('name', e.target.value)}
           placeholder="Entiat River — Summer 2025"
           className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-[#3a3a3a] outline-none"
-          style={{ caretColor: '#f97316' }}
-          onFocus={e => e.target.style.borderColor = 'rgba(249,115,22,0.5)'}
+          style={{ caretColor: accent }}
+          onFocus={e => e.target.style.borderColor = `${accent}80`}
           onBlur={e => e.target.style.borderColor = '#2a2a2a'}
         />
       </Field>
@@ -145,7 +147,7 @@ function Step1Basics({ form, update }) {
               className="py-2.5 rounded-xl text-sm font-semibold transition-colors active:opacity-80"
               style={
                 form.type === t
-                  ? { background: '#f97316', color: 'white' }
+                  ? { background: accent, color: 'white' }
                   : { background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#6b7280' }
               }
             >
@@ -177,8 +179,8 @@ function Step1Basics({ form, update }) {
           onChange={e => update('region', e.target.value)}
           placeholder="Okanogan NF · North Cascades"
           className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-[#3a3a3a] outline-none"
-          style={{ caretColor: '#f97316' }}
-          onFocus={e => e.target.style.borderColor = 'rgba(249,115,22,0.5)'}
+          style={{ caretColor: accent }}
+          onFocus={e => e.target.style.borderColor = `${accent}80`}
           onBlur={e => e.target.style.borderColor = '#2a2a2a'}
         />
       </Field>
@@ -291,6 +293,7 @@ function FuelRow({ label, value }) {
 // ─── Step 3 — People ──────────────────────────────────────────────────────────
 
 function Step3People() {
+  const { accent } = useAppStore()
   return (
     <div className="p-4 flex flex-col gap-5 pb-8">
 
@@ -311,7 +314,7 @@ function Step3People() {
               <p className="text-sm font-medium text-white">Emily Brown</p>
               <p className="text-xs text-[#6b7280]">emily@gmail.com</p>
             </div>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white" style={{ background: '#f97316' }}>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white" style={{ background: accent }}>
               Co-pilot
             </span>
           </div>
@@ -325,7 +328,7 @@ function Step3People() {
           <CampsiteRow
             name="Handy Spring"
             sub="Dispersed · FR 5900"
-            pinColor="#f97316"
+            pinColor={accent}
             badge="Open"
             badgeColor="#22c55e"
             badgeBg="rgba(34,197,94,0.12)"
@@ -399,6 +402,7 @@ function GhostRow({ label }) {
 // ─── Step 4 — Review ──────────────────────────────────────────────────────────
 
 function Step4Review({ form, onEdit, onCreate }) {
+  const { accent } = useAppStore()
   const gearCount = (form.gear.summer ? 42 : 0) + (form.gear.photography ? 6 : 0)
 
   return (
@@ -408,7 +412,7 @@ function Step4Review({ form, onEdit, onCreate }) {
       <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <p className="text-base font-bold text-white">{form.name || 'New Trip'}</p>
-          <button onClick={onEdit} className="text-xs font-semibold active:opacity-60" style={{ color: '#f97316' }}>
+          <button onClick={onEdit} className="text-xs font-semibold active:opacity-60" style={{ color: accent }}>
             Edit
           </button>
         </div>
@@ -444,7 +448,7 @@ function Step4Review({ form, onEdit, onCreate }) {
         <button
           onClick={onCreate}
           className="w-full py-4 rounded-xl text-sm font-bold text-white active:opacity-80 transition-opacity"
-          style={{ background: '#f97316' }}
+          style={{ background: accent }}
         >
           Create trip
         </button>
@@ -478,11 +482,12 @@ function Field({ label, children }) {
 }
 
 function Toggle({ on, onToggle }) {
+  const { accent } = useAppStore()
   return (
     <div
       onClick={onToggle}
       className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
-      style={{ background: on ? '#f97316' : '#3a3a3a' }}
+      style={{ background: on ? accent : '#3a3a3a' }}
     >
       <div
         className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200"

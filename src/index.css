@@ -18,6 +18,40 @@ html, body, #root {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* ── Light theme overrides ──────────────────────────────────────────────────
+   Tailwind v4 emits utilities inside @layer utilities. Plain CSS outside any
+   layer wins the cascade, so these selectors override arbitrary-value classes
+   without needing !important.
+   ───────────────────────────────────────────────────────────────────────── */
+html.light, html.light body, html.light #root {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* backgrounds */
+html.light .bg-\[\#0a0a0a\] { background-color: #f3f4f6; }
+html.light .bg-\[\#111\]    { background-color: #ffffff; }
+html.light .bg-\[\#1a1a1a\] { background-color: #f9fafb; }
+html.light .bg-\[\#1c1c1c\] { background-color: #f3f4f6; }
+html.light .bg-\[\#2a2a2a\] { background-color: #e5e7eb; }
+html.light .bg-\[\#3a3a3a\] { background-color: #d1d5db; }
+
+/* borders */
+html.light .border-\[\#1a1a1a\] { border-color: #e5e7eb; }
+html.light .border-\[\#2a2a2a\] { border-color: #e5e7eb; }
+html.light .border-\[\#3a3a3a\] { border-color: #d1d5db; }
+
+/* dividers (divide-y / divide-x generate borders on children) */
+html.light .divide-\[\#2a2a2a\] > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
+html.light .divide-\[\#1a1a1a\] > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
+
+/* text */
+html.light .text-white          { color: #111827; }
+html.light .text-\[\#f5f5f5\]  { color: #111827; }
+html.light .text-\[\#9ca3af\]  { color: #6b7280; }
+html.light .text-\[\#6b7280\]  { color: #6b7280; }
+html.light .text-\[\#4b5563\]  { color: #9ca3af; }
+
 * {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;

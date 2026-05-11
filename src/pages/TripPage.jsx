@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { useAppStore } from '../store/index'
 
 const MAP_STYLE   = 'https://tiles.openfreemap.org/styles/liberty'
 const CURRENT_POS = [-120.8830, 47.4521]
@@ -27,6 +28,7 @@ const LAYER_CONFIG = [
 ]
 
 export default function TripPage() {
+  const { accent } = useAppStore()
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
@@ -52,14 +54,14 @@ export default function TripPage() {
             <Layer
               id="route-line"
               type="line"
-              paint={{ 'line-color': '#f97316', 'line-width': 2.5, 'line-dasharray': [3, 2], 'line-opacity': 0.9 }}
+              paint={{ 'line-color': accent, 'line-width': 2.5, 'line-dasharray': [3, 2], 'line-opacity': 0.9 }}
               layout={{ 'line-cap': 'butt', 'line-join': 'round' }}
             />
           </Source>
         )}
 
         <Marker longitude={CURRENT_POS[0]} latitude={CURRENT_POS[1]} anchor="center">
-          <CurrentPosMarker />
+          <CurrentPosMarker accent={accent} />
         </Marker>
 
         {WAYPOINTS.map(wp => (
@@ -70,17 +72,17 @@ export default function TripPage() {
       </Map>
 
       {/* ── Floating UI ──────────────────────────────────────────────────────── */}
-      <LayerStrip   layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} />
+      <LayerStrip   layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} accent={accent} />
       <ZoomControls mapRef={mapRef} />
-      <RecenterBtn  onPress={recenter} />
-      <BottomSheet  expanded={expanded} onToggle={() => setExpanded(e => !e)} />
+      <RecenterBtn  onPress={recenter} accent={accent} />
+      <BottomSheet  expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} />
     </div>
   )
 }
 
 // ─── Layer toggle strip ───────────────────────────────────────────────────────
 
-function LayerStrip({ layers, active, onToggle }) {
+function LayerStrip({ layers, active, onToggle, accent }) {
   return (
     <div
       className="absolute top-3 left-0 right-0 flex gap-2 overflow-x-auto px-4"
@@ -92,9 +94,10 @@ function LayerStrip({ layers, active, onToggle }) {
           onClick={() => onToggle(l.id)}
           className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow transition-colors ${
             active[l.id]
-              ? 'bg-[#f97316] text-white'
+              ? 'text-white'
               : 'bg-[#1c1c1c]/90 text-[#6b7280] border border-[#3a3a3a]'
           }`}
+          style={active[l.id] ? { background: accent } : {}}
         >
           {l.label}
         </button>
@@ -105,11 +108,11 @@ function LayerStrip({ layers, active, onToggle }) {
 
 // ─── Markers ──────────────────────────────────────────────────────────────────
 
-function CurrentPosMarker() {
+function CurrentPosMarker({ accent }) {
   return (
     <div className="relative w-6 h-6 flex items-center justify-center">
-      <div className="absolute w-4 h-4 rounded-full bg-[#f97316] animate-ping opacity-50" />
-      <div className="w-3 h-3 rounded-full bg-[#f97316] border-2 border-white shadow" />
+      <div className="absolute w-4 h-4 rounded-full animate-ping opacity-50" style={{ background: accent }} />
+      <div className="w-3 h-3 rounded-full border-2 border-white shadow" style={{ background: accent }} />
     </div>
   )
 }
@@ -148,12 +151,12 @@ function ZoomControls({ mapRef }) {
 
 // ─── Recenter button ──────────────────────────────────────────────────────────
 
-function RecenterBtn({ onPress }) {
+function RecenterBtn({ onPress, accent }) {
   return (
     <button
       onClick={onPress}
-      className="absolute left-4 w-11 h-11 bg-[#f97316] rounded-full flex items-center justify-center shadow-lg active:bg-[#c2410c] transition-colors"
-      style={{ bottom: PEEK_H + 16 }}
+      className="absolute left-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg active:opacity-80 transition-opacity"
+      style={{ background: accent, bottom: PEEK_H + 16 }}
     >
       <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="2"/>
@@ -165,7 +168,7 @@ function RecenterBtn({ onPress }) {
 
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
-function BottomSheet({ expanded, onToggle }) {
+function BottomSheet({ expanded, onToggle, accent }) {
   return (
     <div
       className="absolute left-0 right-0 bottom-0 bg-[#111] border-t border-[#2a2a2a] rounded-t-2xl overflow-hidden"
@@ -184,7 +187,10 @@ function BottomSheet({ expanded, onToggle }) {
         <p className="text-[10px] font-semibold text-[#6b7280] uppercase tracking-widest">Next waypoint</p>
         <p className="text-base font-semibold text-white mt-0.5">Handy Spring · 12mi</p>
         <div className="flex gap-2.5 mt-3">
-          <button className="flex-1 bg-[#f97316] text-white text-sm font-semibold rounded-xl py-2 active:bg-[#c2410c] transition-colors">
+          <button
+            className="flex-1 text-white text-sm font-semibold rounded-xl py-2 active:opacity-80 transition-opacity"
+            style={{ background: accent }}
+          >
             Navigate
           </button>
           <button className="flex-1 border border-[#3a3a3a] text-white text-sm font-semibold rounded-xl py-2 active:bg-[#1c1c1c] transition-colors">
