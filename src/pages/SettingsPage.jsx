@@ -14,8 +14,16 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
-  const [theme,  setTheme]  = useState(() => localStorage.getItem('chomp-theme')  || 'dark')
-  const [accent, setAccent] = useState(() => localStorage.getItem('chomp-accent') || '#f97316')
+  const [theme,  setTheme]  = useState(() => {
+    const stored = localStorage.getItem('chomp-theme')
+    if (!stored) localStorage.setItem('chomp-theme', 'dark')
+    return stored || 'dark'
+  })
+  const [accent, setAccent] = useState(() => {
+    const stored = localStorage.getItem('chomp-accent')
+    if (!stored) localStorage.setItem('chomp-accent', '#f97316')
+    return stored || '#f97316'
+  })
 
   const [tripToggles, setTripToggles] = useState({
     phaseAware:        true,
@@ -41,7 +49,7 @@ export default function SettingsPage({ onBack }) {
   const applyAccent = (color) => {
     setAccent(color)
     localStorage.setItem('chomp-accent', color)
-    document.documentElement.style.setProperty('--chomp-accent', color)
+    document.documentElement.style.setProperty('--color-accent', color)
   }
 
   const toggleTrip  = (k) => setTripToggles(p  => ({ ...p,  [k]: !p[k]  }))
