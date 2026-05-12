@@ -1,6 +1,6 @@
 export const ECOFLOW_DEVICES = {
   delta2Max: {
-    name: 'Chomp Battery',
+    name: 'Main Battery',
     model: 'EcoFlow Delta 2 Max',
     sn: import.meta.env.VITE_ECOFLOW_DELTA2MAX_SN,
     type: 'primary',
@@ -24,7 +24,7 @@ export const ECOFLOW_DEVICES = {
     manualUrl: 'https://www.ecoflow.com/us/river3-plus-portable-power-station',
   },
   wave3: {
-    name: 'Chomp AC',
+    name: 'Camp AC',
     model: 'EcoFlow Wave 3',
     sn: import.meta.env.VITE_ECOFLOW_WAVE3_SN,
     type: 'climate',
@@ -32,7 +32,7 @@ export const ECOFLOW_DEVICES = {
     manualUrl: 'https://www.ecoflow.com/us/wave3-portable-air-conditioner',
   },
   alternator: {
-    name: 'Chomp Charger',
+    name: 'Alt Charger',
     model: 'EcoFlow 800W Alternator Charger',
     sn: import.meta.env.VITE_ECOFLOW_ALTERNATOR_SN,
     type: 'charger',

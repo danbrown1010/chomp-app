@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export function useWeather(lat, lng) {
+export function useWeather(lat, lng, bustKey = 0) {
   const [weather, setWeather] = useState(null)
   const [forecast, setForecast] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -9,12 +9,12 @@ export function useWeather(lat, lng) {
   useEffect(() => {
     if (!lat || !lng) return
 
-    const cacheKey = `chomp-weather-${Math.round(lat * 10)}-${Math.round(lng * 10)}`
+    const cacheKey = `vela-weather-${Math.round(lat * 10)}-${Math.round(lng * 10)}`
     const cacheTimeKey = `${cacheKey}-time`
     const cached = localStorage.getItem(cacheKey)
     const cachedTime = localStorage.getItem(cacheTimeKey)
 
-    if (cached && cachedTime) {
+    if (bustKey === 0 && cached && cachedTime) {
       const age = Date.now() - parseInt(cachedTime)
       if (age < 1800000) {
         const parsed = JSON.parse(cached)
@@ -25,7 +25,9 @@ export function useWeather(lat, lng) {
       }
     }
 
-    const headers = { 'User-Agent': 'ChompApp/0.1 contact@chomp.app' }
+    setLoading(true)
+
+    const headers = { 'User-Agent': 'VELAApp/0.1' }
 
     fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`, { headers })
       .then(r => r.json())
@@ -56,7 +58,7 @@ export function useWeather(lat, lng) {
           setForecast(parsed.forecast)
         }
       })
-  }, [lat, lng])
+  }, [lat, lng, bustKey])
 
   return { weather, forecast, loading, error }
 }
@@ -72,7 +74,7 @@ export function useFireWeather(lat, lng) {
       `https://api.weather.gov/alerts/active` +
       `?point=${lat.toFixed(4)},${lng.toFixed(4)}` +
       `&event=Red%20Flag%20Warning,Fire%20Weather%20Watch,Extreme%20Fire%20Behavior`,
-      { headers: { 'User-Agent': 'ChompApp/0.1 contact@chomp.app' } }
+      { headers: { 'User-Agent': 'VELAApp/0.1' } }
     )
       .then(r => r.json())
       .then(data => {

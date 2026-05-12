@@ -3,6 +3,8 @@ import { useAppStore } from '../store/index'
 import { useEcoFlow } from '../hooks/useEcoFlow'
 import { ECOFLOW_DEVICES } from '../config/devices'
 import { useStarlink } from '../hooks/useStarlink'
+import { StatusBadge } from '../components/StatusBadge'
+import { Skeleton } from '../components/Skeleton'
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,9 @@ const SCENES = {
 
 export default function RigPage() {
   const [lights, setLights] = useState(INITIAL_LIGHTS)
+  const [ecoInfo, setEcoInfo] = useState(null)
+  const currentDevice = ecoInfo?.device
+  const batteryData = ecoInfo?.data
 
   const toggleLight = (id) =>
     setLights(prev => ({ ...prev, [id]: { ...prev[id], on: !prev[id].on } }))
@@ -77,13 +82,164 @@ export default function RigPage() {
     <div className="h-full overflow-y-auto">
       <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
         <RigHeader hasAlert={HAS_ALERT} />
-        <EcoflowSection />
+        <EcoflowSection onShowInfo={setEcoInfo} />
         <TempZones />
         <StarlinkSection />
         <HumiditySection />
         <LightingSection lights={lights} onToggle={toggleLight} onBrightness={setBrightness} />
         <ScenesSection onApply={applyScene} />
       </div>
+
+      {ecoInfo && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setEcoInfo(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              zIndex: 100,
+            }}
+          />
+
+          {/* Sheet */}
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'var(--bg-card, #1C2117)',
+            borderRadius: '16px 16px 0 0',
+            padding: '0 0 env(safe-area-inset-bottom)',
+            zIndex: 101,
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            {/* Drag handle */}
+            <div style={{
+              width: 36, height: 4,
+              borderRadius: 2,
+              background: 'var(--border, #3A4A32)',
+              margin: '12px auto 16px',
+            }} />
+
+            {/* Content */}
+            <div style={{ padding: '0 20px 20px' }}>
+
+              {/* Device name */}
+              <div style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: 'var(--text-primary, #F0EDE4)',
+                marginBottom: 4,
+                fontFamily: 'var(--font-body)',
+              }}>
+                {currentDevice.name}
+              </div>
+
+              {/* Model */}
+              <div style={{
+                fontSize: 13,
+                color: 'var(--text-secondary, #A8B89A)',
+                marginBottom: 16,
+                fontFamily: 'var(--font-body)',
+              }}>
+                {currentDevice.model}
+              </div>
+
+              <div style={{ height: 1, background: 'var(--border, #3A4A32)', marginBottom: 16 }} />
+
+              {/* Info rows */}
+              {[
+                { label: 'Serial', value: currentDevice.sn, mono: true },
+                currentDevice.capacity > 0 && {
+                  label: 'Capacity',
+                  value: `${currentDevice.capacity.toLocaleString()} Wh`,
+                },
+                currentDevice.capacity > 0 && batteryData?.soc != null && {
+                  label: 'Current charge',
+                  value: `${batteryData.soc}% · ${Math.round((batteryData.soc / 100) * currentDevice.capacity).toLocaleString()} Wh`,
+                  color: batteryData.soc > 50 ? '#4A7C3F' : batteryData.soc > 20 ? '#C4521A' : '#8B2E2E',
+                },
+                currentDevice.capacity > 0 && batteryData?.cycles != null && {
+                  label: 'Charge cycles',
+                  value: batteryData.cycles,
+                },
+              ].filter(Boolean).map((row, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingBottom: 12,
+                  marginBottom: 12,
+                  borderBottom: '1px solid var(--border, #3A4A32)',
+                }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary, #A8B89A)', fontFamily: 'var(--font-body)' }}>
+                    {row.label}
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: row.color ?? 'var(--text-primary, #F0EDE4)',
+                    fontFamily: row.mono ? 'var(--font-mono)' : 'var(--font-body)',
+                    textAlign: 'right',
+                    maxWidth: '60%',
+                    wordBreak: 'break-all',
+                  }}>
+                    {row.value}
+                  </div>
+                </div>
+              ))}
+
+              <div style={{ height: 1, background: 'var(--border, #3A4A32)', marginBottom: 16 }} />
+
+              {/* Links */}
+              {[
+                { label: "Owner's Manual", url: currentDevice.manualUrl },
+                { label: 'EcoFlow Support', url: 'https://www.ecoflow.com/us/support' },
+              ].map((link, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(link.url, '_blank')}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 0',
+                    borderBottom: i === 0 ? '1px solid var(--border, #3A4A32)' : 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontSize: 14, color: 'var(--accent, #C4521A)', fontFamily: 'var(--font-body)' }}>
+                    {link.label}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>↗</div>
+                </div>
+              ))}
+
+              {/* Close button */}
+              <button
+                onClick={() => setEcoInfo(null)}
+                style={{
+                  width: '100%',
+                  marginTop: 16,
+                  padding: '12px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border, #3A4A32)',
+                  background: 'transparent',
+                  color: 'var(--text-secondary, #A8B89A)',
+                  fontSize: 14,
+                  fontFamily: 'var(--font-body)',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -92,19 +248,13 @@ export default function RigPage() {
 
 function RigHeader({ hasAlert }) {
   return (
-    <div className="pt-2 flex items-start justify-between">
+    <div style={{ paddingTop: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Chomp</h1>
-        <p className="text-sm text-[#6b7280] mt-0.5">2014 Jeep JKU · Ursa Minor</p>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Chomp</h1>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, letterSpacing: '0.06em' }}>2014 JEEP JKU · URSA MINOR</p>
       </div>
-      <div className="flex items-center gap-1.5 mt-1">
-        <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ background: hasAlert ? '#ef4444' : '#22c55e' }}
-        />
-        <span className="text-xs font-semibold" style={{ color: hasAlert ? '#f87171' : '#4ade80' }}>
-          {hasAlert ? '1 alert' : 'All systems OK'}
-        </span>
+      <div style={{ marginTop: 4 }}>
+        <StatusBadge status={hasAlert ? 'danger' : 'safe'} label={hasAlert ? '1 ALERT' : 'ALL OK'} />
       </div>
     </div>
   )
@@ -118,12 +268,12 @@ function TempZones() {
       <SectionLabel>Temperature</SectionLabel>
       <div className="grid grid-cols-3 gap-2">
         {TEMP_ZONES.map(z => (
-          <div key={z.id} className="bg-[#111] border border-[#2a2a2a] rounded-xl px-3 py-3">
-            <div className="text-[10px] font-semibold text-[#6b7280] uppercase tracking-widest mb-1 leading-none">
+          <div key={z.id} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-3">
+            <div className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-1 leading-none">
               {z.label}
             </div>
             <div
-              className={`text-lg font-bold leading-none${z.color ? '' : ' text-white'}`}
+              className={`text-lg font-bold leading-none${z.color ? '' : ' text-[var(--text-primary)]'}`}
               style={z.color ? { color: z.color } : undefined}
             >
               {z.value}{z.unit}
@@ -163,8 +313,8 @@ function EcoToast({ message }) {
       style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}
     >
       <div
-        className="px-4 py-2 rounded-full text-sm font-medium text-white"
-        style={{ background: 'rgba(28,28,28,0.96)', border: '1px solid #3a3a3a' }}
+        className="px-4 py-2 rounded-full text-sm font-medium text-[var(--text-primary)]"
+        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
       >
         {message}
       </div>
@@ -269,7 +419,7 @@ function PowerFlowCard({ type, data }) {
   const total = isIn ? (data?.totalInputWatts ?? 0) : (data?.totalOutputWatts ?? 0)
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-2.5 flex flex-col gap-1">
+    <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-2.5 flex flex-col gap-1">
       <div className="flex items-center justify-between mb-0.5 px-1">
         <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
           {isIn ? 'IN' : 'OUT'}
@@ -278,18 +428,18 @@ function PowerFlowCard({ type, data }) {
       {rows.map(row => (
         <div
           key={row.label}
-          className={`flex items-center gap-1.5 px-1.5 py-1 rounded-lg${row.watts > 0 ? ' bg-[#2a2a2a]' : ''}`}
+          className={`flex items-center gap-1.5 px-1.5 py-1 rounded-lg${row.watts > 0 ? ' bg-[var(--border)]' : ''}`}
         >
           <span style={{ color: row.watts > 0 ? accentColor : '#4b5563' }}>{row.icon}</span>
-          <span className="text-[9px] text-[#6b7280] flex-1 leading-none">{row.label}</span>
-          <span className={`text-[10px] font-semibold tabular-nums ${row.watts > 0 ? 'text-[#f5f5f5]' : 'text-[#4b5563]'}`}>
+          <span className="text-[9px] text-[var(--text-secondary)] flex-1 leading-none">{row.label}</span>
+          <span className={`text-[10px] font-semibold tabular-nums ${row.watts > 0 ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
             {row.watts > 0 ? `${row.watts}W` : '—'}
           </span>
         </div>
       ))}
-      <div className="flex justify-end px-1 pt-1 border-t border-[#2a2a2a] mt-0.5">
+      <div className="flex justify-end px-1 pt-1 border-t border-[var(--border)] mt-0.5">
         <span
-          className={`text-sm font-bold tabular-nums${total === 0 ? ' text-[#4b5563]' : ''}`}
+          className={`text-sm font-bold tabular-nums${total === 0 ? ' text-[var(--text-tertiary)]' : ''}`}
           style={total > 0 ? { color: accentColor } : undefined}
         >
           {total}W
@@ -302,19 +452,19 @@ function PowerFlowCard({ type, data }) {
 function PortToggleRow({ icon, label, watts, enabled, onToggle, accent }) {
   return (
     <div
-      className="bg-[#1a1a1a] border border-[#2a2a2a] flex items-center gap-3 px-3 py-2.5 rounded-xl"
+      className="bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center gap-3 px-3 py-2.5 rounded-xl"
       style={enabled ? { borderColor: 'rgba(34,197,94,0.35)' } : undefined}
     >
-      <span className={enabled ? 'text-[#4ade80]' : 'text-[#4b5563]'}>{icon}</span>
+      <span className={enabled ? 'text-[#4ade80]' : 'text-[var(--text-tertiary)]'}>{icon}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white leading-none">{label}</p>
-        <p className={`text-[10px] mt-0.5 ${enabled ? 'text-[#4ade80]' : 'text-[#6b7280]'}`}>
+        <p className="text-sm font-medium text-[var(--text-primary)] leading-none">{label}</p>
+        <p className={`text-[10px] mt-0.5 ${enabled ? 'text-[#4ade80]' : 'text-[var(--text-secondary)]'}`}>
           {enabled && watts > 0 ? `${watts}W` : enabled ? 'On' : 'Off'}
         </p>
       </div>
       <div
         onClick={onToggle}
-        className="relative w-11 h-6 bg-[#3a3a3a] rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
+        className="relative w-11 h-6 bg-[var(--border)] rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
         style={enabled ? { background: accent ?? '#f97316' } : undefined}
       >
         <div
@@ -328,104 +478,10 @@ function PortToggleRow({ icon, label, watts, enabled, onToggle, accent }) {
 
 const DEVICE_LIST = Object.entries(ECOFLOW_DEVICES).map(([key, d]) => ({ key, ...d }))
 
-const ExternalLinkIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-    <polyline points="15 3 21 3 21 9"/>
-    <line x1="10" y1="14" x2="21" y2="3"/>
-  </svg>
-)
-
-function DeviceInfoSheet({ device, data, onClose }) {
-  const hasBattery = device.capacity > 0
-  const soc = data?.soc ?? null
-  const whRemaining = hasBattery && soc != null
-    ? Math.round((soc / 100) * device.capacity)
-    : null
-  const whColor = whRemaining == null ? '#6b7280'
-    : soc > 50 ? '#4ade80'
-    : soc > 20 ? '#fbbf24'
-    : '#f87171'
-  const fmtWh = (wh) => wh >= 1000
-    ? `${Math.floor(wh / 1000)},${String(wh % 1000).padStart(3, '0')} Wh`
-    : `${wh} Wh`
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col justify-end"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-[#111] border-t border-[#2a2a2a] rounded-t-2xl p-6 flex flex-col gap-4"
-        style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Device identity */}
-        <div>
-          <p className="text-xl font-bold text-white">{device.name}</p>
-          <p className="text-sm text-[#6b7280] mt-0.5">{device.model}</p>
-        </div>
-
-        {/* Serial number */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-[#9ca3af]">Serial</span>
-          <span className="text-sm text-[#6b7280] font-mono">{device.sn ?? '—'}</span>
-        </div>
-
-        {/* Capacity + live SOC — battery devices only */}
-        {hasBattery && (
-          <>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#9ca3af]">Capacity</span>
-              <span className="text-sm text-[#6b7280]">{fmtWh(device.capacity)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#9ca3af]">Current charge</span>
-              <span className="text-sm font-semibold" style={{ color: whColor }}>
-                {soc != null ? `${soc}% · ${fmtWh(whRemaining)}` : '—'}
-              </span>
-            </div>
-          </>
-        )}
-
-        {/* Cycle count */}
-        {data?.cycles != null && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-[#9ca3af]">Charge cycles</span>
-            <span className="text-sm text-[#6b7280]">{data.cycles}</span>
-          </div>
-        )}
-
-        <div className="border-t border-[#2a2a2a]" />
-
-        {/* Links */}
-        <a href={device.manualUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between py-1">
-          <span className="text-sm text-white">Owner's Manual</span>
-          <ExternalLinkIcon />
-        </a>
-        <a href="https://www.ecoflow.com/us/support" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between py-1">
-          <span className="text-sm text-white">EcoFlow Support</span>
-          <ExternalLinkIcon />
-        </a>
-
-        {/* Close */}
-        <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-[#9ca3af] border border-[#2a2a2a] mt-1">
-          Close
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function EcoflowSection() {
-  const { accent, theme } = useAppStore()
-  const isLight = theme === 'light'
-  const chipInactive = isLight
-    ? { background: '#f3f4f6', borderColor: '#e5e7eb', color: '#6b7280' }
-    : { background: '#111',    borderColor: '#2a2a2a', color: '#9ca3af' }
+function EcoflowSection({ onShowInfo }) {
+  const { accent } = useAppStore()
+  const chipInactive = { background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
   const [selectedKey, setSelectedKey] = useState('delta2Max')
-  const [infoOpen, setInfoOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [, tick] = useState(0)
   const device = ECOFLOW_DEVICES[selectedKey]
@@ -450,7 +506,6 @@ function EcoflowSection() {
   return (
     <div>
       {toast && <EcoToast message={toast} />}
-      {infoOpen && <DeviceInfoSheet device={device} data={data} onClose={() => setInfoOpen(false)} />}
 
       <SectionLabel>EcoFlow</SectionLabel>
 
@@ -472,22 +527,22 @@ function EcoflowSection() {
         ))}
       </div>
 
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex flex-col gap-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
         {/* Card header */}
         <div className="flex items-center justify-between">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <ChargingIndicator netFlow={netWatts} />
             <div>
-              <div className="text-white" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>{device.name}</div>
-              <div className="text-[#6b7280]" style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>
+              <div className="text-[var(--text-primary)]" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>{device.name}</div>
+              <div className="text-[var(--text-secondary)]" style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>
                 {netWatts > 0 ? `+${netWatts}W · Charging` : netWatts < 0 ? `${netWatts}W · Discharging` : 'Idle'}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setInfoOpen(true)}
-              className="flex items-center justify-center text-[#6b7280]"
+              onClick={() => onShowInfo({ device, data })}
+              className="flex items-center justify-center text-[var(--text-secondary)]"
               style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid #3a3a3a', background: 'transparent', fontSize: 12, fontStyle: 'italic', fontWeight: 600, lineHeight: 1 }}
               aria-label="Device info"
             >
@@ -495,8 +550,8 @@ function EcoflowSection() {
             </button>
             <button
               onClick={refetch}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6b7280] hover:text-white transition-colors"
-              style={{ background: 'rgba(255,255,255,0.04)' }}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
+              style={{ background: 'var(--bg-secondary)' }}
               aria-label="Refresh"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -509,20 +564,47 @@ function EcoflowSection() {
           </div>
         </div>
 
-        {error ? (
+        {loading && !data ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Battery bar skeleton */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Skeleton className="h-3 rounded" style={{ width: 52 }} />
+                <Skeleton className="h-3 rounded" style={{ width: 36 }} />
+              </div>
+              <Skeleton className="h-2 rounded-full w-full" />
+            </div>
+            {/* Power flow grid skeleton */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <Skeleton className="rounded-xl" style={{ height: 96 }} />
+              <Skeleton className="rounded-xl" style={{ height: 96 }} />
+            </div>
+            {/* Net / time skeleton */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <Skeleton className="rounded-lg" style={{ height: 44 }} />
+              <Skeleton className="rounded-lg" style={{ height: 44 }} />
+            </div>
+            {/* Port rows skeleton */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Skeleton className="rounded-xl" style={{ height: 48 }} />
+              <Skeleton className="rounded-xl" style={{ height: 48 }} />
+              <Skeleton className="rounded-xl" style={{ height: 48 }} />
+            </div>
+          </div>
+        ) : error ? (
           <p className="text-xs text-[#f87171] text-center py-2">{error}</p>
         ) : (
           <>
             {/* Battery bar */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm text-[#9ca3af]">Battery</span>
+                <span className="text-sm text-[var(--text-secondary)]">Battery</span>
                 <span className="text-sm font-bold" style={{ color: barColor }}>
                   {loading ? '—' : soc != null ? `${soc}%` : '—'}
                   {netWatts > 0 && <span style={{ fontSize: 12, marginLeft: 4, color: '#22c55e' }}>⚡</span>}
                 </span>
               </div>
-              <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+              <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${soc ?? 0}%`, background: barColor }}
@@ -530,10 +612,10 @@ function EcoflowSection() {
               </div>
               {!loading && (
                 <div className="flex justify-between mt-1.5">
-                  <span className={`text-[10px] font-medium ${totalIn > 0 ? 'text-[#4ade80]' : 'text-[#4b5563]'}`}>
+                  <span className={`text-[10px] font-medium ${totalIn > 0 ? 'text-[#4ade80]' : 'text-[var(--text-tertiary)]'}`}>
                     ↓ {totalIn}W in
                   </span>
-                  <span className={`text-[10px] font-medium ${totalOut > 0 ? 'text-[#fb923c]' : 'text-[#4b5563]'}`}>
+                  <span className={`text-[10px] font-medium ${totalOut > 0 ? 'text-[#fb923c]' : 'text-[var(--text-tertiary)]'}`}>
                     ↑ {totalOut}W out
                   </span>
                 </div>
@@ -548,17 +630,17 @@ function EcoflowSection() {
 
             {/* Net flow + time remaining */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-2 flex flex-col items-center gap-0.5">
-                <span className={`text-xs font-bold tabular-nums ${netWatts > 0 ? 'text-[#4ade80]' : netWatts < 0 ? 'text-[#f87171]' : 'text-[#4b5563]'}`}>
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2 flex flex-col items-center gap-0.5">
+                <span className={`text-xs font-bold tabular-nums ${netWatts > 0 ? 'text-[#4ade80]' : netWatts < 0 ? 'text-[#f87171]' : 'text-[var(--text-tertiary)]'}`}>
                   {netWatts > 0 ? `+${netWatts}W` : `${netWatts}W`}
                 </span>
-                <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Net</span>
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">Net</span>
               </div>
-              <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-2.5 py-2 flex flex-col items-center gap-0.5">
-                <span className="text-xs font-bold text-[#f5f5f5]">
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2 flex flex-col items-center gap-0.5">
+                <span className="text-xs font-bold text-[var(--text-primary)]">
                   {loading ? '—' : formatRemainTime(data?.remainTime)}
                 </span>
-                <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Time left</span>
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">Time left</span>
               </div>
             </div>
 
@@ -612,7 +694,7 @@ function EcoflowSection() {
         )}
 
         {lastUpdated && (
-          <p className="text-[10px] text-[#4b5563] text-right -mt-1">
+          <p className="text-[10px] text-[var(--text-tertiary)] text-right -mt-1">
             {formatLastUpdated(lastUpdated)}
           </p>
         )}
@@ -640,7 +722,7 @@ function StarlinkSection() {
   return (
     <div>
       <SectionLabel>Starlink</SectionLabel>
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex flex-col gap-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
 
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -657,15 +739,15 @@ function StarlinkSection() {
             </div>
 
             <div>
-              <div className="text-white" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>{statusLabel}</div>
-              <div className="text-[#6b7280]" style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>Starlink · Flat High Performance</div>
+              <div className="text-[var(--text-primary)]" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>{statusLabel}</div>
+              <div className="text-[var(--text-secondary)]" style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>Starlink · Flat High Performance</div>
             </div>
           </div>
 
           <button
             onClick={refetch}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6b7280] hover:text-white transition-colors"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
+            style={{ background: 'var(--bg-secondary)' }}
             aria-label="Refresh"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -680,26 +762,26 @@ function StarlinkSection() {
         {/* Speed stats — online only */}
         {isOnline && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
-              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{downMbps}</span>
-              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">↓ Mbps</span>
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[var(--text-primary)] tabular-nums">{downMbps}</span>
+              <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">↓ Mbps</span>
             </div>
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
-              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{upMbps}</span>
-              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">↑ Mbps</span>
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[var(--text-primary)] tabular-nums">{upMbps}</span>
+              <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">↑ Mbps</span>
             </div>
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
-              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{latencyMs}ms</span>
-              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Latency</span>
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[var(--text-primary)] tabular-nums">{latencyMs}ms</span>
+              <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">Latency</span>
             </div>
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-2 flex flex-col items-center gap-0.5">
               <span
                 className="text-xs font-bold tabular-nums"
                 style={{ color: parseFloat(obstructionPct) > 5 ? '#ef4444' : '#22c55e' }}
               >
                 {obstructionPct}%
               </span>
-              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Obstruct</span>
+              <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">Obstruct</span>
             </div>
           </div>
         )}
@@ -718,14 +800,18 @@ function StarlinkSection() {
 
         {/* Offline message */}
         {!loading && (status?.offline || (!isOnline && !isSearching)) && (
-          <p className="text-[#6b7280] text-xs text-center py-1">
-            Dish not reachable · Connect to Starlink network to monitor
-          </p>
+          <div className="flex flex-col items-center gap-1 py-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#ef4444]" />
+              <p className="text-[var(--text-secondary)] text-sm font-medium">Dish not reachable</p>
+            </div>
+            <p className="text-[var(--text-tertiary)] text-xs">Connect to Starlink network to monitor</p>
+          </div>
         )}
 
         {/* Last updated */}
         {lastUpdated && (
-          <p className="text-[10px] text-[#4b5563] text-right -mt-1">
+          <p className="text-[10px] text-[var(--text-tertiary)] text-right -mt-1">
             Updated {lastUpdated.toLocaleTimeString()}
           </p>
         )}
@@ -740,24 +826,15 @@ function HumiditySection() {
   return (
     <div>
       <SectionLabel>Humidity</SectionLabel>
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
         {HUMIDITY_ZONES.map(z => {
           const ok = z.value < 70
           return (
             <div key={z.id} className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-[#9ca3af]">{z.label}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{z.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">{z.value}%</span>
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style={
-                    ok
-                      ? { background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.22)', color: '#4ade80' }
-                      : { background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.22)', color: '#fbbf24' }
-                  }
-                >
-                  {ok ? 'Optimal' : 'High'}
-                </span>
+                <span className="text-sm font-bold text-[var(--text-primary)]">{z.value}%</span>
+                <StatusBadge status={ok ? 'safe' : 'advisory'} label={ok ? 'OPTIMAL' : 'HIGH'} dot={false} />
               </div>
             </div>
           )
@@ -773,7 +850,7 @@ function LightingSection({ lights, onToggle, onBrightness }) {
   return (
     <div>
       <SectionLabel>Lighting</SectionLabel>
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl divide-y divide-[#2a2a2a]">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl divide-y divide-[var(--border)]">
         {Object.keys(lights).map(id => (
           <LightRow
             key={id}
@@ -795,7 +872,7 @@ function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
   return (
     <div className="pl-4 pr-3 py-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-white">{label}</span>
+        <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
         <Toggle on={on} onToggle={onToggle} accent={accent} />
       </div>
       <div
@@ -803,7 +880,7 @@ function LightRow({ id, label, on, brightness, onToggle, onBrightness }) {
         style={{ maxHeight: on ? 44 : 0, opacity: on ? 1 : 0 }}
       >
         <div className="flex items-center gap-3 pt-2.5">
-          <span className="text-[10px] text-[#6b7280] w-6 text-right shrink-0">{brightness}%</span>
+          <span className="text-[10px] text-[var(--text-secondary)] w-6 text-right shrink-0">{brightness}%</span>
           <input
             type="range"
             min={5}
@@ -823,7 +900,7 @@ function Toggle({ on, onToggle, accent }) {
   return (
     <div
       onClick={onToggle}
-      className="relative w-11 h-6 bg-[#3a3a3a] rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
+      className="relative w-11 h-6 bg-[var(--border)] rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
       style={on ? { background: accent } : undefined}
     >
       <div
@@ -837,10 +914,8 @@ function Toggle({ on, onToggle, accent }) {
 // ─── Scenes ───────────────────────────────────────────────────────────────────
 
 function ScenesSection({ onApply }) {
-  const { accent, theme } = useAppStore()
-  const chipInactive = theme === 'light'
-    ? { background: '#f3f4f6', borderColor: '#e5e7eb', color: '#6b7280' }
-    : { background: '#111',    borderColor: '#2a2a2a', color: '#9ca3af' }
+  const { accent } = useAppStore()
+  const chipInactive = { background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
   const [active, setActive] = useState(null)
 
   const handle = (name) => {
@@ -878,6 +953,6 @@ function ScenesSection({ onApply }) {
 
 function SectionLabel({ children }) {
   return (
-    <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">{children}</p>
+    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{children}</p>
   )
 }

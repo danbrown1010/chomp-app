@@ -25,10 +25,11 @@ export default function App() {
   return (
     <AppProvider>
       <div
-        className="flex flex-col bg-[#111]"
         style={{
-          height: '100dvh',
-          minHeight: '-webkit-fill-available',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--bg-primary)',
+          height: 'calc(var(--vh, 1svh) * 100)',
           paddingTop: 'env(safe-area-inset-top)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
@@ -40,7 +41,7 @@ export default function App() {
           />
         ) : (
           <>
-            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
               {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} />}
               {activeTab === 'trip'   && <TripPage />}
               {activeTab === 'safety' && <SafetyPage />}

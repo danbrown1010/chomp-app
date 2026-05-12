@@ -12,11 +12,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Chomp',
-        short_name: 'Chomp',
-        description: 'Offline-first overlanding companion',
-        theme_color: '#f97316',
-        background_color: '#0a0a0a',
+        name: 'VELA',
+        short_name: 'VELA',
+        description: 'Engineered for Independence',
+        theme_color: '#1C2117',
+        background_color: '#1C2117',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

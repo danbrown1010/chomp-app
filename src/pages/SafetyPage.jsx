@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
+import { Skeleton } from '../components/Skeleton'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import distance from '@turf/distance'
@@ -6,13 +7,12 @@ import { point } from '@turf/helpers'
 import { useFireData } from '../hooks/useFireData'
 import { useFireWeather } from '../hooks/useWeather'
 import { useAppStore } from '../store/index'
+import { StatusBadge } from '../components/StatusBadge'
 
-// Static conditions — real APIs to be added later
 const SEED = {
-  evac:       { yourZone: 'No order', advisory: 2, warning: 1, order: 0 },
+  evac:       { yourZone: 'Clear', advisory: 2, warning: 1, order: 0 },
   conditions: {
     burnBan:     { county: 'Chelan Co.', status: 'Active' },
-    aqi:         { value: 84, label: 'Moderate' },
     privateLand: '2.4mi clear',
     escapeRoute: 'FR 5900 → Hwy 97',
   },
@@ -26,10 +26,52 @@ function getFireCoord(feature) {
   return null
 }
 
+function usePullToRefresh(onRefresh) {
+  const [pullY, setPullY] = useState(0)
+  const startYRef = useRef(0)
+  const activeRef = useRef(false)
+  const pullYRef  = useRef(0)
+  const scrollRef = useRef(null)
+  const THRESHOLD = 64
+
+  const onTouchStart = useCallback((e) => {
+    if ((scrollRef.current?.scrollTop ?? 0) === 0) {
+      startYRef.current = e.touches[0].clientY
+      activeRef.current = true
+    }
+  }, [])
+
+  const onTouchMove = useCallback((e) => {
+    if (!activeRef.current) return
+    const dy = e.touches[0].clientY - startYRef.current
+    if (dy > 0 && (scrollRef.current?.scrollTop ?? 0) === 0) {
+      const y = Math.min(dy * 0.5, THRESHOLD)
+      pullYRef.current = y
+      setPullY(y)
+    } else if (dy <= 0) {
+      activeRef.current = false
+      pullYRef.current = 0
+      setPullY(0)
+    }
+  }, [])
+
+  const onTouchEnd = useCallback(() => {
+    if (!activeRef.current) return
+    activeRef.current = false
+    const reached = pullYRef.current >= THRESHOLD
+    pullYRef.current = 0
+    setPullY(0)
+    if (reached) onRefresh()
+  }, [onRefresh])
+
+  return { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd }
+}
+
 export default function SafetyPage() {
   const { location, aqi } = useAppStore()
-  const { fires, loading: fireLoading, error: fireError, lastUpdated } = useFireData()
+  const { fires, loading: fireLoading, error: fireError, lastUpdated, refetch: refetchFires } = useFireData()
   const { alerts } = useFireWeather(location?.lat, location?.lng)
+  const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refetchFires)
 
   const hasRedFlag   = alerts.some(a => a.properties.event === 'Red Flag Warning')
   const hasFireWatch = alerts.some(a => a.properties.event === 'Fire Weather Watch')
@@ -39,45 +81,66 @@ export default function SafetyPage() {
     if (!fires?.features?.length) return []
     const userLng = location?.lng ?? -120.8830
     const userLat = location?.lat ?? 47.4521
-    const userPt = point([userLng, userLat])
-
+    const userPt  = point([userLng, userLat])
     return fires.features
       .map(f => {
         const coord = getFireCoord(f)
         if (!coord) return null
         const distMi = distance(userPt, point(coord), { units: 'miles' })
-        return {
-          name:       f.properties?.IncidentName ?? 'Unknown Fire',
-          acres:      Math.round(f.properties?.GISAcres ?? 0),
-          distanceMi: Math.round(distMi),
-        }
+        return { name: f.properties?.IncidentName ?? 'Unknown Fire', acres: Math.round(f.properties?.GISAcres ?? 0), distanceMi: Math.round(distMi) }
       })
       .filter(f => f && f.distanceMi <= 100)
       .sort((a, b) => a.distanceMi - b.distanceMi)
   }, [fires, location])
 
-  const nearest = nearbyFires[0] ?? null
-  const updatedStr = lastUpdated
-    ? lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : null
+  const nearest    = nearbyFires[0] ?? null
+  const updatedStr = lastUpdated ? lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null
+  const monitorBadge = hasRedFlag ? 'danger' : hasFireWatch ? 'warn' : 'monitor'
+  const monitorLabel = hasRedFlag ? 'RED FLAG' : hasFireWatch ? 'FIRE WATCH' : 'MONITORING'
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div
+        ref={scrollRef}
+        style={{ flex: 1, overflowY: 'auto' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {pullY > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: pullY, opacity: pullY / 64 }}>
+            <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--text-tertiary)', borderTopColor: 'transparent', transform: `rotate(${(pullY / 64) * 270}deg)` }} />
+          </div>
+        )}
+
+        {/* Page header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 16px 4px' }}>
+          <div>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Safety</h1>
+            {updatedStr && (
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, letterSpacing: '0.06em' }}>
+                CHELAN CO. · UPDATED {updatedStr}
+              </p>
+            )}
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <StatusBadge status={monitorBadge} label={monitorLabel} />
+          </div>
+        </div>
+
         <FireStatus nearest={nearest} loading={fireLoading} error={fireError} updatedStr={updatedStr} />
+
         {hasRedFlag && (
-          <div
-            className="mx-4 mt-3 rounded-r-lg px-3 py-2"
-            style={{ borderLeft: '3px solid #f97316', background: 'rgba(249,115,22,0.1)' }}
-          >
-            <p className="text-sm font-semibold" style={{ color: '#f97316' }}>Red Flag Warning</p>
-            <p className="text-xs text-[#9ca3af] mt-0.5 leading-snug">
+          <div style={{ margin: '0 16px 4px', borderLeft: '3px solid var(--danger)', background: 'rgba(139,46,46,0.1)', borderRadius: '0 8px 8px 0', padding: '8px 12px' }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger)' }}>Red Flag Warning</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>
               {redFlagAlert?.properties?.headline ?? 'Fire weather conditions in effect'}
             </p>
           </div>
         )}
-        <div className="p-4 flex flex-col gap-4 pb-6">
-          <EvacZones     {...SEED.evac} />
+
+        <div style={{ padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <EvacZones {...SEED.evac} />
           <Conditions
             burnBan={SEED.conditions.burnBan}
             aqi={aqi}
@@ -89,8 +152,8 @@ export default function SafetyPage() {
           <FireMap location={location} fires={fires} lastUpdated={lastUpdated} />
         </div>
       </div>
-      {/* SOS — pinned above nav */}
-      <div className="px-4 py-3 bg-[#0a0a0a] border-t border-[#1a1a1a]">
+
+      <div style={{ padding: '12px 16px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
         <SOSButton />
       </div>
     </div>
@@ -102,55 +165,46 @@ export default function SafetyPage() {
 function FireStatus({ nearest, loading, error, updatedStr }) {
   if (loading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2a2a2a]">
-        <div className="w-2 h-2 rounded-full bg-[#6b7280] animate-pulse" />
-        <span className="text-sm text-[#6b7280]">Loading fire data…</span>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Skeleton className="w-2 h-2 rounded-full" />
+          <Skeleton className="h-3.5 rounded" style={{ width: 180 }} />
+        </div>
+        <Skeleton className="h-2.5 rounded" style={{ width: 120, marginLeft: 22 }} />
       </div>
     )
   }
 
   if (nearest) {
     return (
-      <div
-        className="flex items-start justify-between px-4 py-3 border-l-4 border-l-[#dc2626]"
-        style={{ background: 'rgba(220,38,38,0.07)' }}
-      >
-        <div className="flex items-start gap-2">
-          <div className="relative mt-1.5 shrink-0">
-            <span className="block w-2 h-2 rounded-full bg-red-500" />
-            <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75" />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 16px', borderLeft: '4px solid var(--danger)', background: 'rgba(139,46,46,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ position: 'relative', marginTop: 6, flexShrink: 0 }}>
+            <span style={{ display: 'block', width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+            <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#ef4444', animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite', opacity: 0.75 }} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-red-300">
-              {nearest.name} · {nearest.distanceMi}mi away
-            </p>
-            <p className="text-xs text-red-400 mt-0.5 opacity-70">
-              {nearest.acres.toLocaleString()} acres
-              {updatedStr ? ` · Updated ${updatedStr}` : ''}
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#f87171' }}>{nearest.name} · {nearest.distanceMi}mi away</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#f87171', opacity: 0.7, marginTop: 2 }}>
+              {nearest.acres.toLocaleString()} acres{updatedStr ? ` · Updated ${updatedStr}` : ''}
             </p>
           </div>
         </div>
-        <svg className="w-5 h-5 text-red-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-            stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-          />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#f87171', flexShrink: 0, marginTop: 2 }}>
+          <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     )
   }
 
   return (
-    <div
-      className="flex items-center gap-2 px-4 py-3 border-l-4 border-l-green-500"
-      style={{ background: 'rgba(34,197,94,0.06)' }}
-    >
-      <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderLeft: '4px solid var(--safe)', background: 'rgba(74,124,63,0.06)' }}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--safe)', flexShrink: 0 }} />
       <div>
-        <p className="text-sm font-semibold text-green-400">No active fires nearby</p>
+        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--safe)' }}>All clear · No fires within 100mi</p>
         {updatedStr && (
-          <p className="text-xs text-[#6b7280] mt-0.5">
-            {error ? 'Using cached data' : 'NIFC live data'} · Updated {updatedStr}
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            {error ? 'Cached data' : 'NIFC live data'} · Updated {updatedStr}
           </p>
         )}
       </div>
@@ -161,136 +215,100 @@ function FireStatus({ nearest, loading, error, updatedStr }) {
 // ─── Evacuation zones ─────────────────────────────────────────────────────────
 
 const EVAC_STYLES = {
-  green:  { bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.22)',  text: '#4ade80' },
-  yellow: { bg: 'rgba(234,179,8,0.10)',  border: 'rgba(234,179,8,0.22)',  text: '#fde047' },
-  amber:  { bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.22)', text: '#fb923c' },
-  red:    { bg: 'rgba(220,38,38,0.10)',  border: 'rgba(220,38,38,0.22)',  text: '#f87171' },
+  safe:   { bg: 'rgba(74,124,63,0.12)',   border: 'rgba(74,124,63,0.3)',   color: 'var(--safe)' },
+  yellow: { bg: 'rgba(196,82,26,0.10)',   border: 'rgba(196,82,26,0.25)', color: 'var(--warn)' },
+  amber:  { bg: 'rgba(196,82,26,0.15)',   border: 'rgba(196,82,26,0.35)', color: 'var(--warn)' },
+  danger: { bg: 'rgba(139,46,46,0.12)',   border: 'rgba(139,46,46,0.3)',  color: 'var(--danger)' },
 }
 
 function EvacZones({ yourZone, advisory, warning, order }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Evacuation zones</p>
+      <SectionLabel>Evacuation zones</SectionLabel>
       <div className="grid grid-cols-4 gap-2">
-        <EvacChip label="Your zone" value={yourZone}            variant="green" />
-        <EvacChip label="Advisory"  value={`${advisory} zones`} variant="yellow" />
-        <EvacChip label="Warning"   value={`${warning} zone`}   variant="amber" />
-        <EvacChip label="Order"     value={`${order} zones`}    variant="red"   dim={order === 0} />
+        <EvacChip label="Your zone" value={yourZone}            variant="safe"   />
+        <EvacChip label="Advisory"  value={`${advisory}`}       variant="yellow" />
+        <EvacChip label="Warning"   value={`${warning}`}        variant="amber"  />
+        <EvacChip label="Order"     value={`${order}`}          variant="danger" dim={order === 0} />
       </div>
     </div>
   )
 }
 
 function EvacChip({ label, value, variant, dim = false }) {
-  const { bg, border, text } = EVAC_STYLES[variant]
+  const { bg, border, color } = EVAC_STYLES[variant]
   return (
-    <div className="rounded-lg px-2 py-1.5 flex flex-col gap-1" style={{ background: bg, border: `1px solid ${border}` }}>
-      <span className="text-[8px] font-semibold text-[#6b7280] uppercase tracking-widest leading-none">{label}</span>
-      <span className="text-sm font-bold leading-none" style={{ color: dim ? '#374151' : text }}>{value}</span>
+    <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: 1 }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, lineHeight: 1, color: dim ? 'var(--text-tertiary)' : color }}>{value}</span>
     </div>
   )
 }
 
 // ─── Conditions ───────────────────────────────────────────────────────────────
 
-const BADGE_STYLES = {
-  green: { bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  text: '#4ade80' },
-  amber: { bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.25)', text: '#fbbf24' },
-  red:   { bg: 'rgba(248,113,113,0.12)',border: 'rgba(248,113,113,0.25)',text: '#f87171' },
-}
-
-function Badge({ text, variant }) {
-  const { bg, border, text: color } = BADGE_STYLES[variant]
-  return (
-    <span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: bg, border: `1px solid ${border}`, color }}>
-      {text}
-    </span>
-  )
-}
-
 function Conditions({ burnBan, aqi, hasRedFlag, hasFireWatch, privateLand, escapeRoute }) {
-  const fireWeatherColor = hasRedFlag ? '#ef4444' : hasFireWatch ? '#f97316' : '#22c55e'
-  const fireWeatherText  = hasRedFlag ? 'Red Flag Warning active' : hasFireWatch ? 'Fire Weather Watch active' : 'No fire weather alerts'
+  const fireWeatherStatus = hasRedFlag ? 'danger' : hasFireWatch ? 'warn' : 'safe'
+  const fireWeatherLabel  = hasRedFlag ? 'RED FLAG' : hasFireWatch ? 'FIRE WATCH' : 'ALL CLEAR'
+  const aqiStatus = aqi ? (aqi.aqi < 50 ? 'safe' : aqi.aqi <= 100 ? 'advisory' : 'warn') : 'off'
+  const aqiLabel  = aqi ? `AQI ${aqi.aqi} · ${aqi.category.toUpperCase()}` : 'FETCHING'
 
   return (
     <div>
-      <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Conditions</p>
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm text-[#9ca3af]">Fire weather</span>
-          <span className="text-sm font-medium" style={{ color: fireWeatherColor }}>{fireWeatherText}</span>
-        </div>
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm text-[#9ca3af]">AQI</span>
-          {aqi ? (
-            <span className="text-sm font-semibold" style={{ color: aqi.color }}>
-              {aqi.aqi} · {aqi.category}
-            </span>
-          ) : (
-            <span className="text-sm text-[#6b7280]">Fetching AQI…</span>
-          )}
-        </div>
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm text-[#9ca3af]">Private land</span>
-          <Badge text={privateLand} variant="green" />
-        </div>
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm text-[#9ca3af]">Escape route</span>
-          <span className="text-sm font-medium text-white">{escapeRoute}</span>
-        </div>
+      <SectionLabel>Conditions</SectionLabel>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+        <CondRow label="Fire weather" right={<StatusBadge status={fireWeatherStatus} label={fireWeatherLabel} />} />
+        <CondRow label="AQI" right={<StatusBadge status={aqiStatus} label={aqiLabel} />} />
+        <CondRow label="Burn ban" right={<StatusBadge status="warn" label={`${burnBan.status.toUpperCase()} · ${burnBan.county.toUpperCase()}`} />} />
+        <CondRow label="Private land" right={<StatusBadge status="safe" label={privateLand.toUpperCase()} />} />
+        <CondRow label="Escape route" right={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-primary)' }}>{escapeRoute}</span>} />
       </div>
     </div>
   )
 }
 
-// ─── Fire map placeholder ─────────────────────────────────────────────────────
+function CondRow({ label, right }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)' }} className="last:border-b-0">
+      <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
+      {right}
+    </div>
+  )
+}
+
+// ─── Fire map ─────────────────────────────────────────────────────────────────
 
 function FireMap({ location, fires, lastUpdated }) {
-  const updatedStr = lastUpdated
-    ? lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : null
-
+  const updatedStr = lastUpdated ? lastUpdated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null
   return (
     <div>
+      <SectionLabel>Fire map</SectionLabel>
       <div style={{ height: 200, borderRadius: 12, overflow: 'hidden' }}>
         <Map
           mapStyle="https://tiles.openfreemap.org/styles/liberty"
-          initialViewState={{
-            longitude: location?.lng ?? -120.8830,
-            latitude:  location?.lat ?? 47.4521,
-            zoom: 8,
-          }}
+          initialViewState={{ longitude: location?.lng ?? -120.8830, latitude: location?.lat ?? 47.4521, zoom: 8 }}
           interactive={false}
           attributionControl={false}
         >
           {location && (
             <Marker longitude={location.lng} latitude={location.lat} anchor="center">
               <div style={{ position: 'relative', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', width: 32, height: 32, borderRadius: '50%', background: 'rgba(249,115,22,0.2)', animation: 'gps-pulse 2s ease-out infinite' }} />
-                <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: 'rgba(249,115,22,0.3)', animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.5s' }} />
-                <div style={{ position: 'relative', width: 12, height: 12, borderRadius: '50%', background: '#f97316', border: '2.5px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', zIndex: 1 }} />
+                <div style={{ position: 'absolute', width: 32, height: 32, borderRadius: '50%', background: '#C4521A33', animation: 'gps-pulse 2s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: '#C4521A4d', animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.5s' }} />
+                <div style={{ position: 'relative', width: 12, height: 12, borderRadius: '50%', background: '#C4521A', border: '2.5px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', zIndex: 1 }} />
               </div>
             </Marker>
           )}
-
           {fires && (
             <Source id="fires-safety" type="geojson" data={fires}>
-              <Layer
-                id="fire-fill-safety"
-                type="fill"
-                paint={{ 'fill-color': '#ef4444', 'fill-opacity': 0.2 }}
-              />
-              <Layer
-                id="fire-outline-safety"
-                type="line"
-                paint={{ 'line-color': '#dc2626', 'line-width': 1.5 }}
-              />
+              <Layer id="fire-fill-safety" type="fill" paint={{ 'fill-color': '#8B2E2E', 'fill-opacity': 0.2 }} />
+              <Layer id="fire-outline-safety" type="line" paint={{ 'line-color': '#8B2E2E', 'line-width': 1.5 }} />
             </Source>
           )}
         </Map>
       </div>
-      <p className="text-[10px] text-[#4b5563] mt-1.5">
-        Fire perimeter data · NIFC{updatedStr ? ` · Updated ${updatedStr}` : ''}
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', marginTop: 6, letterSpacing: '0.06em' }}>
+        NIFC FIRE PERIMETER DATA{updatedStr ? ` · UPDATED ${updatedStr}` : ''}
       </p>
     </div>
   )
@@ -314,11 +332,7 @@ function SOSButton() {
     const tick = () => {
       const pct = Math.min(((Date.now() - startRef.current) / HOLD_MS) * 100, 100)
       setProgress(pct)
-      if (pct < 100) {
-        rafRef.current = requestAnimationFrame(tick)
-      } else {
-        setShowModal(true)
-      }
+      if (pct < 100) { rafRef.current = requestAnimationFrame(tick) } else { setShowModal(true) }
     }
     rafRef.current = requestAnimationFrame(tick)
   }, [showModal])
@@ -330,55 +344,52 @@ function SOSButton() {
 
   const handleConfirm = () => { console.log('SOS SENT'); setShowModal(false); setProgress(0) }
   const handleCancel  = () => { setShowModal(false); setProgress(0) }
-
   const ringOffset = RING_CIRC - (progress / 100) * RING_CIRC
 
   return (
     <>
       <button
-        className="w-full rounded-xl py-4 flex items-center justify-center gap-3 select-none active:brightness-90 transition-[filter]"
-        style={{ background: '#dc2626', WebkitUserSelect: 'none' }}
-        onPointerDown={startHold}
-        onPointerUp={cancelHold}
-        onPointerLeave={cancelHold}
-        onPointerCancel={cancelHold}
+        style={{ width: '100%', background: 'var(--danger)', border: 'none', borderRadius: 14, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, cursor: 'pointer', WebkitUserSelect: 'none', userSelect: 'none' }}
+        onPointerDown={startHold} onPointerUp={cancelHold} onPointerLeave={cancelHold} onPointerCancel={cancelHold}
       >
-        <div className="relative w-7 h-7 shrink-0 transition-opacity duration-150" style={{ opacity: progress > 0 ? 1 : 0 }}>
+        <div style={{ position: 'relative', width: 28, height: 28, flexShrink: 0, opacity: progress > 0 ? 1 : 0, transition: 'opacity 0.15s' }}>
           <svg className="-rotate-90 w-full h-full" viewBox="0 0 36 36">
             <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" />
-            <circle cx="18" cy="18" r="15.9" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"
-              strokeDasharray={RING_CIRC} strokeDashoffset={ringOffset} />
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeDasharray={RING_CIRC} strokeDashoffset={ringOffset} />
           </svg>
         </div>
-        <span className="text-white font-bold text-sm tracking-wide">SOS — Hold 3 seconds to broadcast</span>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: 14, fontFamily: 'var(--font-body)', letterSpacing: '0.02em' }}>SOS — Hold 3 seconds to broadcast</span>
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: 'rgba(0,0,0,0.8)' }}>
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 w-full max-w-sm">
-            <div className="flex items-start gap-3 mb-5">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(220,38,38,0.15)' }}>
-                <svg className="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                    stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', background: 'rgba(0,0,0,0.8)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 360 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(139,46,46,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#f87171' }}>
+                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div>
-                <p className="text-white font-bold text-base">Broadcast SOS?</p>
-                <p className="text-xs text-[#6b7280] mt-1 leading-relaxed">This will alert emergency services to your GPS location.</p>
+                <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>Broadcast SOS?</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>This will alert emergency services to your GPS location.</p>
               </div>
             </div>
-            <div className="flex gap-3">
-              <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[#9ca3af] border border-[#2a2a2a] active:bg-[#2a2a2a] transition-colors" onClick={handleCancel}>
-                Cancel
-              </button>
-              <button className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white active:brightness-90 transition-[filter]" style={{ background: '#dc2626' }} onClick={handleConfirm}>
-                Confirm Send
-              </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button style={{ flex: 1, padding: '10px 0', borderRadius: 14, fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={handleCancel}>Cancel</button>
+              <button style={{ flex: 1, padding: '10px 0', borderRadius: 14, fontSize: 14, fontWeight: 700, color: '#fff', background: 'var(--danger)', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={handleConfirm}>Confirm Send</button>
             </div>
           </div>
         </div>
       )}
     </>
+  )
+}
+
+// ─── Shared ───────────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }) {
+  return (
+    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{children}</p>
   )
 }

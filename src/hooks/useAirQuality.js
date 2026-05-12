@@ -12,7 +12,7 @@ function getCategoryColor(categoryNumber) {
   return colors[categoryNumber] || '#6b7280'
 }
 
-export function useAirQuality(lat, lng) {
+export function useAirQuality(lat, lng, bustKey = 0) {
   const [aqi, setAqi] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -21,12 +21,12 @@ export function useAirQuality(lat, lng) {
     if (!lat || !lng) return
 
     const key = import.meta.env.VITE_AIRNOW_API_KEY
-    const cacheKey = `chomp-aqi-${Math.round(lat * 10)}-${Math.round(lng * 10)}`
+    const cacheKey = `vela-aqi-${Math.round(lat * 10)}-${Math.round(lng * 10)}`
     const cacheTimeKey = `${cacheKey}-time`
     const cached = localStorage.getItem(cacheKey)
     const cachedTime = localStorage.getItem(cacheTimeKey)
 
-    if (cached && cachedTime) {
+    if (bustKey === 0 && cached && cachedTime) {
       const age = Date.now() - parseInt(cachedTime)
       if (age < 1800000) {
         setAqi(JSON.parse(cached))
@@ -34,6 +34,8 @@ export function useAirQuality(lat, lng) {
         return
       }
     }
+
+    setLoading(true)
 
     const url =
       `https://www.airnowapi.org/aq/observation/latLong/current/` +
@@ -72,7 +74,7 @@ export function useAirQuality(lat, lng) {
         setLoading(false)
         if (cached) setAqi(JSON.parse(cached))
       })
-  }, [lat, lng])
+  }, [lat, lng, bustKey])
 
   return { aqi, loading, error }
 }

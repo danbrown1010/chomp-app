@@ -8,12 +8,12 @@ const TRIP_TYPES = ['Overlanding', 'Photography', 'Fishing', 'Mixed']
 const STEP_LABELS = ['Basics', 'Rig', 'People', 'Review']
 
 const PREPARE_ITEMS = [
-  { label: 'Fire & evac data',           status: 'Cached',    color: '#22c55e' },
-  { label: 'Offline map tiles',          status: 'Cached',    color: '#22c55e' },
-  { label: 'Weather window',             status: 'Fetching',  color: '#f97316' },
-  { label: 'Burn ban status',            status: 'Fetching',  color: '#f97316' },
-  { label: 'Meal plan suggestions',      status: 'On create', color: '#4b5563' },
-  { label: 'Private land boundary data', status: 'On create', color: '#4b5563' },
+  { label: 'Fire & evac data',           status: 'Cached',    color: 'var(--safe)'           },
+  { label: 'Offline map tiles',          status: 'Cached',    color: 'var(--safe)'           },
+  { label: 'Weather window',             status: 'Fetching',  color: 'var(--warn)'           },
+  { label: 'Burn ban status',            status: 'Fetching',  color: 'var(--warn)'           },
+  { label: 'Meal plan suggestions',      status: 'On create', color: 'var(--text-tertiary)'  },
+  { label: 'Private land boundary data', status: 'On create', color: 'var(--text-tertiary)'  },
 ]
 
 const INITIAL_FORM = {
@@ -68,47 +68,49 @@ export default function CreateTripPage({ onClose, onCreated }) {
 function StepHeader({ step, onBack, onNext }) {
   const { accent } = useAppStore()
   return (
-    <div className="px-4 pt-3 pb-0 border-b border-[#1a1a1a]">
+    <div style={{ padding: '12px 16px 0', borderBottom: '1px solid var(--border)' }}>
+      {/* Step counter */}
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+        STEP {String(step).padStart(2, '0')} · OF 04
+      </p>
+
       {/* Nav row */}
-      <div className="flex items-center justify-between mb-3">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <button
           onClick={onBack}
-          className="w-8 h-8 flex items-center justify-center active:opacity-60 transition-opacity"
+          style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-primary)' }}>
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
-        <span className="text-base font-semibold text-white">New trip</span>
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>New Trip</span>
 
         <button
           onClick={onNext}
-          className="text-sm font-semibold active:opacity-60 transition-opacity px-1"
-          style={{ color: accent }}
+          style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, color: accent, padding: '0 4px' }}
         >
           {step === 4 ? 'Create' : 'Next'}
         </button>
       </div>
 
       {/* Progress bar */}
-      <div className="flex gap-1 mb-2">
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
         {[1, 2, 3, 4].map(i => (
           <div
             key={i}
-            className="flex-1 h-1 rounded-full transition-colors duration-300"
-            style={{ background: i <= step ? accent : '#2a2a2a' }}
+            style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? accent : 'var(--border)', transition: 'background 0.3s' }}
           />
         ))}
       </div>
 
       {/* Step labels */}
-      <div className="flex pb-2.5">
+      <div style={{ display: 'flex', paddingBottom: 10 }}>
         {STEP_LABELS.map((l, i) => (
           <p
             key={l}
-            className="flex-1 text-center text-[10px] font-semibold transition-colors"
-            style={{ color: i + 1 === step ? accent : '#4b5563' }}
+            style={{ flex: 1, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: i + 1 === step ? accent : 'var(--text-tertiary)', transition: 'color 0.2s', textTransform: 'uppercase' }}
           >
             {l}
           </p>
@@ -131,10 +133,10 @@ function Step1Basics({ form, update }) {
           value={form.name}
           onChange={e => update('name', e.target.value)}
           placeholder="Entiat River — Summer 2025"
-          className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-[#3a3a3a] outline-none"
+          className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none"
           style={{ caretColor: accent }}
           onFocus={e => e.target.style.borderColor = `${accent}80`}
-          onBlur={e => e.target.style.borderColor = '#2a2a2a'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
         />
       </Field>
 
@@ -148,7 +150,7 @@ function Step1Basics({ form, update }) {
               style={
                 form.type === t
                   ? { background: accent, color: 'white' }
-                  : { background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#6b7280' }
+                  : { background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }
               }
             >
               {t}
@@ -178,10 +180,10 @@ function Step1Basics({ form, update }) {
           value={form.region}
           onChange={e => update('region', e.target.value)}
           placeholder="Okanogan NF · North Cascades"
-          className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-[#3a3a3a] outline-none"
+          className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none"
           style={{ caretColor: accent }}
           onFocus={e => e.target.style.borderColor = `${accent}80`}
-          onBlur={e => e.target.style.borderColor = '#2a2a2a'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
         />
       </Field>
 
@@ -191,13 +193,13 @@ function Step1Basics({ form, update }) {
 
 function DateCard({ label, value, onChange }) {
   return (
-    <div className="flex-1 bg-[#111] border border-[#2a2a2a] rounded-xl px-3 py-3">
-      <p className="text-[10px] font-semibold text-[#6b7280] uppercase tracking-widest mb-1.5">{label}</p>
+    <div className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-3">
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{label}</p>
       <input
         type="date"
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full text-white text-sm bg-transparent outline-none"
+        className="w-full text-[var(--text-primary)] text-sm bg-transparent outline-none"
         style={{ colorScheme: 'dark' }}
       />
     </div>
@@ -212,36 +214,36 @@ function Step2Rig({ form, updateGear }) {
 
       <Field label="Vehicle">
         {/* Selected vehicle */}
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-8 h-8 rounded-lg bg-[#1c1c1c] border border-[#2a2a2a] flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-[#9ca3af]" viewBox="0 0 24 24" fill="none">
+            <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-[var(--text-secondary)]" viewBox="0 0 24 24" fill="none">
                 <path d="M3 12l2-4h14l2 4M3 12v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="7" cy="16" r="1.5" stroke="currentColor" strokeWidth="1.5" />
                 <circle cx="17" cy="16" r="1.5" stroke="currentColor" strokeWidth="1.5" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white">2014 Jeep JKU — Chomp</p>
-              <p className="text-xs text-[#6b7280]">Primary rig</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">2014 Jeep JKU — Chomp</p>
+              <p className="text-xs text-[var(--text-secondary)]">Primary rig</p>
             </div>
             <svg className="w-4 h-4 text-[#22c55e] shrink-0" viewBox="0 0 24 24" fill="none">
               <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <button className="w-full flex items-center gap-3 px-4 py-3 active:opacity-60 transition-opacity">
-            <div className="w-8 h-8 rounded-lg border border-dashed border-[#2a2a2a] flex items-center justify-center shrink-0">
-              <svg className="w-3.5 h-3.5 text-[#4b5563]" viewBox="0 0 24 24" fill="none">
+            <div className="w-8 h-8 rounded-lg border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="text-sm text-[#4b5563]">Add vehicle</span>
+            <span className="text-sm text-[var(--text-tertiary)]">Add vehicle</span>
           </button>
         </div>
       </Field>
 
       <Field label="Gear lists">
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           <GearToggleRow
             label="5-day summer overlanding"
             count={42}
@@ -258,7 +260,7 @@ function Step2Rig({ form, updateGear }) {
       </Field>
 
       <Field label="Fuel estimate">
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           <FuelRow label="Route distance"  value="~240mi round trip"     />
           <FuelRow label="Fuel needed"     value="~20 gal + 3 gal reserve" />
           <FuelRow label="Last fuel stop"  value="Entiat · 34mi out"     />
@@ -273,8 +275,8 @@ function GearToggleRow({ label, count, on, onToggle }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white">{label}</p>
-        <p className="text-xs text-[#6b7280]">{count} items</p>
+        <p className="text-sm font-medium text-[var(--text-primary)]">{label}</p>
+        <p className="text-xs text-[var(--text-secondary)]">{count} items</p>
       </div>
       <Toggle on={on} onToggle={onToggle} />
     </div>
@@ -284,8 +286,8 @@ function GearToggleRow({ label, count, on, onToggle }) {
 function FuelRow({ label, value }) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-[#9ca3af]">{label}</span>
-      <span className="text-sm font-medium text-white">{value}</span>
+      <span className="text-sm text-[var(--text-secondary)]">{label}</span>
+      <span className="text-sm font-medium text-[var(--text-primary)]">{value}</span>
     </div>
   )
 }
@@ -298,23 +300,23 @@ function Step3People() {
     <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       <Field label="Partners">
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           {/* Dan — fixed */}
           <div className="flex items-center gap-3 px-4 py-3">
             <Avatar initials="DB" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white">Dan Brown</p>
-              <p className="text-xs text-[#6b7280]">You · Trip lead</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">Dan Brown</p>
+              <p className="text-xs text-[var(--text-secondary)]">You · Trip lead</p>
             </div>
           </div>
           {/* Emily */}
           <div className="flex items-center gap-3 px-4 py-3">
             <Avatar initials="EB" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white">Emily Brown</p>
-              <p className="text-xs text-[#6b7280]">emily@gmail.com</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">Emily Brown</p>
+              <p className="text-xs text-[var(--text-secondary)]">emily@gmail.com</p>
             </div>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white" style={{ background: accent }}>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-[var(--text-primary)]" style={{ background: accent }}>
               Co-pilot
             </span>
           </div>
@@ -324,7 +326,7 @@ function Step3People() {
       </Field>
 
       <Field label="Campsites">
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           <CampsiteRow
             name="Handy Spring"
             sub="Dispersed · FR 5900"
@@ -348,7 +350,7 @@ function Step3People() {
       </Field>
 
       <Field label="Pets">
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <GhostRow label="Add a pet" />
         </div>
       </Field>
@@ -359,8 +361,8 @@ function Step3People() {
 
 function Avatar({ initials }) {
   return (
-    <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center shrink-0">
-      <span className="text-[10px] font-bold text-[#9ca3af]">{initials}</span>
+    <div className="w-8 h-8 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+      <span className="text-[10px] font-bold text-[var(--text-secondary)]">{initials}</span>
     </div>
   )
 }
@@ -373,8 +375,8 @@ function CampsiteRow({ name, sub, pinColor, badge, badgeColor, badgeBg, badgeBor
         <circle cx="12" cy="9" r="2.5" fill="currentColor" />
       </svg>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white">{name}</p>
-        <p className="text-xs text-[#6b7280]">{sub}</p>
+        <p className="text-sm font-medium text-[var(--text-primary)]">{name}</p>
+        <p className="text-xs text-[var(--text-secondary)]">{sub}</p>
       </div>
       <span
         className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
@@ -389,12 +391,12 @@ function CampsiteRow({ name, sub, pinColor, badge, badgeColor, badgeBg, badgeBor
 function GhostRow({ label }) {
   return (
     <button className="w-full flex items-center gap-3 px-4 py-3 active:opacity-60 transition-opacity">
-      <div className="w-5 h-5 rounded-full border border-dashed border-[#3a3a3a] flex items-center justify-center shrink-0">
-        <svg className="w-2.5 h-2.5 text-[#4b5563]" viewBox="0 0 24 24" fill="none">
+      <div className="w-5 h-5 rounded-full border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
+        <svg className="w-2.5 h-2.5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none">
           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
       </div>
-      <span className="text-sm text-[#4b5563]">{label}</span>
+      <span className="text-sm text-[var(--text-tertiary)]">{label}</span>
     </button>
   )
 }
@@ -409,14 +411,14 @@ function Step4Review({ form, onEdit, onCreate }) {
     <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       {/* Summary card */}
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <p className="text-base font-bold text-white">{form.name || 'New Trip'}</p>
+          <p className="text-base font-bold text-[var(--text-primary)]">{form.name || 'New Trip'}</p>
           <button onClick={onEdit} className="text-xs font-semibold active:opacity-60" style={{ color: accent }}>
             Edit
           </button>
         </div>
-        <div className="divide-y divide-[#2a2a2a]">
+        <div className="divide-y divide-[var(--border)]">
           <ReviewRow label="Dates"     value={form.departureDate && form.returnDate ? `${fmtDate(form.departureDate)} → ${fmtDate(form.returnDate)}` : '—'} />
           <ReviewRow label="Type"      value={form.type} />
           <ReviewRow label="Region"    value={form.region || '—'} />
@@ -427,13 +429,12 @@ function Step4Review({ form, onEdit, onCreate }) {
         </div>
       </div>
 
-      {/* Chomp will prepare */}
       <div>
-        <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Chomp will prepare</p>
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>VELA will prepare</p>
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           {PREPARE_ITEMS.map(item => (
             <div key={item.label} className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-[#9ca3af]">{item.label}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{item.label}</span>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
                 <span className="text-xs font-semibold" style={{ color: item.color }}>{item.status}</span>
@@ -447,12 +448,12 @@ function Step4Review({ form, onEdit, onCreate }) {
       <div className="flex flex-col gap-2.5">
         <button
           onClick={onCreate}
-          className="w-full py-4 rounded-xl text-sm font-bold text-white active:opacity-80 transition-opacity"
+          className="w-full py-4 rounded-xl text-sm font-bold text-[var(--text-primary)] active:opacity-80 transition-opacity"
           style={{ background: accent }}
         >
           Create trip
         </button>
-        <button className="w-full py-4 rounded-xl text-sm font-semibold text-[#9ca3af] border border-[#2a2a2a] active:opacity-60 transition-opacity">
+        <button className="w-full py-4 rounded-xl text-sm font-semibold text-[var(--text-secondary)] border border-[var(--border)] active:opacity-60 transition-opacity">
           Save as draft
         </button>
       </div>
@@ -464,8 +465,8 @@ function Step4Review({ form, onEdit, onCreate }) {
 function ReviewRow({ label, value }) {
   return (
     <div className="flex items-center justify-between px-4 py-2.5">
-      <span className="text-xs text-[#6b7280]">{label}</span>
-      <span className="text-sm font-medium text-white text-right max-w-[60%]">{value}</span>
+      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
+      <span className="text-sm font-medium text-[var(--text-primary)] text-right max-w-[60%]">{value}</span>
     </div>
   )
 }
@@ -475,7 +476,7 @@ function ReviewRow({ label, value }) {
 function Field({ label, children }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">{label}</p>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{label}</p>
       {children}
     </div>
   )
@@ -487,7 +488,7 @@ function Toggle({ on, onToggle }) {
     <div
       onClick={onToggle}
       className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 cursor-pointer select-none"
-      style={{ background: on ? accent : '#3a3a3a' }}
+      style={{ background: on ? accent : 'var(--border)' }}
     >
       <div
         className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200"
