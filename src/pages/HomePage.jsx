@@ -28,6 +28,35 @@ function GpsStatus() {
   )
 }
 
+function WeatherCard() {
+  const { weather, weatherLoading } = useAppStore()
+  if (weatherLoading) {
+    return (
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-[#6b7280] animate-pulse" />
+        <span className="text-xs text-[#6b7280]">Loading weather…</span>
+      </div>
+    )
+  }
+  if (!weather) return null
+  return (
+    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <div className="text-2xl font-bold text-[#f5f5f5]">
+          {weather.temperature}°{weather.temperatureUnit}
+        </div>
+        <div className="text-xs text-[#6b7280] mt-0.5">{weather.shortForecast}</div>
+      </div>
+      <div className="text-right">
+        <div className="text-[10px] text-[#6b7280] uppercase tracking-wider">Wind</div>
+        <div className="text-sm font-medium text-white mt-0.5">
+          {weather.windSpeed} {weather.windDirection}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function IdleHome({ onPlanTrip }) {
   const { accent } = useAppStore()
   return (
@@ -38,6 +67,8 @@ function IdleHome({ onPlanTrip }) {
           <p className="text-sm text-[#6b7280] mt-0.5">No active trip</p>
           <GpsStatus />
         </div>
+
+        <WeatherCard />
 
         <div className="grid grid-cols-2 gap-3">
           <StatCard label="Days out (YTD)" value="47" />
@@ -87,7 +118,7 @@ const PRE_TRIP_CHECKLIST = [
 ]
 
 function PreTripHome({ activeTrip, daysUntil }) {
-  const { accent } = useAppStore()
+  const { accent, weather } = useAppStore()
   const [checked, setChecked] = useState([])
 
   const toggle = (item) =>
@@ -135,7 +166,11 @@ function PreTripHome({ activeTrip, daysUntil }) {
 
       {/* Pre-trip intel */}
       <Section title="Pre-trip intel">
-        <IntelRow label="Weather"     value="Partly cloudy, 58°F" color="neutral" />
+        <IntelRow
+          label="Weather"
+          value={weather ? `${weather.shortForecast}, ${weather.temperature}°${weather.temperatureUnit}` : 'Loading…'}
+          color="neutral"
+        />
         <IntelRow label="Road status" value="FS-9712 open"        color="green" />
         <IntelRow label="Burn ban"    value="No restriction"      color="green" />
         <IntelRow label="Campsite"    value="Site 14 · confirmed" color="green" />

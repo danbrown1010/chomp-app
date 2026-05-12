@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore } from '../store/index'
+import { useFireData } from '../hooks/useFireData'
 
 const MAP_STYLE   = 'https://tiles.openfreemap.org/styles/liberty'
 const CURRENT_POS = [-120.8830, 47.4521]
@@ -29,6 +30,7 @@ const LAYER_CONFIG = [
 
 export default function TripPage() {
   const { accent, location } = useAppStore()
+  const { fires } = useFireData()
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
@@ -56,6 +58,21 @@ export default function TripPage() {
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
       >
+        {fires && layers.fire && (
+          <Source id="fires" type="geojson" data={fires}>
+            <Layer
+              id="fire-fill"
+              type="fill"
+              paint={{ 'fill-color': '#ef4444', 'fill-opacity': 0.15 }}
+            />
+            <Layer
+              id="fire-outline"
+              type="line"
+              paint={{ 'line-color': '#dc2626', 'line-width': 1.5, 'line-opacity': 0.8 }}
+            />
+          </Source>
+        )}
+
         {layers.route && (
           <Source id="route" type="geojson" data={ROUTE_GEOJSON}>
             <Layer
@@ -69,13 +86,11 @@ export default function TripPage() {
 
         {location && (
           <Marker longitude={location.lng} latitude={location.lat} anchor="center">
-            <div style={{
-              width: 16, height: 16,
-              borderRadius: '50%',
-              background: accent,
-              border: '3px solid white',
-              boxShadow: `0 0 0 4px ${accent}4d`,
-            }} />
+            <div style={{ position: 'relative', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', width: 32, height: 32, borderRadius: '50%', background: `${accent}33`, animation: 'gps-pulse 2s ease-out infinite' }} />
+              <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: `${accent}4d`, animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.5s' }} />
+              <div style={{ position: 'relative', width: 12, height: 12, borderRadius: '50%', background: accent, border: '2.5px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', zIndex: 1 }} />
+            </div>
           </Marker>
         )}
 

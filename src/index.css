@@ -60,6 +60,11 @@ html.light .text-\[\#4b5563\]  { color: #9ca3af; }
   box-sizing: border-box;
 }
 
+@keyframes gps-pulse {
+  0%   { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
 /* maplibre reset */
 .maplibregl-map { font: unset; }
 .maplibregl-ctrl-attrib { font-size: 10px; }

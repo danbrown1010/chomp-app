@@ -1,5 +1,6 @@
 import { useState, createContext, useContext, useCallback } from 'react'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { useWeather } from '../hooks/useWeather'
 
 const AppContext = createContext(null)
 
@@ -19,6 +20,7 @@ export function AppProvider({ children }) {
   }, [])
 
   const { location, error: locationError, loading: locationLoading } = useGeolocation()
+  const { weather, forecast: weatherForecast, loading: weatherLoading, error: weatherError } = useWeather(location?.lat, location?.lng)
 
   const setAccent = useCallback((color) => {
     setAccentState(color)
@@ -27,7 +29,7 @@ export function AppProvider({ children }) {
   }, [])
 
   return (
-    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent, location, locationError, locationLoading }}>
+    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent, location, locationError, locationLoading, weather, weatherForecast, weatherLoading, weatherError }}>
       {children}
     </AppContext.Provider>
   )
