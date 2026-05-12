@@ -26,7 +26,7 @@ function getFireCoord(feature) {
 }
 
 export default function SafetyPage() {
-  const { location } = useAppStore()
+  const { location, aqi } = useAppStore()
   const { fires, loading: fireLoading, error: fireError, lastUpdated } = useFireData()
 
   const nearbyFires = useMemo(() => {
@@ -61,7 +61,12 @@ export default function SafetyPage() {
         <FireStatus nearest={nearest} loading={fireLoading} error={fireError} updatedStr={updatedStr} />
         <div className="p-4 flex flex-col gap-4 pb-6">
           <EvacZones     {...SEED.evac} />
-          <Conditions    {...SEED.conditions} />
+          <Conditions
+            burnBan={SEED.conditions.burnBan}
+            aqi={aqi}
+            privateLand={SEED.conditions.privateLand}
+            escapeRoute={SEED.conditions.escapeRoute}
+          />
           <FireMap location={location} fires={fires} lastUpdated={lastUpdated} />
         </div>
       </div>
@@ -185,7 +190,6 @@ function Badge({ text, variant }) {
 }
 
 function Conditions({ burnBan, aqi, privateLand, escapeRoute }) {
-  const aqiColor = aqi.value < 50 ? '#4ade80' : aqi.value <= 100 ? '#fbbf24' : '#f87171'
   return (
     <div>
       <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Conditions</p>
@@ -196,7 +200,13 @@ function Conditions({ burnBan, aqi, privateLand, escapeRoute }) {
         </div>
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm text-[#9ca3af]">AQI</span>
-          <span className="text-sm font-semibold" style={{ color: aqiColor }}>{aqi.value} · {aqi.label}</span>
+          {aqi ? (
+            <span className="text-sm font-semibold" style={{ color: aqi.color }}>
+              {aqi.aqi} · {aqi.category}
+            </span>
+          ) : (
+            <span className="text-sm text-[#6b7280]">Fetching AQI…</span>
+          )}
         </div>
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm text-[#9ca3af]">Private land</span>

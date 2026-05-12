@@ -118,7 +118,7 @@ const PRE_TRIP_CHECKLIST = [
 ]
 
 function PreTripHome({ activeTrip, daysUntil }) {
-  const { accent, weather } = useAppStore()
+  const { accent, weather, aqi } = useAppStore()
   const [checked, setChecked] = useState([])
 
   const toggle = (item) =>
@@ -170,6 +170,11 @@ function PreTripHome({ activeTrip, daysUntil }) {
           label="Weather"
           value={weather ? `${weather.shortForecast}, ${weather.temperature}°${weather.temperatureUnit}` : 'Loading…'}
           color="neutral"
+        />
+        <IntelRow
+          label="AQI"
+          value={aqi ? `${aqi.aqi} · ${aqi.category}` : 'Loading…'}
+          color={aqi ? (aqi.aqi < 50 ? 'green' : aqi.aqi <= 100 ? 'amber' : 'red') : 'neutral'}
         />
         <IntelRow label="Road status" value="FS-9712 open"        color="green" />
         <IntelRow label="Burn ban"    value="No restriction"      color="green" />
