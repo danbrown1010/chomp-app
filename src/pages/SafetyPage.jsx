@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
 import { useFireData } from '../hooks/useFireData'
+import { useFireWeather } from '../hooks/useWeather'
 import { useAppStore } from '../store/index'
 
 // Static conditions — real APIs to be added later
@@ -28,6 +29,11 @@ function getFireCoord(feature) {
 export default function SafetyPage() {
   const { location, aqi } = useAppStore()
   const { fires, loading: fireLoading, error: fireError, lastUpdated } = useFireData()
+  const { alerts } = useFireWeather(location?.lat, location?.lng)
+
+  const hasRedFlag   = alerts.some(a => a.properties.event === 'Red Flag Warning')
+  const hasFireWatch = alerts.some(a => a.properties.event === 'Fire Weather Watch')
+  const redFlagAlert = alerts.find(a => a.properties.event === 'Red Flag Warning')
 
   const nearbyFires = useMemo(() => {
     if (!fires?.features?.length) return []
@@ -59,11 +65,24 @@ export default function SafetyPage() {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
         <FireStatus nearest={nearest} loading={fireLoading} error={fireError} updatedStr={updatedStr} />
+        {hasRedFlag && (
+          <div
+            className="mx-4 mt-3 rounded-r-lg px-3 py-2"
+            style={{ borderLeft: '3px solid #f97316', background: 'rgba(249,115,22,0.1)' }}
+          >
+            <p className="text-sm font-semibold" style={{ color: '#f97316' }}>Red Flag Warning</p>
+            <p className="text-xs text-[#9ca3af] mt-0.5 leading-snug">
+              {redFlagAlert?.properties?.headline ?? 'Fire weather conditions in effect'}
+            </p>
+          </div>
+        )}
         <div className="p-4 flex flex-col gap-4 pb-6">
           <EvacZones     {...SEED.evac} />
           <Conditions
             burnBan={SEED.conditions.burnBan}
             aqi={aqi}
+            hasRedFlag={hasRedFlag}
+            hasFireWatch={hasFireWatch}
             privateLand={SEED.conditions.privateLand}
             escapeRoute={SEED.conditions.escapeRoute}
           />
@@ -189,14 +208,17 @@ function Badge({ text, variant }) {
   )
 }
 
-function Conditions({ burnBan, aqi, privateLand, escapeRoute }) {
+function Conditions({ burnBan, aqi, hasRedFlag, hasFireWatch, privateLand, escapeRoute }) {
+  const fireWeatherColor = hasRedFlag ? '#ef4444' : hasFireWatch ? '#f97316' : '#22c55e'
+  const fireWeatherText  = hasRedFlag ? 'Red Flag Warning active' : hasFireWatch ? 'Fire Weather Watch active' : 'No fire weather alerts'
+
   return (
     <div>
       <p className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Conditions</p>
       <div className="bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden divide-y divide-[#2a2a2a]">
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm text-[#9ca3af]">Burn ban</span>
-          <Badge text={`${burnBan.county} · ${burnBan.status}`} variant={burnBan.status === 'Active' ? 'amber' : 'green'} />
+          <span className="text-sm text-[#9ca3af]">Fire weather</span>
+          <span className="text-sm font-medium" style={{ color: fireWeatherColor }}>{fireWeatherText}</span>
         </div>
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm text-[#9ca3af]">AQI</span>

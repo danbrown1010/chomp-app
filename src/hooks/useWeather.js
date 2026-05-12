@@ -60,3 +60,27 @@ export function useWeather(lat, lng) {
 
   return { weather, forecast, loading, error }
 }
+
+export function useFireWeather(lat, lng) {
+  const [alerts, setAlerts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!lat || !lng) return
+
+    fetch(
+      `https://api.weather.gov/alerts/active` +
+      `?point=${lat.toFixed(4)},${lng.toFixed(4)}` +
+      `&event=Red%20Flag%20Warning,Fire%20Weather%20Watch,Extreme%20Fire%20Behavior`,
+      { headers: { 'User-Agent': 'ChompApp/0.1 contact@chomp.app' } }
+    )
+      .then(r => r.json())
+      .then(data => {
+        setAlerts(data.features || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [lat, lng])
+
+  return { alerts, loading }
+}
