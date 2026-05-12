@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../store/index'
 import { useEcoFlow } from '../hooks/useEcoFlow'
 import { ECOFLOW_DEVICES } from '../config/devices'
+import { useStarlink } from '../hooks/useStarlink'
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export default function RigPage() {
         <RigHeader hasAlert={HAS_ALERT} />
         <EcoflowSection />
         <TempZones />
+        <StarlinkSection />
         <HumiditySection />
         <LightingSection lights={lights} onToggle={toggleLight} onBrightness={setBrightness} />
         <ScenesSection onApply={applyScene} />
@@ -612,6 +614,119 @@ function EcoflowSection() {
         {lastUpdated && (
           <p className="text-[10px] text-[#4b5563] text-right -mt-1">
             {formatLastUpdated(lastUpdated)}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Starlink ─────────────────────────────────────────────────────────────────
+
+function StarlinkSection() {
+  const {
+    status, loading, isOnline, isSearching,
+    downMbps, upMbps, latencyMs, obstructionPct,
+    lastUpdated, refetch,
+  } = useStarlink()
+
+  const dotColor = isOnline ? '#22c55e' : isSearching ? '#f97316' : '#ef4444'
+  const statusLabel = isOnline ? 'Connected'
+    : isSearching ? 'Searching...'
+    : status?.offline ? 'Dish offline'
+    : loading ? 'Connecting...'
+    : 'Not connected'
+
+  return (
+    <div>
+      <SectionLabel>Starlink</SectionLabel>
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex flex-col gap-3">
+
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {/* Status dot */}
+            <div style={{ position: 'relative', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {isOnline && (
+                <div style={{ position: 'absolute', width: 24, height: 24, borderRadius: '50%', background: '#22c55e', opacity: 0.2, animation: 'gps-pulse 2s ease-out infinite' }} />
+              )}
+              {isOnline && (
+                <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#22c55e', opacity: 0.3, animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.4s' }} />
+              )}
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, position: 'relative', zIndex: 1, boxShadow: isOnline ? '0 0 6px #22c55e' : 'none' }} />
+            </div>
+
+            <div>
+              <div className="text-white" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>{statusLabel}</div>
+              <div className="text-[#6b7280]" style={{ fontSize: 11, lineHeight: 1.2, marginTop: 2 }}>Starlink · Flat High Performance</div>
+            </div>
+          </div>
+
+          <button
+            onClick={refetch}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6b7280] hover:text-white transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
+            aria-label="Refresh"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+              <path d="M3 21v-5h5"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Speed stats — online only */}
+        {isOnline && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{downMbps}</span>
+              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">↓ Mbps</span>
+            </div>
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{upMbps}</span>
+              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">↑ Mbps</span>
+            </div>
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span className="text-xs font-bold text-[#f5f5f5] tabular-nums">{latencyMs}ms</span>
+              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Latency</span>
+            </div>
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-2 flex flex-col items-center gap-0.5">
+              <span
+                className="text-xs font-bold tabular-nums"
+                style={{ color: parseFloat(obstructionPct) > 5 ? '#ef4444' : '#22c55e' }}
+              >
+                {obstructionPct}%
+              </span>
+              <span className="text-[9px] text-[#6b7280] uppercase tracking-wider">Obstruct</span>
+            </div>
+          </div>
+        )}
+
+        {/* Alerts */}
+        {status?.alerts?.thermalThrottle && (
+          <div className="rounded-r-lg px-3 py-2" style={{ background: 'rgba(249,115,22,0.1)', borderLeft: '2px solid #f97316' }}>
+            <p className="text-xs font-medium" style={{ color: '#f97316' }}>Thermal throttling active</p>
+          </div>
+        )}
+        {status?.alerts?.motorsStuck && (
+          <div className="rounded-r-lg px-3 py-2" style={{ background: 'rgba(239,68,68,0.1)', borderLeft: '2px solid #ef4444' }}>
+            <p className="text-xs font-medium" style={{ color: '#ef4444' }}>Motors stuck — check dish position</p>
+          </div>
+        )}
+
+        {/* Offline message */}
+        {!loading && (status?.offline || (!isOnline && !isSearching)) && (
+          <p className="text-[#6b7280] text-xs text-center py-1">
+            Dish not reachable · Connect to Starlink network to monitor
+          </p>
+        )}
+
+        {/* Last updated */}
+        {lastUpdated && (
+          <p className="text-[10px] text-[#4b5563] text-right -mt-1">
+            Updated {lastUpdated.toLocaleTimeString()}
           </p>
         )}
       </div>
