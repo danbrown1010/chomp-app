@@ -28,15 +28,18 @@ const LAYER_CONFIG = [
 ]
 
 export default function TripPage() {
-  const { accent } = useAppStore()
+  const { accent, location } = useAppStore()
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
 
   const toggleLayer = id => setLayers(prev => ({ ...prev, [id]: !prev[id] }))
 
-  const recenter = () =>
-    mapRef.current?.getMap()?.flyTo({ center: CURRENT_POS, zoom: 11, duration: 800 })
+  const recenter = () => {
+    if (location && mapRef.current) {
+      mapRef.current.flyTo({ center: [location.lng, location.lat], zoom: 14, duration: 1000 })
+    }
+  }
 
   return (
     <div className="relative h-full overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
@@ -45,7 +48,11 @@ export default function TripPage() {
       <Map
         ref={mapRef}
         mapStyle={MAP_STYLE}
-        initialViewState={{ longitude: CURRENT_POS[0], latitude: CURRENT_POS[1], zoom: 11 }}
+        initialViewState={{
+          longitude: location?.lng ?? CURRENT_POS[0],
+          latitude:  location?.lat ?? CURRENT_POS[1],
+          zoom: 13,
+        }}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
       >
@@ -60,9 +67,17 @@ export default function TripPage() {
           </Source>
         )}
 
-        <Marker longitude={CURRENT_POS[0]} latitude={CURRENT_POS[1]} anchor="center">
-          <CurrentPosMarker accent={accent} />
-        </Marker>
+        {location && (
+          <Marker longitude={location.lng} latitude={location.lat} anchor="center">
+            <div style={{
+              width: 16, height: 16,
+              borderRadius: '50%',
+              background: accent,
+              border: '3px solid white',
+              boxShadow: `0 0 0 4px ${accent}4d`,
+            }} />
+          </Marker>
+        )}
 
         {WAYPOINTS.map(wp => (
           <Marker key={wp.id} longitude={wp.coords[0]} latitude={wp.coords[1]} anchor="bottom">

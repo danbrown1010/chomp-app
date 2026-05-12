@@ -13,6 +13,21 @@ export default function HomePage({ onPlanTrip }) {
 
 // ─── Idle (no active trip) ────────────────────────────────────────────────────
 
+function GpsStatus() {
+  const { location, locationError, locationLoading } = useAppStore()
+  let dot, text
+  if (locationLoading)     { dot = '#6b7280'; text = 'Acquiring GPS' }
+  else if (locationError)  { dot = '#ef4444'; text = 'GPS unavailable' }
+  else if (location)       { dot = '#22c55e'; text = 'GPS locked' }
+  if (!dot) return null
+  return (
+    <div className="flex items-center gap-1.5 mt-1">
+      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} />
+      <span className="text-xs text-[#6b7280]">{text}</span>
+    </div>
+  )
+}
+
 function IdleHome({ onPlanTrip }) {
   const { accent } = useAppStore()
   return (
@@ -21,6 +36,7 @@ function IdleHome({ onPlanTrip }) {
         <div className="pt-2">
           <h1 className="text-2xl font-bold tracking-tight">Good morning, Dan</h1>
           <p className="text-sm text-[#6b7280] mt-0.5">No active trip</p>
+          <GpsStatus />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -89,6 +105,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
         <p className="text-sm text-[#6b7280] mt-0.5">
           {fmt(activeTrip.departureDate)} → {fmt(activeTrip.returnDate)}
         </p>
+        <GpsStatus />
       </div>
 
       {/* Packing readiness */}
@@ -137,6 +154,7 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{activeTrip.name}</h1>
           <p className="text-sm text-[#6b7280] mt-0.5">{daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining</p>
+        <GpsStatus />
         </div>
         <span
           className="mt-1 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"

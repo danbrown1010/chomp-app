@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useCallback } from 'react'
+import { useGeolocation } from '../hooks/useGeolocation'
 
 const AppContext = createContext(null)
 
@@ -17,6 +18,8 @@ export function AppProvider({ children }) {
     return next
   }, [])
 
+  const { location, error: locationError, loading: locationLoading } = useGeolocation()
+
   const setAccent = useCallback((color) => {
     setAccentState(color)
     localStorage.setItem('chomp-accent', color)
@@ -24,7 +27,7 @@ export function AppProvider({ children }) {
   }, [])
 
   return (
-    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent }}>
+    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent, location, locationError, locationLoading }}>
       {children}
     </AppContext.Provider>
   )
