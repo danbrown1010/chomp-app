@@ -39,7 +39,7 @@ export default function TripPage() {
     mapRef.current?.getMap()?.flyTo({ center: CURRENT_POS, zoom: 11, duration: 800 })
 
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className="relative h-full overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
 
       {/* ── Map ──────────────────────────────────────────────────────────────── */}
       <Map

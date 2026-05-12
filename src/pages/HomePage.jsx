@@ -248,10 +248,10 @@ function PostTripHome({ activeTrip, totalDays }) {
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-function StatCard({ label, value, valueColor = '#f5f5f5' }) {
+function StatCard({ label, value, valueColor }) {
   return (
     <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4">
-      <div className="text-2xl font-bold" style={{ color: valueColor }}>{value}</div>
+      <div className="text-2xl font-bold text-[#f5f5f5]" style={valueColor ? { color: valueColor } : {}}>{value}</div>
       <div className="text-xs text-[#6b7280] mt-0.5">{label}</div>
     </div>
   )

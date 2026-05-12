@@ -24,7 +24,15 @@ export default function App() {
 
   return (
     <AppProvider>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#0a0a0a' }}>
+      <div
+        className="flex flex-col bg-[#111]"
+        style={{
+          height: '100dvh',
+          minHeight: '-webkit-fill-available',
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         {showCreate ? (
           <CreateTripPage
             onClose={closeCreate}
@@ -32,7 +40,7 @@ export default function App() {
           />
         ) : (
           <>
-            <div className="flex-1 overflow-hidden">
+            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
               {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} />}
               {activeTab === 'trip'   && <TripPage />}
               {activeTab === 'safety' && <SafetyPage />}

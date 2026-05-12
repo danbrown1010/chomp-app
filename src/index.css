@@ -30,7 +30,8 @@ html.light, html.light body, html.light #root {
 }
 
 /* backgrounds */
-html.light .bg-\[\#0a0a0a\] { background-color: #f3f4f6; }
+html.light body            { background: #f3f4f6; }
+html.light .bg-\[\#0a0a0a\] { background-color: #f3f4f6 !important; }
 html.light .bg-\[\#111\]    { background-color: #ffffff; }
 html.light .bg-\[\#1a1a1a\] { background-color: #f9fafb; }
 html.light .bg-\[\#1c1c1c\] { background-color: #f3f4f6; }
@@ -49,6 +50,7 @@ html.light .divide-\[\#1a1a1a\] > :not([hidden]) ~ :not([hidden]) { border-color
 /* text */
 html.light .text-white          { color: #111827; }
 html.light .text-\[\#f5f5f5\]  { color: #111827; }
+html.light .text-\[\#e5e7eb\]  { color: #374151; }
 html.light .text-\[\#9ca3af\]  { color: #6b7280; }
 html.light .text-\[\#6b7280\]  { color: #6b7280; }
 html.light .text-\[\#4b5563\]  { color: #9ca3af; }
@@ -61,3 +63,10 @@ html.light .text-\[\#4b5563\]  { color: #9ca3af; }
 /* maplibre reset */
 .maplibregl-map { font: unset; }
 .maplibregl-ctrl-attrib { font-size: 10px; }
+
+/* iPhone PWA safe area fix */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

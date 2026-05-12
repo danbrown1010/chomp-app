@@ -13,8 +13,7 @@ export default function BottomNav({ active, onChange }) {
   const { accent } = useAppStore()
   return (
     <nav
-      className="flex bg-[#111] border-t border-[#2a2a2a]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="flex bg-[#111] border-t border-[#2a2a2a] flex-shrink-0"
     >
       {tabs.map(({ id, label, Icon }) => {
         const isActive = active === id
