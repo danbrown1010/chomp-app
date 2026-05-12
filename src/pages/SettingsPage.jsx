@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/index'
 
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ACCENTS = [
@@ -15,12 +16,7 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
-  const [theme,  setTheme]  = useState(() => {
-    const stored = localStorage.getItem('chomp-theme')
-    if (!stored) localStorage.setItem('chomp-theme', 'dark')
-    return stored || 'dark'
-  })
-  const { accent, setAccent } = useAppStore()
+  const { accent, setAccent, theme, setTheme } = useAppStore()
 
   const [tripToggles, setTripToggles] = useState({
     phaseAware:        true,
@@ -35,13 +31,6 @@ export default function SettingsPage({ onBack }) {
     campsite:     false,
     checkIn:      true,
   })
-
-  const applyTheme = (t) => {
-    setTheme(t)
-    localStorage.setItem('chomp-theme', t)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(t)
-  }
 
   const toggleTrip  = (k) => setTripToggles(p  => ({ ...p,  [k]: !p[k]  }))
   const toggleNotif = (k) => setNotifToggles(p => ({ ...p, [k]: !p[k] }))
@@ -73,13 +62,13 @@ export default function SettingsPage({ onBack }) {
               <ThemeCard
                 label="Dark"
                 selected={theme === 'dark'}
-                onSelect={() => applyTheme('dark')}
+                onSelect={() => setTheme('dark')}
                 preview={<DarkPreview />}
               />
               <ThemeCard
                 label="Light"
                 selected={theme === 'light'}
-                onSelect={() => applyTheme('light')}
+                onSelect={() => setTheme('light')}
                 preview={<LightPreview />}
               />
             </div>

@@ -1,0 +1,42 @@
+export const ECOFLOW_DEVICES = {
+  delta2Max: {
+    name: 'Chomp Battery',
+    model: 'EcoFlow Delta 2 Max',
+    sn: import.meta.env.VITE_ECOFLOW_DELTA2MAX_SN,
+    type: 'primary',
+    capacity: 2048,
+    manualUrl: 'https://www.ecoflow.com/us/delta2-max-portable-power-station',
+  },
+  delta2: {
+    name: 'Office Battery',
+    model: 'EcoFlow Delta 2',
+    sn: import.meta.env.VITE_ECOFLOW_DELTA2_SN,
+    type: 'secondary',
+    capacity: 1024,
+    manualUrl: 'https://www.ecoflow.com/us/delta2-portable-power-station',
+  },
+  river3Plus: {
+    name: 'River 3 Plus',
+    model: 'EcoFlow River 3 Plus Wireless',
+    sn: import.meta.env.VITE_ECOFLOW_RIVER3_SN,
+    type: 'portable',
+    capacity: 288,
+    manualUrl: 'https://www.ecoflow.com/us/river3-plus-portable-power-station',
+  },
+  wave3: {
+    name: 'Chomp AC',
+    model: 'EcoFlow Wave 3',
+    sn: import.meta.env.VITE_ECOFLOW_WAVE3_SN,
+    type: 'climate',
+    capacity: 0,
+    manualUrl: 'https://www.ecoflow.com/us/wave3-portable-air-conditioner',
+  },
+  alternator: {
+    name: 'Chomp Charger',
+    model: 'EcoFlow 800W Alternator Charger',
+    sn: import.meta.env.VITE_ECOFLOW_ALTERNATOR_SN,
+    type: 'charger',
+    capacity: 0,
+    manualUrl: 'https://www.ecoflow.com/us/alternator-charger',
+  },
+}

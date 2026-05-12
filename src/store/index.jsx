@@ -13,6 +13,11 @@ export function AppProvider({ children }) {
   const [accent, setAccentState] = useState(
     () => localStorage.getItem('chomp-accent') || '#f97316'
   )
+  const [theme, setThemeState] = useState(() => {
+    const stored = localStorage.getItem('chomp-theme')
+    if (!stored) localStorage.setItem('chomp-theme', 'dark')
+    return stored || 'dark'
+  })
 
   const createTrip = useCallback((trip) => {
     const next = { ...trip, id: String(Date.now()), status: 'pre-trip' }
@@ -30,8 +35,15 @@ export function AppProvider({ children }) {
     document.documentElement.style.setProperty('--color-accent', color)
   }, [])
 
+  const setTheme = useCallback((t) => {
+    setThemeState(t)
+    localStorage.setItem('chomp-theme', t)
+    document.documentElement.classList.remove('dark', 'light')
+    document.documentElement.classList.add(t)
+  }, [])
+
   return (
-    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent, location, locationError, locationLoading, weather, weatherForecast, weatherLoading, weatherError, aqi, aqiLoading, aqiError }}>
+    <AppContext.Provider value={{ trips, activeTrip, setActiveTrip, createTrip, accent, setAccent, theme, setTheme, location, locationError, locationLoading, weather, weatherForecast, weatherLoading, weatherError, aqi, aqiLoading, aqiError }}>
       {children}
     </AppContext.Provider>
   )
