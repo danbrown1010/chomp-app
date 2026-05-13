@@ -10,6 +10,7 @@ import CreateTripPage from './pages/CreateTripPage'
 import SettingsPage from './pages/SettingsPage'
 import SurvivalAgentPage from './pages/SurvivalAgentPage'
 import KnowledgeBasePage from './pages/KnowledgeBasePage'
+import MealPlanningPage from './pages/MealPlanningPage'
 
 export default function App() {
   const [activeTab,   setActiveTab]   = useState('home')
@@ -52,6 +53,7 @@ export default function App() {
               {activeTab === 'more'   && moreSubview === 'settings'         && <SettingsPage      onBack={() => setMoreSubview(null)} />}
               {activeTab === 'more'   && moreSubview === 'survival'          && <SurvivalAgentPage  onBack={() => setMoreSubview(null)} />}
               {activeTab === 'more'   && moreSubview === 'knowledge'         && <KnowledgeBasePage  onBack={() => setMoreSubview(null)} />}
+              {activeTab === 'more'   && moreSubview === 'meals'             && <MealPlanningPage   onBack={() => setMoreSubview(null)} />}
             </div>
             <BottomNav active={activeTab} onChange={handleTabChange} />
           </>
