@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTripPhase } from '../hooks/useTripPhase'
 import { useAppStore } from '../store/index'
+import { getGearItems } from '../utils/gearStorage'
 import { Skeleton } from '../components/Skeleton'
 import { VelaLogo } from '../components/VelaLogo'
 import { StatusBadge } from '../components/StatusBadge'
@@ -191,8 +192,29 @@ const PRE_TRIP_CHECKLIST = [
 function PreTripHome({ activeTrip, daysUntil }) {
   const { accent, weather, aqi } = useAppStore()
   const [checked, setChecked] = useState([])
+  const [gearChecklist, setGearChecklist] = useState([])
+  const [gearChecked, setGearChecked] = useState(new Set())
+
+  useEffect(() => {
+    getGearItems().then(items => {
+      setGearChecklist(
+        items
+          .filter(i => i.includeInChecklist)
+          .map(i => ({ id: i.id, label: i.quantity > 1 ? `${i.name} (×${i.quantity})` : i.name }))
+      )
+    })
+  }, [])
+
   const toggle = (item) => setChecked(p => p.includes(item) ? p.filter(x => x !== item) : [...p, item])
-  const pct = Math.round((checked.length / PRE_TRIP_CHECKLIST.length) * 100)
+  const toggleGear = (id) => setGearChecked(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
+  const totalItems = PRE_TRIP_CHECKLIST.length + gearChecklist.length
+  const totalChecked = checked.length + gearChecked.size
+  const pct = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100)
 
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
@@ -219,6 +241,15 @@ function PreTripHome({ activeTrip, daysUntil }) {
           {PRE_TRIP_CHECKLIST.map(item => (
             <CheckItem key={item} label={item} checked={checked.includes(item)} onToggle={() => toggle(item)} accent={accent} />
           ))}
+          {gearChecklist.length > 0 && (
+            <>
+              <div style={{ height: 1, background: 'var(--border)', margin: '2px 0' }} />
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>From gear registry</p>
+              {gearChecklist.map(item => (
+                <CheckItem key={item.id} label={item.label} checked={gearChecked.has(item.id)} onToggle={() => toggleGear(item.id)} accent={accent} />
+              ))}
+            </>
+          )}
         </div>
       </div>
 

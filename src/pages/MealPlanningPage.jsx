@@ -729,14 +729,21 @@ Fuel type: ${config.fuelType}${config.fuelType === 'propane' ? ` — ${config.pr
 Resupply available mid-trip: ${config.resupply}
 Notes: ${config.notes || 'none'}
 
-Return this exact JSON — be concise, no verbose descriptions:
+STRICT RULES — output will be cut off if you exceed the token limit:
+- Max 4 ingredients per meal (strings only, no objects)
+- Instructions: 1 sentence only
+- No cookMethod, no prepAhead, no difficulty, no totalCalories per day
+- fuelNotes and storageNotes: 1 sentence each
+- No extra fields beyond the schema below
+
+Return this exact JSON:
 {
   "title": "Plan title",
   "summary": "One sentence",
   "days": [
     {
       "day": 1,
-      "label": "Day 1 — Departure",
+      "label": "Day 1",
       "meals": [
         {
           "type": "Breakfast",
@@ -744,19 +751,11 @@ Return this exact JSON — be concise, no verbose descriptions:
           "calories": 450,
           "protein": 22,
           "prepTime": "15 min",
-          "cookMethod": "stove",
-          "ingredients": [
-            "1 cup oats per person",
-            "2 tbsp honey",
-            "1/2 cup dried fruit"
-          ],
-          "instructions": "Brief steps",
-          "prepAhead": "Optional home prep note",
+          "ingredients": ["1 cup oats", "2 tbsp honey", "1/4 cup dried fruit"],
+          "instructions": "One sentence.",
           "storage": "dry"
         }
-      ],
-      "totalCalories": 1800,
-      "notes": "Optional day note"
+      ]
     }
   ],
   "shoppingList": {
@@ -768,12 +767,10 @@ Return this exact JSON — be concise, no verbose descriptions:
     "equipment": ["item"]
   },
   "prepAheadTasks": ["task"],
-  "fuelNotes": "Brief fuel note",
-  "storageNotes": "Brief storage note",
+  "fuelNotes": "One sentence.",
+  "storageNotes": "One sentence.",
   "cost": "$120-150 for 2 people"
-}
-
-Keep ingredients as simple strings not objects. Keep instructions to 2-3 sentences max. No perPerson field, no difficulty field, no cookingMethod field on meals.`
+}`
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -795,9 +792,15 @@ Keep ingredients as simple strings not objects. Keep instructions to 2-3 sentenc
       const data = await res.json()
       if (data.error) throw new Error(data.error.message)
 
+      if (data.stop_reason === 'max_tokens') {
+        setError('Response was cut off — try fewer days or tap Regenerate.')
+        setView('setup')
+        setGenerating(false)
+        return
+      }
+
       const text = data.content?.[0]?.text ?? ''
-      console.log('Raw response length:', text.length)
-      console.log('Raw response preview:', text.substring(0, 200))
+      console.log('Raw response length:', text.length, '| stop_reason:', data.stop_reason)
 
       const clean = text
         .replace(/```json\n?/g, '')
@@ -812,12 +815,7 @@ Keep ingredients as simple strings not objects. Keep instructions to 2-3 sentenc
           plan, config, generatedAt: new Date().toISOString(),
         }))
       } catch (parseErr) {
-        const lastCompleteDay = clean.lastIndexOf('}, {\n      "day"')
-        if (lastCompleteDay > 0) {
-          setError('Response was too long. Try fewer days or tap Regenerate.')
-        } else {
-          setError(`Parse error: ${parseErr.message}`)
-        }
+        setError('Response was cut off — try fewer days or tap Regenerate.')
         setView('setup')
         console.error('Parse error:', parseErr)
         console.error('Raw text:', text)

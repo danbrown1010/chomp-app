@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useFireData } from '../hooks/useFireData'
 import { useAppStore } from '../store/index'
+import { getGearSummary } from '../utils/gearStorage'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
 
@@ -266,12 +267,15 @@ export default function SurvivalAgentPage({ onBack }) {
   const { location, weather, aqi, activeTrip } = useAppStore()
   const { fires } = useFireData()
 
-  const [apiKey, setApiKey]     = useState(() => localStorage.getItem(LS_KEY) ?? '')
-  const [messages, setMessages] = useState(INITIAL_MESSAGES)
-  const [input, setInput]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [apiKey, setApiKey]       = useState(() => localStorage.getItem(LS_KEY) ?? '')
+  const [messages, setMessages]   = useState(INITIAL_MESSAGES)
+  const [input, setInput]         = useState('')
+  const [loading, setLoading]     = useState(false)
+  const [gearSummary, setGearSummary] = useState(null)
   const messagesEndRef = useRef(null)
   const inputRef       = useRef(null)
+
+  useEffect(() => { getGearSummary().then(setGearSummary) }, [])
 
   const hasUserMessage = messages.some(m => m.role === 'user')
 
@@ -316,6 +320,10 @@ Current situational context:`,
       parts.push(`Active fires within 100mi:\n${nearbyFires.slice(0, 3).map(f => `  • ${f.name} — ${f.mi}mi away, ${f.acres.toLocaleString()} acres`).join('\n')}`)
     if (activeTrip)
       parts.push(`Active trip: ${activeTrip.name}\nDates: ${activeTrip.departureDate} to ${activeTrip.returnDate}\nRegion: ${activeTrip.region ?? 'Unknown'}`)
+    if (gearSummary)
+      parts.push(gearSummary)
+    else
+      parts.push('Equipment: No gear registry configured yet.')
     parts.push(`Expertise areas:
 - Vehicle recovery (winching, traction boards, high-lift jack, kinetic rope)
 - Navigation and route-finding
