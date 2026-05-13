@@ -8,6 +8,8 @@ import RigPage from './pages/RigPage'
 import MorePage from './pages/MorePage'
 import CreateTripPage from './pages/CreateTripPage'
 import SettingsPage from './pages/SettingsPage'
+import SurvivalAgentPage from './pages/SurvivalAgentPage'
+import KnowledgeBasePage from './pages/KnowledgeBasePage'
 
 export default function App() {
   const [activeTab,   setActiveTab]   = useState('home')
@@ -47,7 +49,9 @@ export default function App() {
               {activeTab === 'safety' && <SafetyPage />}
               {activeTab === 'rig'    && <RigPage />}
               {activeTab === 'more'   && moreSubview === null      && <MorePage     onNavigate={setMoreSubview} />}
-              {activeTab === 'more'   && moreSubview === 'settings' && <SettingsPage onBack={() => setMoreSubview(null)} />}
+              {activeTab === 'more'   && moreSubview === 'settings'         && <SettingsPage      onBack={() => setMoreSubview(null)} />}
+              {activeTab === 'more'   && moreSubview === 'survival'          && <SurvivalAgentPage  onBack={() => setMoreSubview(null)} />}
+              {activeTab === 'more'   && moreSubview === 'knowledge'         && <KnowledgeBasePage  onBack={() => setMoreSubview(null)} />}
             </div>
             <BottomNav active={activeTab} onChange={handleTabChange} />
           </>
