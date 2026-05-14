@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { getGearItems, getPendingDeletes, removePendingDelete, clearPendingSaves } from '../utils/gearStorage'
 import { getPendingTripSaves, removePendingTripSave, getPendingTripDeletes, removePendingTripDelete } from '../utils/tripStorage'
 import { bulkSyncGearToSupabase, deleteGearFromSupabase, syncTripToSupabase, deleteTripFromSupabase } from '../utils/syncManager'
+import { getAnthropicKey } from '../utils/secretsManager'
 
 export function useSyncOnLogin(user, setSyncStatus) {
   useEffect(() => {
@@ -53,6 +54,9 @@ export function useSyncOnLogin(user, setSyncStatus) {
         } else {
           console.log('No local gear found to sync')
         }
+        await getAnthropicKey(user.id)
+        console.log('API key cached from Supabase')
+
         setSyncStatus('idle')
       } catch (err) {
         console.error('Sync failed:', err)

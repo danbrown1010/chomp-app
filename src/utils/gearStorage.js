@@ -96,17 +96,25 @@ export async function getGearByCategory(category) {
 }
 
 export async function deleteGearItem(id) {
+  console.log('deleteGearItem called:', id)
   const db = await getDB()
   await db.delete('gear', id)
 
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session?.user) {
-    const { error } = await deleteGearFromSupabase(id)
-    if (error) {
-      addPendingDelete(id)
-    } else {
-      removePendingDelete(id)
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    console.log('Session:', session?.user?.id)
+    if (session?.user) {
+      const { error } = await deleteGearFromSupabase(id)
+      console.log('Delete result:', error ?? 'ok')
+      if (error) {
+        addPendingDelete(id)
+      } else {
+        removePendingDelete(id)
+      }
     }
+  } catch (err) {
+    console.error('deleteGearItem sync error, queuing:', err)
+    addPendingDelete(id)
   }
 }
 

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../store/index'
+import { saveAnthropicKey, clearAnthropicKey, hasAnthropicKey } from '../utils/secretsManager'
 
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -16,7 +17,44 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
-  const { accent, setAccent, theme, setTheme } = useAppStore()
+  const { accent, setAccent, theme, setTheme, user } = useAppStore()
+
+  const [keySet, setKeySet]           = useState(() => !!localStorage.getItem('vela-anthropic-key'))
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [keySaving, setKeySaving]     = useState(false)
+  const [toast, setToast]             = useState('')
+
+  useEffect(() => {
+    hasAnthropicKey(user?.id).then(setKeySet)
+  }, [user?.id])
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 2500)
+  }
+
+  const handleSaveKey = async () => {
+    if (!apiKeyInput.trim().startsWith('sk-ant-') || !user?.id) return
+    setKeySaving(true)
+    try {
+      const success = await saveAnthropicKey(apiKeyInput.trim(), user.id)
+      if (success) {
+        setKeySet(true)
+        setApiKeyInput('')
+        showToast('AI features enabled ✓')
+      } else {
+        showToast('Failed to save key — try again')
+      }
+    } finally {
+      setKeySaving(false)
+    }
+  }
+
+  const handleClearKey = async () => {
+    await clearAnthropicKey(user?.id)
+    setKeySet(false)
+    showToast('API key removed')
+  }
 
   const [tripToggles, setTripToggles] = useState({
     phaseAware:        true,
@@ -135,6 +173,74 @@ export default function SettingsPage({ onBack }) {
           <button className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity">
             <span className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Sign out</span>
           </button>
+        </Section>
+
+        {/* ── AI Configuration ────────────────────────────────────────────────── */}
+        <Section label="AI Configuration">
+          <div className="px-4 py-3 flex flex-col gap-3">
+            {toast && (
+              <div style={{
+                padding: '8px 12px', borderRadius: 8,
+                background: toast.includes('✓') ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${toast.includes('✓') ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                fontSize: 12, fontFamily: 'var(--font-body)',
+                color: toast.includes('✓') ? '#22c55e' : '#f87171',
+              }}>
+                {toast}
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p className="text-sm font-medium text-[var(--text-primary)]">Anthropic API key</p>
+                <p style={{ fontSize: 11, color: keySet ? '#22c55e' : 'var(--text-tertiary)', marginTop: 2 }}>
+                  {keySet ? 'Configured' : 'Not configured'}
+                </p>
+              </div>
+              {keySet && (
+                <button
+                  onClick={handleClearKey}
+                  style={{
+                    fontSize: 12, padding: '5px 12px', borderRadius: 20,
+                    border: '1px solid var(--border)', background: 'transparent',
+                    color: '#ef4444', fontFamily: 'var(--font-body)', cursor: 'pointer',
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {!keySet && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="password"
+                  placeholder="sk-ant-..."
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSaveKey()}
+                  style={{
+                    flex: 1, background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)', borderRadius: 10,
+                    padding: '9px 12px', color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)', fontSize: 13, outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={handleSaveKey}
+                  disabled={!apiKeyInput.trim().startsWith('sk-ant-') || keySaving}
+                  style={{
+                    padding: '9px 16px', borderRadius: 10, border: 'none',
+                    background: apiKeyInput.trim().startsWith('sk-ant-') && !keySaving ? accent : 'var(--border)',
+                    color: apiKeyInput.trim().startsWith('sk-ant-') && !keySaving ? '#fff' : 'var(--text-tertiary)',
+                    fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 600,
+                    cursor: apiKeyInput.trim().startsWith('sk-ant-') && !keySaving ? 'pointer' : 'default',
+                    flexShrink: 0, transition: 'background 0.15s',
+                  }}
+                >
+                  {keySaving ? 'Saving…' : 'Save API Key'}
+                </button>
+              </div>
+            )}
+          </div>
         </Section>
 
         {/* ── About ───────────────────────────────────────────────────────────── */}

@@ -83,11 +83,16 @@ export function AppProvider({ children, user = null, isPro = false, signOut = ()
     setActiveTrip(prev => prev?.id === tripId ? null : prev)
 
     if (user) {
-      const { error } = await deleteTripFromSupabase(tripId)
-      if (error) {
+      try {
+        const { error } = await deleteTripFromSupabase(tripId)
+        if (error) {
+          addPendingTripDelete(tripId)
+        } else {
+          removePendingTripDelete(tripId)
+        }
+      } catch (err) {
+        console.error('deleteTrip sync error, queuing:', err)
         addPendingTripDelete(tripId)
-      } else {
-        removePendingTripDelete(tripId)
       }
     }
   }, [user])

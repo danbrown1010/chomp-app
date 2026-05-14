@@ -3,10 +3,9 @@ import { useFireData } from '../hooks/useFireData'
 import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
 import { ProGate } from '../components/ProGate'
+import { getAnthropicKey } from '../utils/secretsManager'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
-
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
@@ -84,17 +83,19 @@ const INITIAL_MESSAGES = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurvivalAgentPage({ onBack }) {
-  const { location, weather, aqi, activeTrip } = useAppStore()
+  const { location, weather, aqi, activeTrip, user } = useAppStore()
   const { fires } = useFireData()
 
-  const [messages, setMessages]   = useState(INITIAL_MESSAGES)
-  const [input, setInput]         = useState('')
-  const [loading, setLoading]     = useState(false)
+  const [messages, setMessages]       = useState(INITIAL_MESSAGES)
+  const [input, setInput]             = useState('')
+  const [loading, setLoading]         = useState(false)
   const [gearSummary, setGearSummary] = useState(null)
+  const [apiKey, setApiKey]           = useState(null)
   const messagesEndRef = useRef(null)
   const inputRef       = useRef(null)
 
   useEffect(() => { getGearSummary().then(setGearSummary) }, [])
+  useEffect(() => { getAnthropicKey(user?.id).then(setApiKey) }, [user?.id])
 
   const hasUserMessage = messages.some(m => m.role === 'user')
 
@@ -166,6 +167,14 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
     const content = (override ?? input).trim()
     if (!content || loading) return
 
+    if (!apiKey) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'No API key configured. Go to **Settings → AI Configuration** to add your Anthropic API key.',
+      }])
+      return
+    }
+
     const userMsg = { role: 'user', content }
     const next = [...messages, userMsg]
     setMessages(next)
@@ -177,7 +186,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },

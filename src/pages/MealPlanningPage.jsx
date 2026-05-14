@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../store/index'
 import { ProGate } from '../components/ProGate'
-
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
+import { IconCampsite, IconClock, IconChef, IconFire, IconProtein, IconPackage, IconZap, IconSnowflake } from '../components/icons'
+import { getAnthropicKey } from '../utils/secretsManager'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -197,7 +197,6 @@ function CheckRow({ label, checked, onToggle }) {
 function SetupView({ config, setConfig, onGenerate, generating, error, onBack, hasSavedPlan, onViewSaved }) {
   const { accent } = useAppStore()
   const update = (key, val) => setConfig(prev => ({ ...prev, [key]: val }))
-  const hasKey = Boolean(ANTHROPIC_KEY)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -231,13 +230,6 @@ function SetupView({ config, setConfig, onGenerate, generating, error, onBack, h
 
       {/* Form */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 100 }}>
-        {!hasKey && (
-          <div style={{ padding: '12px 16px', background: 'rgba(196,82,26,0.1)', border: '1px solid rgba(196,82,26,0.3)', borderRadius: 12 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent, #C4521A)', marginBottom: 2 }}>API key required</p>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Go to More → Survival Agent to configure your Anthropic API key.</p>
-          </div>
-        )}
-
         {error && (
           <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10 }}>
             <p style={{ fontSize: 13, color: '#f87171' }}>{error}</p>
@@ -331,14 +323,14 @@ function SetupView({ config, setConfig, onGenerate, generating, error, onBack, h
       <div style={{ padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
         <button
           onClick={onGenerate}
-          disabled={!hasKey || generating}
+          disabled={generating}
           style={{
             width: '100%', padding: '14px',
             borderRadius: 12, border: 'none',
-            background: hasKey && !generating ? accent : 'var(--bg-card)',
-            color: hasKey && !generating ? '#fff' : 'var(--text-tertiary)',
+            background: !generating ? accent : 'var(--bg-card)',
+            color: !generating ? '#fff' : 'var(--text-tertiary)',
             fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
-            cursor: hasKey && !generating ? 'pointer' : 'default',
+            cursor: !generating ? 'pointer' : 'default',
             transition: 'background 0.15s',
           }}
         >
@@ -354,7 +346,9 @@ function SetupView({ config, setConfig, onGenerate, generating, error, onBack, h
 function GeneratingView({ config }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, padding: 32 }}>
-      <div style={{ fontSize: 52, animation: 'pulse 2s ease-in-out infinite' }}>🏕</div>
+      <div style={{ animation: 'pulse 2s ease-in-out infinite', color: 'var(--accent)' }}>
+        <IconCampsite size={52} />
+      </div>
       <p style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center', margin: 0 }}>
         Planning your meals…
       </p>
@@ -400,10 +394,10 @@ function MealCard({ meal, expanded, onToggle, checked, onCheck }) {
 
         {/* Stat pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-          {meal.prepTime && <Chip>⏱ {meal.prepTime} prep</Chip>}
-          {meal.cookTime && <Chip>🍳 {meal.cookTime} cook</Chip>}
-          {meal.calories && <Chip>🔥 {meal.calories} cal</Chip>}
-          {meal.protein && <Chip>💪 {meal.protein}g protein</Chip>}
+          {meal.prepTime && <Chip icon={<IconClock size={10} />}>{meal.prepTime} prep</Chip>}
+          {meal.cookTime && <Chip icon={<IconChef size={10} />}>{meal.cookTime} cook</Chip>}
+          {meal.calories && <Chip icon={<IconFire size={10} />}>{meal.calories} cal</Chip>}
+          {meal.protein && <Chip icon={<IconProtein size={10} />}>{meal.protein}g protein</Chip>}
           {meal.difficulty && <Chip style={{ color: diffColor }}>{meal.difficulty}</Chip>}
         </div>
       </button>
@@ -444,7 +438,7 @@ function MealCard({ meal, expanded, onToggle, checked, onCheck }) {
           {/* Prep ahead */}
           {meal.prepAhead && (
             <div style={{ display: 'flex', gap: 8, padding: '8px 10px', background: 'rgba(196,82,26,0.08)', border: '1px solid rgba(196,82,26,0.2)', borderRadius: 8 }}>
-              <span style={{ flexShrink: 0 }}>📦</span>
+              <IconPackage size={16} style={{ flexShrink: 0, color: 'var(--accent)' }} />
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
                 <strong style={{ color: 'var(--accent, #C4521A)' }}>Prep at home: </strong>{meal.prepAhead}
               </p>
@@ -456,14 +450,16 @@ function MealCard({ meal, expanded, onToggle, checked, onCheck }) {
   )
 }
 
-function Chip({ children, style }) {
+function Chip({ children, style, icon }) {
   return (
     <span style={{
       fontSize: 11, padding: '2px 8px', borderRadius: 10,
       background: 'var(--bg-secondary)', border: '1px solid var(--border)',
       color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)',
-      whiteSpace: 'nowrap', ...style,
+      whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3,
+      ...style,
     }}>
+      {icon}
       {children}
     </span>
   )
@@ -549,7 +545,7 @@ function PlanView({ plan, config, onRegenerate, onNewPlan, onBack, checked, onCh
                   {day.notes && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0', fontFamily: 'var(--font-body)' }}>{day.notes}</p>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  {day.totalCalories && <Chip>🔥 {day.totalCalories} cal</Chip>}
+                  {day.totalCalories && <Chip icon={<IconFire size={10} />}>{day.totalCalories} cal</Chip>}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                     style={{ transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
                     <path d="M6 9l6 6 6-6" />
@@ -634,13 +630,13 @@ function PlanView({ plan, config, onRegenerate, onNewPlan, onBack, checked, onCh
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {plan.fuelNotes && (
                   <div style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 10 }}>
-                    <span>⚡</span>
+                    <IconZap size={16} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>{plan.fuelNotes}</p>
                   </div>
                 )}
                 {plan.storageNotes && (
                   <div style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 10 }}>
-                    <span>🧊</span>
+                    <IconSnowflake size={16} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>{plan.storageNotes}</p>
                   </div>
                 )}
@@ -660,7 +656,10 @@ export default function MealPlanningPage({ onBack }) {
 }
 
 function MealPlanningInner({ onBack }) {
-  const { activeTrip } = useAppStore()
+  const { activeTrip, user } = useAppStore()
+  const [apiKey, setApiKey] = useState(null)
+
+  useEffect(() => { getAnthropicKey(user?.id).then(setApiKey) }, [user?.id])
 
   const [view, setView] = useState('setup')
   const [config, setConfig] = useState(() => ({
@@ -709,6 +708,10 @@ function MealPlanningInner({ onBack }) {
   }
 
   const generateMealPlan = async () => {
+    if (!apiKey) {
+      setError('No API key configured. Go to Settings → AI Configuration to add your Anthropic API key.')
+      return
+    }
 
     setGenerating(true)
     setView('generating')
@@ -781,7 +784,7 @@ Return this exact JSON:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },

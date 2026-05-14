@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { extractTextFromPDF, chunkText } from '../utils/pdfProcessor'
 import { saveDocument, getDocuments, deleteDocument, saveChunks, searchChunks } from '../utils/ragStorage'
 import { ProGate } from '../components/ProGate'
-
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
+import { useAppStore } from '../store/index'
+import { getAnthropicKey } from '../utils/secretsManager'
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
@@ -62,26 +62,6 @@ function renderMarkdown(text) {
   return result
 }
 
-// ─── No-key banner ────────────────────────────────────────────────────────────
-
-function NoKeyBanner() {
-  return (
-    <div style={{
-      margin: '16px', padding: '14px 16px',
-      background: 'rgba(196,82,26,0.1)',
-      border: '1px solid rgba(196,82,26,0.3)',
-      borderRadius: 12,
-    }}>
-      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent, #C4521A)', marginBottom: 4, fontFamily: 'var(--font-body)' }}>
-        API key required
-      </p>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
-        Go to More → Survival Agent to configure your Anthropic API key. It will be shared with the Knowledge Base automatically.
-      </p>
-    </div>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const INITIAL_MESSAGES = [{
@@ -90,20 +70,25 @@ const INITIAL_MESSAGES = [{
 }]
 
 export default function KnowledgeBasePage({ onBack }) {
-  const [documents, setDocuments]       = useState([])
-  const [messages, setMessages]         = useState(INITIAL_MESSAGES)
-  const [input, setInput]               = useState('')
-  const [loading, setLoading]           = useState(false)
-  const [uploading, setUploading]       = useState(false)
+  return <ProGate feature="Knowledge Base"><KnowledgeBaseInner onBack={onBack} /></ProGate>
+}
+
+function KnowledgeBaseInner({ onBack }) {
+  const { user } = useAppStore()
+  const [documents, setDocuments]           = useState([])
+  const [messages, setMessages]             = useState(INITIAL_MESSAGES)
+  const [input, setInput]                   = useState('')
+  const [loading, setLoading]               = useState(false)
+  const [uploading, setUploading]           = useState(false)
   const [uploadProgress, setUploadProgress] = useState(null)
-  const [activeTab, setActiveTab]       = useState('chat')
+  const [activeTab, setActiveTab]           = useState('chat')
+  const [apiKey, setApiKey]                 = useState(null)
   const fileInputRef  = useRef(null)
   const messagesEndRef = useRef(null)
   const inputRef      = useRef(null)
 
-  const hasKey = Boolean(ANTHROPIC_KEY)
-
   useEffect(() => { loadDocuments() }, [])
+  useEffect(() => { getAnthropicKey(user?.id).then(setApiKey) }, [user?.id])
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -176,6 +161,14 @@ export default function KnowledgeBasePage({ onBack }) {
     const query = input.trim()
     if (!query || loading) return
 
+    if (!apiKey) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'No API key configured. Go to **Settings → AI Configuration** to add your Anthropic API key.',
+      }])
+      return
+    }
+
     const userMsg = { role: 'user', content: query }
     const next = [...messages, userMsg]
     setMessages(next)
@@ -202,7 +195,7 @@ export default function KnowledgeBasePage({ onBack }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_KEY,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
@@ -293,8 +286,6 @@ export default function KnowledgeBasePage({ onBack }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
         <Header />
-        {!hasKey && <NoKeyBanner />}
-
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {messages.map((msg, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -345,29 +336,27 @@ export default function KnowledgeBasePage({ onBack }) {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder="Ask about your manuals…"
-            disabled={!hasKey}
             style={{
               flex: 1, background: 'var(--bg-card)',
               border: '1px solid var(--border)', borderRadius: 20,
               padding: '10px 16px', color: 'var(--text-primary)',
               fontFamily: 'var(--font-body)', fontSize: 14, outline: 'none',
-              opacity: hasKey ? 1 : 0.5,
             }}
           />
           <button
             onClick={sendMessage}
-            disabled={!input.trim() || loading || !hasKey}
+            disabled={!input.trim() || loading}
             style={{
               width: 40, height: 40, borderRadius: '50%',
-              background: input.trim() && !loading && hasKey ? 'var(--accent)' : 'var(--bg-card)',
+              background: input.trim() && !loading ? 'var(--accent)' : 'var(--bg-card)',
               border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: input.trim() && hasKey ? 'pointer' : 'default',
+              cursor: input.trim() ? 'pointer' : 'default',
               flexShrink: 0, transition: 'background 0.15s',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke={input.trim() && !loading && hasKey ? '#fff' : 'var(--text-tertiary)'}
+              stroke={input.trim() && !loading ? '#fff' : 'var(--text-tertiary)'}
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
             </svg>
@@ -380,7 +369,6 @@ export default function KnowledgeBasePage({ onBack }) {
   // ── Docs tab ───────────────────────────────────────────────────────────────
 
   return (
-    <ProGate feature="Knowledge Base">
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
       <Header />
 
@@ -498,6 +486,5 @@ export default function KnowledgeBasePage({ onBack }) {
         )}
       </div>
     </div>
-    </ProGate>
   )
 }

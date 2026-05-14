@@ -2,6 +2,7 @@ import { useAppStore } from '../store/index'
 
 export function ProGate({ feature, children }) {
   const { isPro } = useAppStore()
+  console.log('ProGate isPro:', isPro, 'feature:', feature)
 
   if (isPro) return children
 
@@ -24,9 +25,10 @@ export function ProGate({ feature, children }) {
         marginBottom: 20,
       }}>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-          stroke="var(--accent)" strokeWidth="1.5"
+          stroke="var(--accent)" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
         </svg>
       </div>
 

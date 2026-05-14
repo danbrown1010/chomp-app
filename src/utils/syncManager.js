@@ -74,6 +74,7 @@ export async function deleteTripFromSupabase(tripId) {
     .eq('id', tripId)
 
   if (error) console.error('Trip delete error:', error)
+  return { error }
 }
 
 // ─── GEAR ─────────────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ export async function deleteGearFromSupabase(itemId) {
     .eq('id', itemId)
 
   if (error) console.error('Gear delete error:', error)
+  return { error }
 }
 
 export async function bulkSyncGearToSupabase(items, userId) {

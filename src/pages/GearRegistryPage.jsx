@@ -4,6 +4,7 @@ import { GEAR_CATEGORIES, PRESET_GEAR } from '../data/presetGear'
 import { BrandLogo } from '../components/BrandLogo'
 import { getVendorLogo, getStoreLogo } from '../utils/brandLogos'
 import { ProGate } from '../components/ProGate'
+import { IconTool, IconEdit, IconX, IconCheck, IconPlus, IconDownload, IconUpload } from '../components/icons'
 
 const CONDITIONS = ['good', 'worn', 'replace']
 
@@ -239,7 +240,7 @@ export default function GearRegistryPage({ onBack }) {
                 style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '8px 14px 8px 34px', color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
               />
               {myGearSearch && (
-                <button onClick={() => setMyGearSearch('')} style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 16, padding: 0, display: 'flex', alignItems: 'center' }}>×</button>
+                <button onClick={() => setMyGearSearch('')} style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}><IconX size={14} /></button>
               )}
             </div>
             {items.length > 0 && (() => {
@@ -282,7 +283,7 @@ export default function GearRegistryPage({ onBack }) {
           <div style={{ flex: 1, overflowY: 'auto', padding: 16, paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
             {items.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.8 }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🔧</div>
+                <div style={{ marginBottom: 12, color: 'var(--text-tertiary)' }}><IconTool size={40} /></div>
                 <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>No gear added yet</div>
                 Browse presets or add custom items.<br />
                 Your gear feeds into the Survival Agent for better advice.
@@ -370,8 +371,8 @@ export default function GearRegistryPage({ onBack }) {
                             </div>
                           )}
                           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                            <button onClick={() => handleEdit(item)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 14, padding: '2px 4px' }}>✎</button>
-                            <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 18, padding: '0 4px', lineHeight: 1 }}>×</button>
+                            <button onClick={() => handleEdit(item)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><IconEdit size={14} /></button>
+                            <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><IconX size={16} /></button>
                           </div>
                         </div>
                       ))}
@@ -435,7 +436,7 @@ export default function GearRegistryPage({ onBack }) {
                           style={{ padding: '10px 14px', borderBottom: i < presets.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', background: added ? 'rgba(74,124,63,0.08)' : 'transparent' }}
                         >
                           <div style={{ width: 22, height: 22, borderRadius: '50%', border: `1.5px solid ${added ? 'var(--safe)' : 'var(--border)'}`, background: added ? 'var(--safe)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, color: '#fff', fontWeight: 700 }}>
-                            {added ? '✓' : <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>+</span>}
+                            {added ? <IconCheck size={12} /> : <IconPlus size={12} style={{ color: 'var(--text-tertiary)' }} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{preset.name}</div>
@@ -664,7 +665,7 @@ function ReviewList({ parsed, setParsed, categories, onBack, onSave, backLabel =
             >
               {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
-            <button onClick={() => setParsed(parsed.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 18, padding: '0 2px', flexShrink: 0, lineHeight: 1 }}>×</button>
+            <button onClick={() => setParsed(parsed.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0 2px', flexShrink: 0, display: 'flex', alignItems: 'center' }}><IconX size={16} /></button>
           </div>
         ))}
       </div>
@@ -869,13 +870,11 @@ function CSVImportView({ categories, onSave, onCancel }) {
       </div>
 
       <button onClick={downloadTemplate} style={{ width: '100%', padding: '11px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--accent)', fontSize: 13, fontFamily: 'var(--font-body)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-        ↓ Download CSV template
+        <IconDownload size={16} /> Download CSV template
       </button>
 
       <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '2px dashed var(--border)', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
+        <IconUpload size={18} />
         Upload CSV file
       </button>
       <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} style={{ display: 'none' }} />
