@@ -1,4 +1,54 @@
 import { openDB } from 'idb'
+import { v4 as uuidv4 } from 'uuid'
+import { supabase } from '../lib/supabase'
+import { syncGearToSupabase, deleteGearFromSupabase } from './syncManager'
+
+function isValidUUID(str) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+}
+
+const PENDING_SAVES_KEY = 'vela-pending-saves'
+
+export function getPendingSaves() {
+  const raw = localStorage.getItem(PENDING_SAVES_KEY)
+  return raw ? JSON.parse(raw) : {}
+}
+
+function addPendingSave(item) {
+  const pending = getPendingSaves()
+  pending[item.id] = item
+  localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(pending))
+}
+
+export function removePendingSave(id) {
+  const pending = getPendingSaves()
+  delete pending[id]
+  localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(pending))
+}
+
+export function clearPendingSaves() {
+  localStorage.removeItem(PENDING_SAVES_KEY)
+}
+
+const PENDING_DELETES_KEY = 'vela-pending-deletes'
+
+export function getPendingDeletes() {
+  const raw = localStorage.getItem(PENDING_DELETES_KEY)
+  return raw ? JSON.parse(raw) : []
+}
+
+function addPendingDelete(id) {
+  const pending = getPendingDeletes()
+  if (!pending.includes(id)) {
+    pending.push(id)
+    localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(pending))
+  }
+}
+
+export function removePendingDelete(id) {
+  const pending = getPendingDeletes().filter(p => p !== id)
+  localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(pending))
+}
 
 const DB_NAME = 'vela-gear'
 const DB_VERSION = 1
@@ -16,8 +66,22 @@ async function getDB() {
 }
 
 export async function saveGearItem(item) {
+  const itemWithUUID = {
+    ...item,
+    id: isValidUUID(item.id) ? item.id : uuidv4(),
+  }
   const db = await getDB()
-  await db.put('gear', item)
+  await db.put('gear', itemWithUUID)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.user) {
+    const { error } = await syncGearToSupabase(itemWithUUID, session.user.id)
+    if (error) {
+      addPendingSave(itemWithUUID)
+    } else {
+      removePendingSave(itemWithUUID.id)
+    }
+  }
 }
 
 export async function getGearItems() {
@@ -34,6 +98,16 @@ export async function getGearByCategory(category) {
 export async function deleteGearItem(id) {
   const db = await getDB()
   await db.delete('gear', id)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.user) {
+    const { error } = await deleteGearFromSupabase(id)
+    if (error) {
+      addPendingDelete(id)
+    } else {
+      removePendingDelete(id)
+    }
+  }
 }
 
 export async function getGearSummary() {

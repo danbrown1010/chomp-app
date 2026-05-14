@@ -59,6 +59,10 @@ html, body, #root {
 }
 
 /* ── Animations ──────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @keyframes gps-pulse {
   0%   { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(1.5); opacity: 0; }

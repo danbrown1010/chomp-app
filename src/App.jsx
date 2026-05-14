@@ -1,5 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from './hooks/useAuth'
 import { AppProvider, useAppStore } from './store/index'
+import { useSyncOnLogin } from './hooks/useSyncOnLogin'
+import { supabase } from './lib/supabase'
+import { getPendingDeletes, removePendingDelete, getPendingSaves, removePendingSave } from './utils/gearStorage'
+import { getPendingTripSaves, removePendingTripSave, getPendingTripDeletes, removePendingTripDelete } from './utils/tripStorage'
+import { syncGearToSupabase, deleteGearFromSupabase, syncTripToSupabase, deleteTripFromSupabase } from './utils/syncManager'
 import BottomNav from './components/BottomNav'
 import HomePage from './pages/HomePage'
 import TripPage from './pages/TripPage'
@@ -15,28 +21,8 @@ import GearRegistryPage from './pages/GearRegistryPage'
 import AuthPage from './pages/AuthPage'
 
 export default function App() {
-  return (
-    <AppProvider>
-      <AppShell />
-    </AppProvider>
-  )
-}
+  const { user, isPro, signInWithGoogle, signOut, loading: authLoading } = useAuth()
 
-function AppShell() {
-  const { user, authLoading, signInWithGoogle } = useAppStore()
-  const [activeTab,   setActiveTab]   = useState('home')
-  const [showCreate,  setShowCreate]  = useState(false)
-  const [moreSubview, setMoreSubview] = useState(null)
-
-  const openCreate = () => setShowCreate(true)
-  const closeCreate = () => setShowCreate(false)
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab)
-    setMoreSubview(null)
-  }
-
-  // Resolving session — show neutral splash to avoid flicker
   if (authLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(var(--vh, 1svh) * 100)', background: '#1C2117' }}>
@@ -53,23 +39,72 @@ function AppShell() {
     )
   }
 
-  // No session — show auth wall
   if (!user) {
     return <AuthPage onSignIn={signInWithGoogle} />
   }
 
-  // Authenticated — show app
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--bg-primary)',
-        height: 'calc(var(--vh, 1svh) * 100)',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
+    <AppProvider user={user} isPro={isPro} signOut={signOut} signInWithGoogle={signInWithGoogle}>
+      <AppShell user={user} />
+    </AppProvider>
+  )
+}
+
+function AppShell({ user }) {
+  const { setSyncStatus } = useAppStore()
+  useSyncOnLogin(user, setSyncStatus)
+
+  useEffect(() => {
+    const handleOnline = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const userId = session.user.id
+
+      for (const id of getPendingTripDeletes()) {
+        const { error } = await deleteTripFromSupabase(id)
+        if (!error) removePendingTripDelete(id)
+      }
+
+      for (const trip of Object.values(getPendingTripSaves())) {
+        const { error } = await syncTripToSupabase(trip, userId)
+        if (!error) removePendingTripSave(trip.id)
+      }
+
+      for (const id of getPendingDeletes()) {
+        const { error } = await deleteGearFromSupabase(id)
+        if (!error) removePendingDelete(id)
+      }
+
+      for (const item of Object.values(getPendingSaves())) {
+        const { error } = await syncGearToSupabase(item, userId)
+        if (!error) removePendingSave(item.id)
+      }
+    }
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [])
+
+  const [activeTab,   setActiveTab]   = useState('home')
+  const [showCreate,  setShowCreate]  = useState(false)
+  const [moreSubview, setMoreSubview] = useState(null)
+
+  const openCreate  = () => setShowCreate(true)
+  const closeCreate = () => setShowCreate(false)
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setMoreSubview(null)
+  }
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--bg-primary)',
+      height: 'calc(var(--vh, 1svh) * 100)',
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
+    }}>
       {showCreate ? (
         <CreateTripPage
           onClose={closeCreate}
@@ -82,12 +117,12 @@ function AppShell() {
             {activeTab === 'trip'   && <TripPage />}
             {activeTab === 'safety' && <SafetyPage />}
             {activeTab === 'rig'    && <RigPage />}
-            {activeTab === 'more'   && moreSubview === null               && <MorePage          onNavigate={setMoreSubview} />}
-            {activeTab === 'more'   && moreSubview === 'settings'         && <SettingsPage      onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'survival'         && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'knowledge'        && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'meals'            && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'gear'             && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === null        && <MorePage          onNavigate={setMoreSubview} />}
+            {activeTab === 'more'   && moreSubview === 'settings'  && <SettingsPage      onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'survival'  && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'knowledge' && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'meals'     && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'gear'      && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>

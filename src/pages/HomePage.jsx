@@ -114,7 +114,7 @@ function GpsStatus() {
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
 function IdleHome({ onPlanTrip }) {
-  const { accent, refreshHomeData } = useAppStore()
+  const { accent, refreshHomeData, syncStatus } = useAppStore()
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
 
   return (
@@ -136,9 +136,17 @@ function IdleHome({ onPlanTrip }) {
         <div style={{ paddingTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <VelaLogo size={22} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-              GO FURTHER!
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {syncStatus === 'syncing' && (
+                <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+              )}
+              {syncStatus === 'error' && (
+                <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
+              )}
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
+                GO FURTHER!
+              </span>
+            </div>
           </div>
           <div style={{ marginTop: 16 }}>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, Dan</h1>
