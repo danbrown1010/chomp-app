@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { extractTextFromPDF, chunkText } from '../utils/pdfProcessor'
 import { saveDocument, getDocuments, deleteDocument, saveChunks, searchChunks } from '../utils/ragStorage'
-import { getAnthropicKey } from '../utils/apiKeys'
+import { ProGate } from '../components/ProGate'
+
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
@@ -99,7 +101,7 @@ export default function KnowledgeBasePage({ onBack }) {
   const messagesEndRef = useRef(null)
   const inputRef      = useRef(null)
 
-  const hasKey = Boolean(getAnthropicKey())
+  const hasKey = Boolean(ANTHROPIC_KEY)
 
   useEffect(() => { loadDocuments() }, [])
   useEffect(() => {
@@ -174,9 +176,6 @@ export default function KnowledgeBasePage({ onBack }) {
     const query = input.trim()
     if (!query || loading) return
 
-    const apiKey = getAnthropicKey()
-    if (!apiKey) return
-
     const userMsg = { role: 'user', content: query }
     const next = [...messages, userMsg]
     setMessages(next)
@@ -203,7 +202,7 @@ export default function KnowledgeBasePage({ onBack }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': ANTHROPIC_KEY,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
@@ -381,6 +380,7 @@ export default function KnowledgeBasePage({ onBack }) {
   // ── Docs tab ───────────────────────────────────────────────────────────────
 
   return (
+    <ProGate feature="Knowledge Base">
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
       <Header />
 
@@ -498,5 +498,6 @@ export default function KnowledgeBasePage({ onBack }) {
         )}
       </div>
     </div>
+    </ProGate>
   )
 }

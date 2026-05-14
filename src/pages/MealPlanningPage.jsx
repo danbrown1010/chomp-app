@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../store/index'
-import { getAnthropicKey } from '../utils/apiKeys'
+import { ProGate } from '../components/ProGate'
+
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -195,7 +197,7 @@ function CheckRow({ label, checked, onToggle }) {
 function SetupView({ config, setConfig, onGenerate, generating, error, onBack, hasSavedPlan, onViewSaved }) {
   const { accent } = useAppStore()
   const update = (key, val) => setConfig(prev => ({ ...prev, [key]: val }))
-  const hasKey = Boolean(getAnthropicKey())
+  const hasKey = Boolean(ANTHROPIC_KEY)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -654,6 +656,10 @@ function PlanView({ plan, config, onRegenerate, onNewPlan, onBack, checked, onCh
 // ─── Page root ────────────────────────────────────────────────────────────────
 
 export default function MealPlanningPage({ onBack }) {
+  return <ProGate feature="AI Meal Planning"><MealPlanningInner onBack={onBack} /></ProGate>
+}
+
+function MealPlanningInner({ onBack }) {
   const { activeTrip } = useAppStore()
 
   const [view, setView] = useState('setup')
@@ -703,8 +709,6 @@ export default function MealPlanningPage({ onBack }) {
   }
 
   const generateMealPlan = async () => {
-    const apiKey = getAnthropicKey()
-    if (!apiKey) return
 
     setGenerating(true)
     setView('generating')
@@ -777,7 +781,7 @@ Return this exact JSON:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': ANTHROPIC_KEY,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },

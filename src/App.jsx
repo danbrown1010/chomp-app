@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AppProvider } from './store/index'
+import { AppProvider, useAppStore } from './store/index'
 import BottomNav from './components/BottomNav'
 import HomePage from './pages/HomePage'
 import TripPage from './pages/TripPage'
@@ -12,8 +12,18 @@ import SurvivalAgentPage from './pages/SurvivalAgentPage'
 import KnowledgeBasePage from './pages/KnowledgeBasePage'
 import MealPlanningPage from './pages/MealPlanningPage'
 import GearRegistryPage from './pages/GearRegistryPage'
+import AuthPage from './pages/AuthPage'
 
 export default function App() {
+  return (
+    <AppProvider>
+      <AppShell />
+    </AppProvider>
+  )
+}
+
+function AppShell() {
+  const { user, authLoading, signInWithGoogle } = useAppStore()
   const [activeTab,   setActiveTab]   = useState('home')
   const [showCreate,  setShowCreate]  = useState(false)
   const [moreSubview, setMoreSubview] = useState(null)
@@ -26,41 +36,62 @@ export default function App() {
     setMoreSubview(null)
   }
 
-  return (
-    <AppProvider>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--bg-primary)',
-          height: 'calc(var(--vh, 1svh) * 100)',
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        {showCreate ? (
-          <CreateTripPage
-            onClose={closeCreate}
-            onCreated={() => { closeCreate(); setActiveTab('home') }}
-          />
-        ) : (
-          <>
-            <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-              {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} />}
-              {activeTab === 'trip'   && <TripPage />}
-              {activeTab === 'safety' && <SafetyPage />}
-              {activeTab === 'rig'    && <RigPage />}
-              {activeTab === 'more'   && moreSubview === null      && <MorePage     onNavigate={setMoreSubview} />}
-              {activeTab === 'more'   && moreSubview === 'settings'         && <SettingsPage      onBack={() => setMoreSubview(null)} />}
-              {activeTab === 'more'   && moreSubview === 'survival'          && <SurvivalAgentPage  onBack={() => setMoreSubview(null)} />}
-              {activeTab === 'more'   && moreSubview === 'knowledge'         && <KnowledgeBasePage  onBack={() => setMoreSubview(null)} />}
-              {activeTab === 'more'   && moreSubview === 'meals'             && <MealPlanningPage   onBack={() => setMoreSubview(null)} />}
-              {activeTab === 'more'   && moreSubview === 'gear'              && <GearRegistryPage   onBack={() => setMoreSubview(null)} />}
-            </div>
-            <BottomNav active={activeTab} onChange={handleTabChange} />
-          </>
-        )}
+  // Resolving session — show neutral splash to avoid flicker
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(var(--vh, 1svh) * 100)', background: '#1C2117' }}>
+        <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="20" fill="#243020"/>
+          <g fill="#F0EDE4">
+            <path d="M50 5C41.7 5 35 11.7 35 20c0 11.5 15 28 15 28s15-16.5 15-28C65 11.7 58.3 5 50 5zM50 26c-3.3 0-6-2.7-6-6s2.7-6 6-6s6 2.7 6 6-2.7 6-6 6z"/>
+            <path d="M2 92L30 38L45 63L38 73L53 92H2z"/>
+            <path d="M98 92L70 45L55 65L62 75L47 92H98z"/>
+            <path d="M46 92C46 92 47 78 50 70C53 62 57 59 55 52C53 45 49 48 49 48" fill="none" stroke="#1C2117" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </g>
+        </svg>
       </div>
-    </AppProvider>
+    )
+  }
+
+  // No session — show auth wall
+  if (!user) {
+    return <AuthPage onSignIn={signInWithGoogle} />
+  }
+
+  // Authenticated — show app
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--bg-primary)',
+        height: 'calc(var(--vh, 1svh) * 100)',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
+      {showCreate ? (
+        <CreateTripPage
+          onClose={closeCreate}
+          onCreated={() => { closeCreate(); setActiveTab('home') }}
+        />
+      ) : (
+        <>
+          <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} />}
+            {activeTab === 'trip'   && <TripPage />}
+            {activeTab === 'safety' && <SafetyPage />}
+            {activeTab === 'rig'    && <RigPage />}
+            {activeTab === 'more'   && moreSubview === null               && <MorePage          onNavigate={setMoreSubview} />}
+            {activeTab === 'more'   && moreSubview === 'settings'         && <SettingsPage      onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'survival'         && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'knowledge'        && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'meals'            && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'gear'             && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
+          </div>
+          <BottomNav active={activeTab} onChange={handleTabChange} />
+        </>
+      )}
+    </div>
   )
 }

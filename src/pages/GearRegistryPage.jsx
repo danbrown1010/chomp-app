@@ -3,6 +3,7 @@ import { saveGearItem, getGearItems, deleteGearItem } from '../utils/gearStorage
 import { GEAR_CATEGORIES, PRESET_GEAR } from '../data/presetGear'
 import { BrandLogo } from '../components/BrandLogo'
 import { getVendorLogo, getStoreLogo } from '../utils/brandLogos'
+import { ProGate } from '../components/ProGate'
 
 const CONDITIONS = ['good', 'worn', 'replace']
 
@@ -453,6 +454,7 @@ export default function GearRegistryPage({ onBack }) {
 
       {/* BULK TAB */}
       {activeTab === 'bulk' && (
+        <ProGate feature="Bulk gear import">
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Sub-tab switcher */}
           <div style={{ display: 'flex', gap: 0, padding: '8px 16px 0', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
@@ -490,6 +492,7 @@ export default function GearRegistryPage({ onBack }) {
             />
           )}
         </div>
+        </ProGate>
       )}
 
       {/* ADD / EDIT FORM */}

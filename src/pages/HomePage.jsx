@@ -137,7 +137,7 @@ function IdleHome({ onPlanTrip }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <VelaLogo size={22} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-              ENGINEERED FOR INDEPENDENCE
+              GO FURTHER!
             </span>
           </div>
           <div style={{ marginTop: 16 }}>

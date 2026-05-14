@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useFireData } from '../hooks/useFireData'
 import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
+import { ProGate } from '../components/ProGate'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
 
-const LS_KEY = 'vela-anthropic-key'
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
@@ -80,194 +81,12 @@ const INITIAL_MESSAGES = [
   },
 ]
 
-// ─── Setup screen ─────────────────────────────────────────────────────────────
-
-function SetupScreen({ onBack, onActivate }) {
-  const [keyInput, setKeyInput] = useState('')
-  const [showKey, setShowKey]   = useState(false)
-  const [error, setError]       = useState('')
-  const [testing, setTesting]   = useState(false)
-
-  const handleActivate = async () => {
-    const trimmed = keyInput.trim()
-    if (!trimmed.startsWith('sk-ant-')) {
-      setError('Key should start with sk-ant-')
-      return
-    }
-    setTesting(true)
-    setError('')
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': trimmed,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'ping' }],
-        }),
-      })
-      const data = await res.json()
-      if (data.error) {
-        setError(data.error.message ?? 'Invalid key')
-      } else {
-        localStorage.setItem(LS_KEY, trimmed)
-        onActivate(trimmed)
-      }
-    } catch (err) {
-      setError(`Connection error: ${err.message}`)
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
-      {/* Header */}
-      <div style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 12px' }}>
-          <button
-            onClick={onBack}
-            style={{
-              width: 32, height: 32, borderRadius: '50%',
-              border: '1px solid var(--border)', background: 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="var(--text-secondary)" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </button>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.08em', margin: 0 }}>
-              SURVIVAL AGENT
-            </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em', margin: '2px 0 0' }}>
-              POWERED BY CLAUDE · VELA AI
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-tertiary)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>NOT CONFIGURED</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
-        {/* Icon */}
-        <div style={{
-          width: 64, height: 64, borderRadius: 20,
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 20,
-        }}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-            stroke="var(--accent, #C4521A)" strokeWidth="1.5" strokeLinejoin="round">
-            <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6L12 2z" />
-            <path d="M9 12l2 2 4-4" strokeLinecap="round" />
-          </svg>
-        </div>
-
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', marginBottom: 8, textAlign: 'center' }}>
-          ACTIVATE SURVIVAL AGENT
-        </p>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6, marginBottom: 28, maxWidth: 280 }}>
-          Enter your Anthropic API key to enable the AI wilderness expert. Your key is stored locally on this device and never transmitted anywhere except the Anthropic API.
-        </p>
-
-        {/* Key input */}
-        <div style={{ width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type={showKey ? 'text' : 'password'}
-              value={keyInput}
-              onChange={e => { setKeyInput(e.target.value); setError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleActivate()}
-              placeholder="sk-ant-api03-..."
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: 'var(--bg-card)',
-                border: `1px solid ${error ? '#ef4444' : 'var(--border)'}`,
-                borderRadius: 12,
-                padding: '12px 44px 12px 16px',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 13,
-                outline: 'none',
-              }}
-            />
-            <button
-              onClick={() => setShowKey(v => !v)}
-              style={{
-                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                color: 'var(--text-tertiary)', padding: 2,
-              }}
-            >
-              {showKey ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {error && (
-            <p style={{ fontSize: 12, color: '#ef4444', fontFamily: 'var(--font-mono)', margin: 0 }}>
-              {error}
-            </p>
-          )}
-
-          <button
-            onClick={handleActivate}
-            disabled={!keyInput.trim() || testing}
-            style={{
-              width: '100%', padding: '13px',
-              borderRadius: 12,
-              background: keyInput.trim() && !testing ? 'var(--accent, #C4521A)' : 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              color: keyInput.trim() && !testing ? '#fff' : 'var(--text-tertiary)',
-              fontFamily: 'var(--font-body)',
-              fontSize: 14, fontWeight: 600,
-              cursor: keyInput.trim() && !testing ? 'pointer' : 'default',
-              transition: 'background 0.15s, color 0.15s',
-            }}
-          >
-            {testing ? 'Verifying…' : 'Activate'}
-          </button>
-        </div>
-
-        <p style={{ marginTop: 20, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>
-          console.anthropic.com → API Keys
-        </p>
-      </div>
-    </div>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurvivalAgentPage({ onBack }) {
   const { location, weather, aqi, activeTrip } = useAppStore()
   const { fires } = useFireData()
 
-  const [apiKey, setApiKey]       = useState(() => localStorage.getItem(LS_KEY) ?? '')
   const [messages, setMessages]   = useState(INITIAL_MESSAGES)
   const [input, setInput]         = useState('')
   const [loading, setLoading]     = useState(false)
@@ -358,7 +177,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': ANTHROPIC_KEY,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
@@ -384,17 +203,6 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
     }
   }
 
-  const resetKey = () => {
-    localStorage.removeItem(LS_KEY)
-    setApiKey('')
-    setMessages(INITIAL_MESSAGES)
-  }
-
-  // ── No key → setup screen ──────────────────────────────────────────────────
-  if (!apiKey) {
-    return <SetupScreen onBack={onBack} onActivate={setApiKey} />
-  }
-
   const chipBase = {
     fontSize: 11, padding: '3px 8px', borderRadius: 12,
     background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -404,6 +212,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
   const aqiStyle = aqi ? aqiColors(aqi.category) : null
 
   return (
+    <ProGate feature="Survival Agent">
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
 
       {/* ─── Header ─────────────────────────────────────────────────────── */}
@@ -432,24 +241,6 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
               POWERED BY CLAUDE · VELA AI
             </p>
           </div>
-          {/* Reset key */}
-          <button
-            onClick={resetKey}
-            title="Reset API key"
-            style={{
-              width: 28, height: 28, borderRadius: '50%',
-              border: '1px solid var(--border)', background: 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, marginRight: 4,
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-              stroke="var(--text-tertiary)" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#22c55e', letterSpacing: '0.06em' }}>ONLINE</span>
@@ -584,5 +375,6 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
         </button>
       </div>
     </div>
+    </ProGate>
   )
 }
