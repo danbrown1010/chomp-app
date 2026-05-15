@@ -1,101 +1,164 @@
-export default function AuthPage({ onSignIn }) {
+import { VelaLogo } from '../components/VelaLogo'
+
+export default function AuthPage({ onSignIn, notAllowed = false }) {
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
       height: 'calc(var(--vh, 1svh) * 100)',
-      background: '#1C2117',
-      padding: '32px 24px',
-      paddingTop: 'calc(32px + env(safe-area-inset-top))',
-      paddingBottom: 'calc(32px + env(safe-area-inset-bottom))',
-      boxSizing: 'border-box',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
-
-      {/* Logo */}
-      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="100" rx="20" fill="#243020"/>
-          <g fill="#F0EDE4">
-            <path d="M50 5C41.7 5 35 11.7 35 20c0 11.5 15 28 15 28s15-16.5 15-28C65 11.7 58.3 5 50 5zM50 26c-3.3 0-6-2.7-6-6s2.7-6 6-6s6 2.7 6 6-2.7 6-6 6z"/>
-            <path d="M2 92L30 38L45 63L38 73L53 92H2z"/>
-            <path d="M98 92L70 45L55 65L62 75L47 92H98z"/>
-            <path d="M46 92C46 92 47 78 50 70C53 62 57 59 55 52C53 45 49 48 49 48" fill="none" stroke="#1C2117" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </g>
-        </svg>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 36, letterSpacing: '0.12em', color: '#F0EDE4' }}>
-            VELA
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(240,237,228,0.45)', letterSpacing: '0.14em', marginTop: 6, textTransform: 'uppercase' }}>
-            Go further
-          </div>
-        </div>
-      </div>
-
-      {/* Card */}
+      {/* Hero background — shifted to show road, less sky */}
       <div style={{
-        width: '100%',
-        maxWidth: 340,
-        background: 'rgba(240,237,228,0.06)',
-        border: '1px solid rgba(240,237,228,0.12)',
-        borderRadius: 20,
-        padding: '28px 24px',
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'url(/Hero.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center 45%',
+        zIndex: 0,
+      }} />
+
+      {/* Gradient — lighter at top, sharp transition at bottom */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: `linear-gradient(
+          to bottom,
+          rgba(28,33,23,0.15) 0%,
+          rgba(28,33,23,0.25) 30%,
+          rgba(28,33,23,0.70) 60%,
+          rgba(28,33,23,0.93) 80%,
+          rgba(28,33,23,0.98) 100%
+        )`,
+        zIndex: 1,
+      }} />
+
+      {/* Content */}
+      <div style={{
+        position: 'relative',
+        zIndex: 2,
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        padding: '0 32px',
+        gap: 20,
       }}>
-        <div style={{ textAlign: 'center', marginBottom: 4 }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 600, color: '#F0EDE4', marginBottom: 6 }}>
-            Sign in to continue
-          </div>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'rgba(240,237,228,0.5)', lineHeight: 1.5 }}>
-            Your expedition companion for overlanding and off-grid adventure.
-          </div>
+        {/* VELA logo — absolute top-left */}
+        <div style={{ position: 'absolute', top: 44, left: 24, zIndex: 3, color: '#F0EDE4' }}>
+          <VelaLogo size={36} transparent textShadow="0 1px 8px rgba(0,0,0,0.5)" />
         </div>
 
-        {/* Google button */}
+        {/* Headline */}
+        <div style={{
+          fontSize: 42,
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          color: '#F0EDE4',
+          fontFamily: 'var(--font-body)',
+          lineHeight: 1.1,
+          textAlign: 'center',
+          textShadow: '0 2px 20px rgba(0,0,0,0.6)',
+        }}>
+          Go further!
+        </div>
+
+        {/* Tagline */}
+        <div style={{
+          fontSize: 16,
+          color: 'rgba(240,237,228,0.7)',
+          fontFamily: 'var(--font-body)',
+          lineHeight: 1.5,
+          maxWidth: 260,
+          textAlign: 'center',
+        }}>
+          Expedition intelligence for overlanders, photographers, and off-grid adventurers.
+        </div>
+
+        {/* Access restricted banner */}
+        {notAllowed && (
+          <div style={{
+            width: '100%',
+            maxWidth: 340,
+            background: 'rgba(139,46,46,0.85)',
+            border: '1px solid #8B2E2E',
+            borderRadius: 12,
+            padding: '12px 16px',
+            textAlign: 'center',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: 'var(--font-body)', marginBottom: 4 }}>
+              Access restricted
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-body)', lineHeight: 1.5 }}>
+              VELA is currently invite-only. Contact danbrown1010@gmail.com to request access.
+            </div>
+          </div>
+        )}
+
+        {/* Google sign-in button — compact pill */}
         <button
           onClick={onSignIn}
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
             gap: 12,
-            width: '100%',
-            padding: '13px 20px',
-            borderRadius: 12,
+            background: 'rgba(240,237,228,0.95)',
+            backdropFilter: 'blur(12px)',
             border: 'none',
-            background: '#fff',
-            color: '#1C2117',
-            fontFamily: 'var(--font-body)',
-            fontWeight: 600,
-            fontSize: 15,
+            borderRadius: 50,
+            padding: '14px 28px',
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+            width: '100%',
+            maxWidth: 280,
+            justifyContent: 'center',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
           }}
         >
-          <GoogleIcon />
-          Continue with Google
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span style={{ fontSize: 15, fontWeight: 600, color: '#1C2117', fontFamily: 'var(--font-body)' }}>
+            Continue with Google
+          </span>
         </button>
-      </div>
 
-      {/* Footer */}
-      <div style={{ marginTop: 28, fontFamily: 'var(--font-body)', fontSize: 11, color: 'rgba(240,237,228,0.25)', textAlign: 'center', maxWidth: 280, lineHeight: 1.6 }}>
-        By signing in you agree to our terms of service and privacy policy.
+        {/* Feature pills — 3 on one line */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+          {['Fire & safety alerts', 'AI Survival Agent', 'EcoFlow + Starlink'].map(f => (
+            <div key={f} style={{
+              background: 'rgba(240,237,228,0.15)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(240,237,228,0.25)',
+              borderRadius: 20,
+              padding: '4px 10px',
+              fontSize: 11,
+              color: 'rgba(240,237,228,0.8)',
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap',
+            }}>
+              {f}
+            </div>
+          ))}
+        </div>
+
+        {/* Terms */}
+        <div style={{
+          fontSize: 11,
+          color: 'rgba(240,237,228,0.3)',
+          textAlign: 'center',
+          fontFamily: 'var(--font-body)',
+          lineHeight: 1.5,
+        }}>
+          By continuing you agree to our Terms of Service and Privacy Policy.{'\n'}Free to start · PRO from $4.99/mo
+        </div>
       </div>
     </div>
-  )
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18">
-      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-      <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
-      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-    </svg>
   )
 }

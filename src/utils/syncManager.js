@@ -30,29 +30,41 @@ function gearRow(item, userId) {
 // ─── TRIPS ────────────────────────────────────────────────────────────────────
 
 export async function syncTripToSupabase(trip, userId) {
+  console.log('[syncTrip] called — userId:', userId, '| trip.id:', trip.id, '| trip.name:', trip.name)
+
+  const row = {
+    id: toUUID(trip.id),
+    user_id: userId,
+    name: trip.name,
+    type: trip.type,
+    region: trip.region,
+    departure_date: trip.departureDate || null,
+    return_date: trip.returnDate || null,
+    status: trip.status ?? 'planning',
+    waypoints: trip.waypoints ?? [],
+    campsites: trip.campsites ?? [],
+    data: {
+      checklist: trip.checklist ?? [],
+      gearLists: trip.gearLists ?? [],
+      partners: trip.partners ?? [],
+      notes: trip.notes ?? '',
+      types: trip.types ?? [],
+    },
+    updated_at: new Date().toISOString(),
+  }
+
+  console.log('[syncTrip] upsert row:', JSON.stringify(row, null, 2))
+
   const { data, error } = await supabase
     .from('trips')
-    .upsert({
-      id: toUUID(trip.id),
-      user_id: userId,
-      name: trip.name,
-      type: trip.type,
-      region: trip.region,
-      departure_date: trip.departureDate,
-      return_date: trip.returnDate,
-      status: trip.status ?? 'planning',
-      waypoints: trip.waypoints ?? [],
-      campsites: trip.campsites ?? [],
-      data: {
-        checklist: trip.checklist ?? [],
-        gearLists: trip.gearLists ?? [],
-        partners: trip.partners ?? [],
-        notes: trip.notes ?? '',
-      },
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' })
+    .upsert(row, { onConflict: 'id' })
 
-  if (error) console.error('Trip sync error:', error)
+  if (error) {
+    console.error('[syncTrip] UPSERT ERROR:', error)
+  } else {
+    console.log('[syncTrip] upsert SUCCESS — data:', data)
+  }
+
   return { data, error }
 }
 

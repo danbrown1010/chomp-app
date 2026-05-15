@@ -69,14 +69,31 @@ export async function clearAnthropicKey(userId) {
   localStorage.removeItem('vela-anthropic-key')
 
   if (userId) {
-    await supabase
+    const { error } = await supabase
       .from('user_secrets')
       .delete()
       .eq('user_id', userId)
+    if (error) console.error('Failed to clear key from Supabase:', error)
   }
+
+  console.log('API key cleared from localStorage and Supabase')
 }
 
 export async function hasAnthropicKey(userId) {
-  const key = await getAnthropicKey(userId)
-  return !!key && key.length > 10
+  if (!userId) {
+    return !!localStorage.getItem('vela-anthropic-key')
+  }
+
+  const { data } = await supabase
+    .from('user_secrets')
+    .select('anthropic_key_encrypted')
+    .eq('user_id', userId)
+    .single()
+
+  if (!data?.anthropic_key_encrypted) {
+    localStorage.removeItem('vela-anthropic-key')
+    return false
+  }
+
+  return true
 }

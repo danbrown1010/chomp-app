@@ -5,13 +5,16 @@ import { getGearItems } from '../utils/gearStorage'
 import { Skeleton } from '../components/Skeleton'
 import { VelaLogo } from '../components/VelaLogo'
 import { StatusBadge } from '../components/StatusBadge'
+import { getFirstName } from '../utils/userHelpers'
+import { TypeBadge } from '../components/TripTypeIcons'
+import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind } from '../components/icons'
 
-export default function HomePage({ onPlanTrip }) {
+export default function HomePage({ onPlanTrip, onEditTrip }) {
   const tripPhase = useTripPhase()
-  if (tripPhase.phase === 'pre-trip')  return <PreTripHome  {...tripPhase} />
-  if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} />
-  if (tripPhase.phase === 'post-trip') return <PostTripHome {...tripPhase} />
-  return <IdleHome onPlanTrip={onPlanTrip} />
+  if (tripPhase.phase === 'pre-trip')  return <PreTripHome  {...tripPhase} onEditTrip={onEditTrip} />
+  if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} onEditTrip={onEditTrip} />
+  if (tripPhase.phase === 'post-trip') return <PostTripHome {...tripPhase} onEditTrip={onEditTrip} />
+  return <IdleHome onPlanTrip={onPlanTrip} onEditTrip={onEditTrip} />
 }
 
 // ─── Pull-to-refresh ──────────────────────────────────────────────────────────
@@ -57,14 +60,29 @@ function usePullToRefresh(onRefresh) {
   return { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd }
 }
 
+// ─── Weather icon picker ──────────────────────────────────────────────────────
+
+function WeatherIcon({ description, size = 40, color = 'var(--accent)' }) {
+  const desc = (description ?? '').toLowerCase()
+  const props = { style: { width: size, height: size, color, flexShrink: 0 } }
+  if (desc.includes('thunder'))                                         return <IconCloudRain {...props} />
+  if (desc.includes('snow') || desc.includes('sleet') || desc.includes('flurr')) return <IconCloudSnow {...props} />
+  if (desc.includes('rain') || desc.includes('shower') || desc.includes('drizzle')) return <IconCloudRain {...props} />
+  if (desc.includes('cloud') || desc.includes('overcast') || desc.includes('fog') || desc.includes('mist'))
+    return desc.includes('partly') || desc.includes('mostly') ? <IconCloudSun {...props} /> : <IconCloud {...props} />
+  if (desc.includes('wind') || desc.includes('breezy'))                return <IconWind {...props} />
+  return <IconSun {...props} />
+}
+
 // ─── Weather card ─────────────────────────────────────────────────────────────
 
 function WeatherCard() {
   const { weather, weatherLoading } = useAppStore()
   if (weatherLoading) {
     return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Skeleton className="h-10 w-10 rounded-lg" />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <Skeleton className="h-8 w-20 rounded" />
           <Skeleton className="h-3 w-36 rounded" />
         </div>
@@ -77,16 +95,19 @@ function WeatherCard() {
   }
   if (!weather) return null
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <WeatherIcon description={weather.shortForecast} size={40} color="var(--accent)" />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', lineHeight: 1 }}>
           {weather.temperature}°{weather.temperatureUnit}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{weather.shortForecast}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 3, textTransform: 'capitalize' }}>
+          {weather.shortForecast}
+        </div>
       </div>
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Wind</div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
+        <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Wind</div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginTop: 2 }}>
           {weather.windSpeed} {weather.windDirection}
         </div>
       </div>
@@ -113,9 +134,23 @@ function GpsStatus() {
 
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
-function IdleHome({ onPlanTrip }) {
-  const { accent, refreshHomeData, syncStatus } = useAppStore()
+function IdleHome({ onPlanTrip, onEditTrip }) {
+  const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip } = useAppStore()
+  const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
+
+  const now = new Date()
+
+  const upcomingTrips = trips.filter(t =>
+    t.status !== 'completed' &&
+    t.status !== 'cancelled' &&
+    t.id !== activeTrip?.id
+  ).sort((a, b) => new Date(a.departureDate) - new Date(b.departureDate))
+
+  const recentTrips = trips.filter(t =>
+    t.status === 'completed' ||
+    (t.returnDate && new Date(t.returnDate) < now)
+  ).sort((a, b) => new Date(b.departureDate) - new Date(a.departureDate)).slice(0, 3)
 
   return (
     <div style={{ position: 'relative', height: '100%' }}>
@@ -149,19 +184,72 @@ function IdleHome({ onPlanTrip }) {
             </div>
           </div>
           <div style={{ marginTop: 16 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, Dan</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, {firstName}</h1>
             <GpsStatus />
           </div>
         </div>
 
         <WeatherCard />
 
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Days out (YTD)" value="47" />
-          <StatCard label="Miles logged"   value="1,240" />
-          <StatCard label="Trail reports"  value="12" />
-          <StatCard label="Trips total"    value="8" />
-        </div>
+        {activeTrip && (
+          <div style={{ background: 'var(--accent)', padding: '12px 16px', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active Trip</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', fontFamily: 'var(--font-body)' }}>{activeTrip.name}</div>
+            </div>
+            <button
+              onClick={deactivateTrip}
+              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Deactivate
+            </button>
+          </div>
+        )}
+
+        {upcomingTrips.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              Upcoming
+            </div>
+            {upcomingTrips.map(trip => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                isActive={false}
+                onSetActive={() => setActiveTripById(trip.id)}
+                onDelete={() => deleteTrip(trip.id)}
+                onEdit={() => onEditTrip(trip)}
+              />
+            ))}
+          </div>
+        )}
+
+        {recentTrips.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              Recent
+            </div>
+            {recentTrips.map(trip => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                isActive={false}
+                onSetActive={() => setActiveTripById(trip.id)}
+                onDelete={() => deleteTrip(trip.id)}
+                onEdit={() => onEditTrip(trip)}
+              />
+            ))}
+          </div>
+        )}
+
+        {trips.length === 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Days out (YTD)" value="47" />
+            <StatCard label="Miles logged"   value="1,240" />
+            <StatCard label="Trail reports"  value="12" />
+            <StatCard label="Trips total"    value="8" />
+          </div>
+        )}
 
         <button
           onClick={onPlanTrip}
@@ -169,12 +257,6 @@ function IdleHome({ onPlanTrip }) {
         >
           Plan a trip
         </button>
-
-        <Section title="Recent trips">
-          <TripRow name="Winthrop Loop"         detail="Apr 28 · 3 days · 284 mi" />
-          <TripRow name="Teanaway Country"       detail="Apr 12 · 2 days · 190 mi" />
-          <TripRow name="Sun Lakes – Dry Falls"  detail="Mar 1 · 4 days · 410 mi" />
-        </Section>
       </div>
 
       <button
@@ -197,8 +279,8 @@ const PRE_TRIP_CHECKLIST = [
   'Camera kits charged', 'Offline maps downloaded', 'Trip plan shared with contact',
 ]
 
-function PreTripHome({ activeTrip, daysUntil }) {
-  const { accent, weather, aqi } = useAppStore()
+function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
+  const { accent, weather, aqi, deactivateTrip } = useAppStore()
   const [checked, setChecked] = useState([])
   const [gearChecklist, setGearChecklist] = useState([])
   const [gearChecked, setGearChecked] = useState(new Set())
@@ -227,13 +309,31 @@ function PreTripHome({ activeTrip, daysUntil }) {
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-          Departing in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
-        </p>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: accent, margin: 0 }}>{activeTrip.name}</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-          {fmt(activeTrip.departureDate)} → {fmt(activeTrip.returnDate)}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+              Departing in {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: accent, margin: 0 }}>{activeTrip.name}</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+              {fmt(activeTrip.departureDate)} → {fmt(activeTrip.returnDate)}
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginTop: 4 }}>
+            <button
+              onClick={() => onEditTrip?.(activeTrip)}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={deactivateTrip}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Deactivate
+            </button>
+          </div>
+        </div>
         <GpsStatus />
       </div>
 
@@ -275,7 +375,7 @@ function PreTripHome({ activeTrip, daysUntil }) {
 // ─── On-trip ──────────────────────────────────────────────────────────────────
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
-  const { accent } = useAppStore()
+  const { accent, deactivateTrip } = useAppStore()
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -284,9 +384,17 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining</p>
           <GpsStatus />
         </div>
-        <span style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: `${accent}26`, color: accent, whiteSpace: 'nowrap' }}>
-          DAY {dayOf} / {totalDays}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <span style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 20, background: `${accent}26`, color: accent, whiteSpace: 'nowrap' }}>
+            DAY {dayOf} / {totalDays}
+          </span>
+          <button
+            onClick={deactivateTrip}
+            style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+          >
+            Deactivate
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -324,14 +432,22 @@ const POST_TRIP_TASKS = [
 
 function PostTripHome({ activeTrip, totalDays }) {
   const [checked, setChecked] = useState([])
-  const { accent } = useAppStore()
+  const { accent, deactivateTrip } = useAppStore()
   const toggle = (item) => setChecked(p => p.includes(item) ? p.filter(x => x !== item) : [...p, item])
   const done = checked.length === POST_TRIP_TASKS.length
 
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Trip complete</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Trip complete</p>
+          <button
+            onClick={deactivateTrip}
+            style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+          >
+            Deactivate
+          </button>
+        </div>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#c4b5fd', margin: 0 }}>{activeTrip.name}</h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
           {fmt(activeTrip.departureDate)} → {fmt(activeTrip.returnDate)}
@@ -359,6 +475,110 @@ function PostTripHome({ activeTrip, totalDays }) {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Trip card ────────────────────────────────────────────────────────────────
+
+function TripCard({ trip, onSetActive, onDeactivate, onDelete, onEdit, isActive }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const daysUntil = trip.departureDate
+    ? Math.ceil((new Date(trip.departureDate) - new Date()) / (1000 * 60 * 60 * 24))
+    : null
+
+  return (
+    <div style={{ background: 'var(--bg-card)', border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{trip.name}</div>
+          {trip.region && (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>{trip.region}</div>
+          )}
+          {trip.types?.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 5 }}>
+              {trip.types.map(t => <TypeBadge key={t} type={t} />)}
+            </div>
+          )}
+        </div>
+        {isActive
+          ? <StatusBadge status="safe" label="ACTIVE" />
+          : (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <button
+                onClick={onEdit}
+                style={{ background: 'transparent', border: 'none', padding: '2px 4px', cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}
+                aria-label="Edit trip"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setConfirmDelete(v => !v)}
+                style={{ background: 'transparent', border: 'none', padding: '2px 4px', cursor: 'pointer', color: confirmDelete ? 'var(--danger)' : 'var(--text-tertiary)', lineHeight: 1 }}
+                aria-label="Delete trip"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+              </button>
+            </div>
+          )
+        }
+      </div>
+
+      {confirmDelete ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>Delete this trip?</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onDelete}
+              style={{ background: 'var(--danger, #ef4444)', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+          <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>
+            {trip.departureDate
+              ? daysUntil > 0
+                ? `Departs in ${daysUntil} days · ${new Date(trip.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : daysUntil === 0
+                  ? 'Departing today'
+                  : `Departed ${Math.abs(daysUntil)} days ago`
+              : 'No date set'}
+          </div>
+          {isActive ? (
+            <button
+              onClick={onDeactivate}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Deactivate
+            </button>
+          ) : (
+            <button
+              onClick={onSetActive}
+              style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Set active
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

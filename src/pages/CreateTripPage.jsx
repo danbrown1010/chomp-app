@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/index'
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const TRIP_TYPES = ['Overlanding', 'Photography', 'Fishing', 'Mixed']
+import { getDisplayName, getInitials } from '../utils/userHelpers'
+import { TypeSelector, TypeBadge } from '../components/TripTypeIcons'
 
 const STEP_LABELS = ['Basics', 'Rig', 'People', 'Review']
 
@@ -18,7 +16,7 @@ const PREPARE_ITEMS = [
 
 const INITIAL_FORM = {
   name: '',
-  type: 'Overlanding',
+  types: [],
   departureDate: '',
   returnDate: '',
   region: '',
@@ -28,9 +26,11 @@ const INITIAL_FORM = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CreateTripPage({ onClose, onCreated }) {
-  const [step, setStep] = useState(1)
-  const [form, setForm] = useState(INITIAL_FORM)
-  const { createTrip, setActiveTrip } = useAppStore()
+  const [step, setStep]       = useState(1)
+  const [form, setForm]       = useState(INITIAL_FORM)
+  const [creating, setCreating] = useState(false)
+  const [error, setError]     = useState(null)
+  const { createTrip } = useAppStore()
 
   const update = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
   const updateGear = (key, val) => setForm(prev => ({ ...prev, gear: { ...prev.gear, [key]: val } }))
@@ -38,26 +38,37 @@ export default function CreateTripPage({ onClose, onCreated }) {
   const goBack = () => step > 1 ? setStep(s => s - 1) : onClose()
   const goNext = () => step < 4 ? setStep(s => s + 1) : handleCreate()
 
-  const handleCreate = () => {
-    const newTrip = createTrip({
-      name:          form.name || 'New Trip',
-      type:          form.type,
-      departureDate: form.departureDate || '2026-06-01',
-      returnDate:    form.returnDate    || '2026-06-05',
-      region:        form.region,
-    })
-    setActiveTrip(newTrip)
-    onCreated()
+  const handleCreate = async () => {
+    setCreating(true)
+    setError(null)
+    try {
+      console.log('Creating trip:', form)
+      await createTrip({
+        name:          form.name || 'New Trip',
+        type:          form.types[0] ?? 'Overlanding',
+        types:         form.types,
+        departureDate: form.departureDate || '2026-06-01',
+        returnDate:    form.returnDate    || '2026-06-05',
+        region:        form.region,
+      })
+      console.log('Trip created — calling onCreated')
+      onCreated()
+    } catch (err) {
+      console.error('Create trip error:', err)
+      setError('Failed to create trip. Try again.')
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
     <div className="flex flex-col h-full">
-      <StepHeader step={step} onBack={goBack} onNext={goNext} />
+      <StepHeader step={step} onBack={goBack} onNext={goNext} creating={creating} />
       <div className="flex-1 overflow-y-auto">
         {step === 1 && <Step1Basics  form={form} update={update} />}
         {step === 2 && <Step2Rig     form={form} updateGear={updateGear} />}
         {step === 3 && <Step3People />}
-        {step === 4 && <Step4Review  form={form} onEdit={() => setStep(1)} onCreate={handleCreate} />}
+        {step === 4 && <Step4Review  form={form} onEdit={() => setStep(1)} onCreate={handleCreate} creating={creating} error={error} />}
       </div>
     </div>
   )
@@ -65,7 +76,7 @@ export default function CreateTripPage({ onClose, onCreated }) {
 
 // ─── Shared header ────────────────────────────────────────────────────────────
 
-function StepHeader({ step, onBack, onNext }) {
+function StepHeader({ step, onBack, onNext, creating }) {
   const { accent } = useAppStore()
   return (
     <div style={{ padding: '12px 16px 0', borderBottom: '1px solid var(--border)' }}>
@@ -89,9 +100,10 @@ function StepHeader({ step, onBack, onNext }) {
 
         <button
           onClick={onNext}
-          style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, color: accent, padding: '0 4px' }}
+          disabled={creating}
+          style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, color: creating ? 'var(--text-tertiary)' : accent, padding: '0 4px' }}
         >
-          {step === 4 ? 'Create' : 'Next'}
+          {step === 4 ? (creating ? 'Creating…' : 'Create') : 'Next'}
         </button>
       </div>
 
@@ -141,22 +153,7 @@ function Step1Basics({ form, update }) {
       </Field>
 
       <Field label="Trip type">
-        <div className="grid grid-cols-2 gap-2">
-          {TRIP_TYPES.map(t => (
-            <button
-              key={t}
-              onClick={() => update('type', t)}
-              className="py-2.5 rounded-xl text-sm font-semibold transition-colors active:opacity-80"
-              style={
-                form.type === t
-                  ? { background: accent, color: 'white' }
-                  : { background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }
-              }
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <TypeSelector selected={form.types} onChange={v => update('types', v)} />
       </Field>
 
       <Field label="Dates">
@@ -295,17 +292,19 @@ function FuelRow({ label, value }) {
 // ─── Step 3 — People ──────────────────────────────────────────────────────────
 
 function Step3People() {
-  const { accent } = useAppStore()
+  const { accent, user, profile } = useAppStore()
+  const displayName = getDisplayName(profile, user, 'You')
+  const initials    = getInitials(profile, user)
   return (
     <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
       <Field label="Partners">
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
-          {/* Dan — fixed */}
+          {/* Current user — fixed */}
           <div className="flex items-center gap-3 px-4 py-3">
-            <Avatar initials="DB" />
+            <Avatar initials={initials} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--text-primary)]">Dan Brown</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{displayName}</p>
               <p className="text-xs text-[var(--text-secondary)]">You · Trip lead</p>
             </div>
           </div>
@@ -403,9 +402,10 @@ function GhostRow({ label }) {
 
 // ─── Step 4 — Review ──────────────────────────────────────────────────────────
 
-function Step4Review({ form, onEdit, onCreate }) {
-  const { accent } = useAppStore()
-  const gearCount = (form.gear.summer ? 42 : 0) + (form.gear.photography ? 6 : 0)
+function Step4Review({ form, onEdit, onCreate, creating, error }) {
+  const { accent, user, profile } = useAppStore()
+  const gearCount   = (form.gear.summer ? 42 : 0) + (form.gear.photography ? 6 : 0)
+  const displayName = getDisplayName(profile, user, 'You')
 
   return (
     <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
@@ -418,12 +418,16 @@ function Step4Review({ form, onEdit, onCreate }) {
             Edit
           </button>
         </div>
+        {form.types.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 12px' }}>
+            {form.types.map(t => <TypeBadge key={t} type={t} />)}
+          </div>
+        )}
         <div className="divide-y divide-[var(--border)]">
           <ReviewRow label="Dates"     value={form.departureDate && form.returnDate ? `${fmtDate(form.departureDate)} → ${fmtDate(form.returnDate)}` : '—'} />
-          <ReviewRow label="Type"      value={form.type} />
           <ReviewRow label="Region"    value={form.region || '—'} />
           <ReviewRow label="Vehicle"   value="2014 Jeep JKU · Chomp" />
-          <ReviewRow label="People"    value="Dan Brown, Emily Brown" />
+          <ReviewRow label="People"    value={`${displayName}, Emily Brown`} />
           <ReviewRow label="Campsites" value="Handy Spring, Entiat River" />
           <ReviewRow label="Gear"      value={`${gearCount} items`} />
         </div>
@@ -446,12 +450,18 @@ function Step4Review({ form, onEdit, onCreate }) {
 
       {/* Actions */}
       <div className="flex flex-col gap-2.5">
+        {error && (
+          <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, fontSize: 13, color: '#f87171', fontFamily: 'var(--font-body)' }}>
+            {error}
+          </div>
+        )}
         <button
           onClick={onCreate}
-          className="w-full py-4 rounded-xl text-sm font-bold text-[var(--text-primary)] active:opacity-80 transition-opacity"
-          style={{ background: accent }}
+          disabled={creating}
+          className="w-full py-4 rounded-xl text-sm font-bold active:opacity-80 transition-opacity"
+          style={{ background: creating ? 'var(--border)' : accent, color: creating ? 'var(--text-tertiary)' : '#fff', cursor: creating ? 'default' : 'pointer' }}
         >
-          Create trip
+          {creating ? 'Creating…' : 'Create trip'}
         </button>
         <button className="w-full py-4 rounded-xl text-sm font-semibold text-[var(--text-secondary)] border border-[var(--border)] active:opacity-60 transition-opacity">
           Save as draft

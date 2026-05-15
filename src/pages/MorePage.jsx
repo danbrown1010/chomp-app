@@ -1,4 +1,6 @@
 import { StatusBadge } from '../components/StatusBadge'
+import { useAppStore } from '../store/index'
+import { UserAvatar } from '../components/UserAvatar'
 
 const CONNECTED = [
   { id: 'onx',       title: 'OnX Offroad',    sub: 'Maps & route planning' },
@@ -43,6 +45,10 @@ const SECTIONS = [
 ]
 
 export default function MorePage({ onNavigate }) {
+  const { user, profile } = useAppStore()
+  const displayName = profile?.name || user?.user_metadata?.full_name || user?.email || 'User'
+  const isPro = profile?.plan === 'pro'
+
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
@@ -51,12 +57,10 @@ export default function MorePage({ onNavigate }) {
         <div style={{ paddingTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--bg-card)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>DB</span>
-              </div>
+              <UserAvatar profile={profile} user={user} size={44} />
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', letterSpacing: '0.06em' }}>DAN BROWN</p>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>danbrown1010@gmail.com</p>
+                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{displayName}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{user?.email}</p>
               </div>
             </div>
             <StatusBadge status="safe" label="PRO" />

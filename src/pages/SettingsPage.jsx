@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../store/index'
 import { saveAnthropicKey, clearAnthropicKey, hasAnthropicKey } from '../utils/secretsManager'
+import { UserAvatar } from '../components/UserAvatar'
+import { getFirstName } from '../utils/userHelpers'
 
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -17,7 +19,7 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
-  const { accent, setAccent, theme, setTheme, user } = useAppStore()
+  const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut } = useAppStore()
 
   const [keySet, setKeySet]           = useState(() => !!localStorage.getItem('vela-anthropic-key'))
   const [apiKeyInput, setApiKeyInput] = useState('')
@@ -166,11 +168,47 @@ export default function SettingsPage({ onBack }) {
 
         {/* ── Account ─────────────────────────────────────────────────────────── */}
         <Section label="Account">
+          {/* Profile header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+            <UserAvatar profile={profile} user={user} size={48} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.name || user?.user_metadata?.full_name || 'User'}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.email}
+              </div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: profile?.plan === 'pro' ? 'var(--accent)' : 'var(--text-tertiary)', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {profile?.plan === 'pro' ? '● PRO' : '● FREE'}
+              </div>
+            </div>
+          </div>
           <AccountRow label="Vehicle profiles"  value="2014 Jeep JKU — Chomp" />
-          <AccountRow label="Household"         value="Dan + Emily" />
-          <AccountRow label="Subscription"      value="Pro" valueColor="var(--accent)" />
+          <AccountRow label="Household"         value={`${getFirstName(profile, user, 'You')} + Emily`} />
+          <AccountRow label="Subscription"      value={profile?.plan === 'pro' ? 'Pro' : 'Free'} valueColor={profile?.plan === 'pro' ? 'var(--accent)' : undefined} />
           <AccountRow label="Connected apps"    value="OnX, Gaia GPS" />
-          <button className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity">
+          {isPro && (
+            <button
+              className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
+              onClick={() => window.open('https://billing.stripe.com/p/login/5kQ9AT2zygVuf4ZfOzaAw00', '_blank')}
+            >
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Manage subscription</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>Billing · Cancel · Receipts</div>
+              </div>
+              <svg className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+          <button
+            className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity"
+            onClick={async () => {
+              console.log('Sign out clicked')
+              await signOut()
+              console.log('Sign out complete')
+            }}
+          >
             <span className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Sign out</span>
           </button>
         </Section>

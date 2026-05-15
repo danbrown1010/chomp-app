@@ -1,14 +1,90 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useWeather } from '../hooks/useWeather'
 import { useAirQuality } from '../hooks/useAirQuality'
+import { supabase } from '../lib/supabase'
 import { syncTripToSupabase, fetchTripsFromSupabase, deleteTripFromSupabase } from '../utils/syncManager'
 import { addPendingTripSave, removePendingTripSave, addPendingTripDelete, removePendingTripDelete } from '../utils/tripStorage'
 
 const AppContext = createContext(null)
 
-export function AppProvider({ children, user = null, isPro = false, signOut = () => {}, signInWithGoogle = () => {} }) {
-  const [trips, setTrips]         = useState([])
+const MOCK_TRIPS = [
+  {
+    id: 'mock-1',
+    name: 'White Rim Road',
+    region: 'Canyonlands, UT',
+    departureDate: '2026-04-28',
+    returnDate: '2026-05-01',
+    status: 'completed',
+    type: 'Overlanding',
+    types: ['Overlanding'],
+    miles: 284,
+    nights: 3,
+    notes: 'Epic loop. Cache Valley camp was perfect.',
+    waypoints: [], campsites: [],
+  },
+  {
+    id: 'mock-2',
+    name: 'Methow High Country',
+    region: 'Okanogan-Wenatchee NF, WA',
+    departureDate: '2026-04-12',
+    returnDate: '2026-04-14',
+    status: 'completed',
+    type: 'Overlanding',
+    types: ['Overlanding', 'Photography'],
+    miles: 190,
+    nights: 2,
+    notes: 'Snow on Harts Pass. Wildflowers at Tiffany.',
+    waypoints: [], campsites: [],
+  },
+  {
+    id: 'mock-3',
+    name: 'Sun Lakes — Dry Falls',
+    region: 'Grant County, WA',
+    departureDate: '2026-03-21',
+    returnDate: '2026-03-22',
+    status: 'completed',
+    type: 'Photography',
+    types: ['Photography', 'Camping'],
+    miles: 110,
+    nights: 1,
+    notes: 'Great stargazing. Dry Falls at sunrise.',
+    waypoints: [], campsites: [],
+  },
+  {
+    id: 'mock-4',
+    name: 'Teanaway Country',
+    region: 'Kittitas County, WA',
+    departureDate: '2026-03-08',
+    returnDate: '2026-03-09',
+    status: 'completed',
+    type: 'Overlanding',
+    types: ['Overlanding', 'Hiking'],
+    miles: 145,
+    nights: 1,
+    notes: 'Beveridge Mine trail. Good early season conditions.',
+    waypoints: [], campsites: [],
+  },
+  {
+    id: 'mock-5',
+    name: 'Entiat River — Summer Run',
+    region: 'Chelan County, WA',
+    departureDate: '2026-06-14',
+    returnDate: '2026-06-17',
+    status: 'planning',
+    type: 'Overlanding',
+    types: ['Overlanding', 'Fishing'],
+    waypoints: [], campsites: [],
+  },
+]
+
+export function AppProvider({ children, user = null, profile = null, signOut = () => {}, signInWithGoogle = () => {} }) {
+  const [profileState, setProfile] = useState(profile)
+  useEffect(() => { if (profile !== undefined) setProfile(profile) }, [profile])
+  const isPro = profileState?.plan === 'pro'
+
+  const [trips, setTrips]         = useState(MOCK_TRIPS)
   const [activeTrip, setActiveTrip] = useState(null)
   const [syncStatus, setSyncStatus] = useState('idle')
   const [accent, setAccentState]  = useState(() => localStorage.getItem('vela-accent') || '#f97316')
@@ -23,8 +99,7 @@ export function AppProvider({ children, user = null, isPro = false, signOut = ()
   useEffect(() => {
     if (!user) return
     fetchTripsFromSupabase(user.id).then(remoteTrips => {
-      if (remoteTrips.length === 0) return
-      setTrips(remoteTrips.map(t => ({
+      const real = remoteTrips.map(t => ({
         id: t.id,
         name: t.name,
         type: t.type,
@@ -35,30 +110,41 @@ export function AppProvider({ children, user = null, isPro = false, signOut = ()
         waypoints: t.waypoints ?? [],
         campsites: t.campsites ?? [],
         ...(t.data ?? {}),
-      })))
+      }))
+      const mockCompleted = MOCK_TRIPS.filter(t => t.status === 'completed')
+      setTrips(real.length === 0 ? MOCK_TRIPS : [...real, ...mockCompleted])
     }).catch(console.error)
   }, [user?.id])
 
   const createTrip = useCallback(async (trip) => {
     const next = {
       ...trip,
-      id: trip.id ?? `trip-${Date.now()}`,
+      id: uuidv4(),
       status: trip.status ?? 'pre-trip',
       createdAt: new Date().toISOString(),
     }
     setTrips(prev => [...prev, next])
     setActiveTrip(next)
 
+    // Sync in background — don't block the UI or throw
+    console.log('[createTrip] user:', user?.id ?? 'NO USER — skipping sync', '| next.id:', next.id)
     if (user) {
-      setSyncStatus('syncing')
-      const { error } = await syncTripToSupabase(next, user.id)
-      if (error) {
-        addPendingTripSave(next)
-        setSyncStatus('error')
-      } else {
-        removePendingTripSave(next.id)
-        setSyncStatus('idle')
-      }
+      syncTripToSupabase(next, user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.warn('[createTrip] sync failed, queuing pending save:', error)
+            addPendingTripSave(next)
+          } else {
+            console.log('[createTrip] sync succeeded, removing pending save for:', next.id)
+            removePendingTripSave(next.id)
+          }
+        })
+        .catch((err) => {
+          console.error('[createTrip] sync threw:', err)
+          addPendingTripSave(next)
+        })
+    } else {
+      console.warn('[createTrip] no user — trip NOT synced to Supabase')
     }
 
     return next
@@ -97,6 +183,42 @@ export function AppProvider({ children, user = null, isPro = false, signOut = ()
     }
   }, [user])
 
+  const setActiveTripById = useCallback(async (tripId) => {
+    const trip = trips.find(t => t.id === tripId)
+    if (!trip) return
+
+    if (activeTrip && activeTrip.id !== tripId) {
+      setTrips(prev => prev.map(t => t.id === activeTrip.id ? { ...t, status: 'planning' } : t))
+      if (user?.id) {
+        await supabase.from('trips').update({ status: 'planning' }).eq('id', activeTrip.id).eq('user_id', user.id)
+      }
+    }
+
+    const updatedTrip = { ...trip, status: 'pre-trip' }
+    setActiveTrip(updatedTrip)
+    setTrips(prev => prev.map(t => t.id === tripId ? updatedTrip : t))
+
+    if (user?.id) {
+      await supabase.from('trips')
+        .update({ status: 'pre-trip', updated_at: new Date().toISOString() })
+        .eq('id', tripId)
+        .eq('user_id', user.id)
+    }
+  }, [trips, activeTrip, user])
+
+  const deactivateTrip = useCallback(async () => {
+    if (!activeTrip) return
+    const updatedTrip = { ...activeTrip, status: 'planning' }
+    setTrips(prev => prev.map(t => t.id === activeTrip.id ? updatedTrip : t))
+    setActiveTrip(null)
+    if (user?.id) {
+      await supabase.from('trips')
+        .update({ status: 'planning', updated_at: new Date().toISOString() })
+        .eq('id', activeTrip.id)
+        .eq('user_id', user.id)
+    }
+  }, [activeTrip, user])
+
   const refreshHomeData = useCallback(() => setDataBust(k => k + 1), [])
 
   const { location, error: locationError, loading: locationLoading } = useGeolocation()
@@ -118,9 +240,9 @@ export function AppProvider({ children, user = null, isPro = false, signOut = ()
 
   return (
     <AppContext.Provider value={{
-      user, isPro, signOut, signInWithGoogle,
+      user, profile: profileState, isPro, setProfile, signOut, signInWithGoogle,
       syncStatus, setSyncStatus,
-      trips, activeTrip, setActiveTrip, createTrip, updateTrip, deleteTrip,
+      trips, activeTrip, setActiveTrip, createTrip, updateTrip, deleteTrip, setActiveTripById, deactivateTrip,
       accent, setAccent, theme, setTheme,
       location, locationError, locationLoading,
       weather, weatherForecast, weatherLoading, weatherError,

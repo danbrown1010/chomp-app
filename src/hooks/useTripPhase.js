@@ -16,6 +16,11 @@ export function useTripPhase() {
   return useMemo(() => {
     if (!activeTrip) return { phase: 'none', activeTrip: null, daysUntil: null, dayOf: null, daysRemaining: null, totalDays: null }
 
+    // Guard against trips with no dates set
+    if (!activeTrip.departureDate || !activeTrip.returnDate) {
+      return { phase: 'pre-trip', activeTrip, daysUntil: null, dayOf: null, daysRemaining: null, totalDays: null }
+    }
+
     const today      = dayOnly(new Date().toISOString().slice(0, 10))
     const departure  = dayOnly(activeTrip.departureDate)
     const returnDate = dayOnly(activeTrip.returnDate)

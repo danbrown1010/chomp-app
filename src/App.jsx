@@ -13,6 +13,7 @@ import SafetyPage from './pages/SafetyPage'
 import RigPage from './pages/RigPage'
 import MorePage from './pages/MorePage'
 import CreateTripPage from './pages/CreateTripPage'
+import EditTripPage from './pages/EditTripPage'
 import SettingsPage from './pages/SettingsPage'
 import SurvivalAgentPage from './pages/SurvivalAgentPage'
 import KnowledgeBasePage from './pages/KnowledgeBasePage'
@@ -21,7 +22,7 @@ import GearRegistryPage from './pages/GearRegistryPage'
 import AuthPage from './pages/AuthPage'
 
 export default function App() {
-  const { user, isPro, signInWithGoogle, signOut, loading: authLoading } = useAuth()
+  const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
 
   if (authLoading) {
     return (
@@ -40,19 +41,48 @@ export default function App() {
   }
 
   if (!user) {
-    return <AuthPage onSignIn={signInWithGoogle} />
+    return <AuthPage onSignIn={signInWithGoogle} notAllowed={notAllowed} />
   }
 
   return (
-    <AppProvider user={user} isPro={isPro} signOut={signOut} signInWithGoogle={signInWithGoogle}>
+    <AppProvider user={user} profile={profile} signOut={signOut} signInWithGoogle={signInWithGoogle}>
       <AppShell user={user} />
     </AppProvider>
   )
 }
 
 function AppShell({ user }) {
-  const { setSyncStatus } = useAppStore()
+  const { setSyncStatus, setProfile } = useAppStore()
   useSyncOnLogin(user, setSyncStatus)
+
+  const [toast, setToast] = useState(null)
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
+
+  // Handle Stripe redirect returns
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+
+    if (params.get('upgraded') === 'true') {
+      window.history.replaceState({}, '', window.location.pathname)
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              setProfile(data)
+              showToast('Welcome to VELA PRO!')
+            }
+          })
+      }
+    }
+
+    if (params.get('cancelled') === 'true') {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [user])
 
   useEffect(() => {
     const handleOnline = async () => {
@@ -86,10 +116,13 @@ function AppShell({ user }) {
 
   const [activeTab,   setActiveTab]   = useState('home')
   const [showCreate,  setShowCreate]  = useState(false)
+  const [editingTrip, setEditingTrip] = useState(null)
   const [moreSubview, setMoreSubview] = useState(null)
 
   const openCreate  = () => setShowCreate(true)
   const closeCreate = () => setShowCreate(false)
+  const openEdit    = (trip) => setEditingTrip(trip)
+  const closeEdit   = () => setEditingTrip(null)
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
@@ -104,16 +137,33 @@ function AppShell({ user }) {
       height: 'calc(var(--vh, 1svh) * 100)',
       paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
+      position: 'relative',
     }}>
+      {toast && (
+        <div style={{
+          position: 'absolute', top: 'calc(16px + env(safe-area-inset-top))',
+          left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, pointerEvents: 'none',
+          background: 'var(--accent)', color: '#fff',
+          padding: '10px 20px', borderRadius: 24,
+          fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          whiteSpace: 'nowrap',
+        }}>
+          {toast}
+        </div>
+      )}
       {showCreate ? (
         <CreateTripPage
           onClose={closeCreate}
           onCreated={() => { closeCreate(); setActiveTab('home') }}
         />
+      ) : editingTrip ? (
+        <EditTripPage trip={editingTrip} onClose={closeEdit} />
       ) : (
         <>
           <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} />}
+            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} onEditTrip={openEdit} />}
             {activeTab === 'trip'   && <TripPage />}
             {activeTab === 'safety' && <SafetyPage />}
             {activeTab === 'rig'    && <RigPage />}

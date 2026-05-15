@@ -283,7 +283,7 @@ export default function GearRegistryPage({ onBack }) {
           <div style={{ flex: 1, overflowY: 'auto', padding: 16, paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
             {items.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.8 }}>
-                <div style={{ marginBottom: 12, color: 'var(--text-tertiary)' }}><IconTool size={40} /></div>
+                <div style={{ marginBottom: 12, color: 'var(--text-tertiary)', display: 'flex', justifyContent: 'center' }}><IconTool size={40} /></div>
                 <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>No gear added yet</div>
                 Browse presets or add custom items.<br />
                 Your gear feeds into the Survival Agent for better advice.

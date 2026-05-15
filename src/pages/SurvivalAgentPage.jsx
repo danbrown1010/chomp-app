@@ -4,6 +4,7 @@ import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
 import { ProGate } from '../components/ProGate'
 import { getAnthropicKey } from '../utils/secretsManager'
+import { IconMapPin, IconThermometer, IconWind, IconFlame, IconTent } from '../components/icons'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
 
@@ -259,23 +260,34 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
         {/* Context chips */}
         <div style={{ display: 'flex', gap: 6, padding: '0 16px 10px', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {location && (
-            <div style={chipBase}>📍 {location.lat.toFixed(4)}°N {Math.abs(location.lng).toFixed(4)}°W</div>
+            <div style={{ ...chipBase, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconMapPin style={{ width: 11, height: 11, flexShrink: 0 }} />
+              {location.lat.toFixed(4)}°N {Math.abs(location.lng).toFixed(4)}°W
+            </div>
           )}
           {weather && (
-            <div style={chipBase}>🌡 {weather.temperature}°{weather.temperatureUnit} · {weather.shortForecast}</div>
+            <div style={{ ...chipBase, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconThermometer style={{ width: 11, height: 11, flexShrink: 0 }} />
+              {weather.temperature}°{weather.temperatureUnit} · {weather.shortForecast}
+            </div>
           )}
           {aqi && aqiStyle && (
-            <div style={{ ...chipBase, background: aqiStyle.bg, color: aqiStyle.color, border: `1px solid ${aqiStyle.border}` }}>
+            <div style={{ ...chipBase, background: aqiStyle.bg, color: aqiStyle.color, border: `1px solid ${aqiStyle.border}`, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconWind style={{ width: 11, height: 11, flexShrink: 0 }} />
               AQI {aqi.aqi} · {aqi.category}
             </div>
           )}
           {nearbyFires.length > 0 && (
-            <div style={{ ...chipBase, background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>
-              🔥 {nearbyFires[0].name} · {nearbyFires[0].mi}mi
+            <div style={{ ...chipBase, background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconFlame style={{ width: 11, height: 11, flexShrink: 0 }} />
+              {nearbyFires[0].name} · {nearbyFires[0].mi}mi
             </div>
           )}
           {activeTrip && (
-            <div style={chipBase}>🏕 {activeTrip.name}</div>
+            <div style={{ ...chipBase, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconTent style={{ width: 11, height: 11, flexShrink: 0 }} />
+              {activeTrip.name}
+            </div>
           )}
           {!location && !weather && !aqi && (
             <div style={{ ...chipBase, color: 'var(--text-tertiary)' }}>Acquiring context…</div>
