@@ -45,7 +45,13 @@ export default function GearRegistryPage({ onBack }) {
 
   const initialLoadDone = useRef(false)
 
-  useEffect(() => { loadItems() }, [])
+  useEffect(() => {
+    loadItems()
+    // Retry after sync completes — catches the case where useSyncOnLogin
+    // finishes populating IndexedDB after the initial mount render
+    const timer = setTimeout(loadItems, 2000)
+    return () => clearTimeout(timer)
+  }, [])
 
   const loadItems = async () => {
     const gear = await getGearItems()
