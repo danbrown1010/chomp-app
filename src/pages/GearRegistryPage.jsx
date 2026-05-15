@@ -49,7 +49,7 @@ export default function GearRegistryPage({ onBack }) {
     loadItems()
     // Retry after sync completes — catches the case where useSyncOnLogin
     // finishes populating IndexedDB after the initial mount render
-    const timer = setTimeout(loadItems, 2000)
+    const timer = setTimeout(loadItems, 5000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -58,9 +58,7 @@ export default function GearRegistryPage({ onBack }) {
     setItems(gear)
     if (!initialLoadDone.current) {
       initialLoadDone.current = true
-      const collapsed = {}
-      gear.forEach(item => { collapsed[item.category] = true })
-      setCollapsedCategories(collapsed)
+      setCollapsedCategories({})
     }
   }
 

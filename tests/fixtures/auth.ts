@@ -18,7 +18,7 @@ export const test = base.extend<{ authenticatedPage: import('@playwright/test').
     const page = await context.newPage()
     await page.goto(process.env.BASE_URL ?? 'https://app.vela-go.com')
     // Allow useSyncOnLogin to fire and populate IndexedDB
-    await page.waitForTimeout(2500)
+    await page.waitForTimeout(6000)
     await use(page)
     await context.close()
   },

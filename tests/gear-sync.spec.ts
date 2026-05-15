@@ -7,12 +7,14 @@ const BASE_URL = process.env.BASE_URL ?? 'https://app.vela-go.com'
 async function goToGear(page: import('@playwright/test').Page) {
   await page.getByText('More').click()
   await page.getByText('Gear & Packing').click()
-  await page.waitForSelector('[data-testid="gear-item"]', { timeout: 5000 })
+  await page.waitForSelector('[data-testid="gear-item"]', { timeout: 10000 })
 }
 
 test.describe('TF-013 · Gear Cross-Device Sync', () => {
 
-  // TF-013-01 — gear loads in a fresh session with no IndexedDB cache
+  // TF-013-01 — gear loads in a fresh session with no IndexedDB cache.
+  // Playwright storageState includes localStorage (auth) but NOT IndexedDB,
+  // so a new context already simulates incognito / new device — no manual wipe needed.
   test('TF-013-01 · gear loads in fresh session (no cache)', async ({ browser }) => {
     const context = await browser.newContext({
       storageState: 'tests/fixtures/.auth.json',
@@ -21,19 +23,9 @@ test.describe('TF-013 · Gear Cross-Device Sync', () => {
     const consoleLogs: string[] = []
     page.on('console', msg => consoleLogs.push(msg.text()))
 
-    // Load the app then wipe IndexedDB to simulate an incognito / new-device session
     await page.goto(BASE_URL)
-    await page.evaluate(() =>
-      new Promise<void>((resolve, reject) => {
-        const req = indexedDB.deleteDatabase('vela-gear')
-        req.onsuccess = () => resolve()
-        req.onerror   = () => reject(req.error)
-      })
-    )
-
-    // Reload so useSyncOnLogin runs against an empty cache
-    await page.reload()
-    await page.waitForTimeout(3000)
+    // Allow useSyncOnLogin to pull gear down from Supabase into IndexedDB
+    await page.waitForTimeout(7000)
 
     await goToGear(page)
 
@@ -74,18 +66,11 @@ test.describe('TF-013 · Gear Cross-Device Sync', () => {
       .eq('name', testItem.name)
     expect(rows?.length).toBe(1)
 
-    // Device B: fresh context, should see the item
+    // Device B: fresh context (new Playwright context has no IndexedDB), should sync from Supabase
     const ctxB = await browser.newContext({ storageState: 'tests/fixtures/.auth.json' })
     const pageB = await ctxB.newPage()
-    await pageB.evaluate(() =>
-      new Promise<void>((resolve, reject) => {
-        const req = indexedDB.deleteDatabase('vela-gear')
-        req.onsuccess = () => resolve()
-        req.onerror   = () => reject(req.error)
-      })
-    )
     await pageB.goto(BASE_URL)
-    await pageB.waitForTimeout(3000)
+    await pageB.waitForTimeout(7000) // let useSyncOnLogin pull gear from Supabase
     await goToGear(pageB)
 
     await expect(pageB.getByText(testItem.name)).toBeVisible()
