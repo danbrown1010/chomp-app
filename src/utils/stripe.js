@@ -1,4 +1,4 @@
-const CHECKOUT_FN = 'https://wyznbarcxwjfjpnrvtpo.supabase.co/functions/v1/create-checkout-session'
+const CHECKOUT_FN = import.meta.env.VITE_SUPABASE_URL + '/functions/v1/create-checkout-session'
 
 export async function redirectToCheckout(priceId, userEmail, userId) {
   const res = await fetch(CHECKOUT_FN, {

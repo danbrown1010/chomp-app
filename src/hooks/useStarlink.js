@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react'
 
+// Dev proxy: run starlink-proxy/ locally. Leave VITE_STARLINK_PROXY unset in production to disable.
 const PROXY = import.meta.env.VITE_STARLINK_PROXY ?? 'http://localhost:3001'
+
+if (!import.meta.env.VITE_STARLINK_PROXY && import.meta.env.PROD) {
+  console.warn(
+    'VITE_STARLINK_PROXY not set — ' +
+    'Starlink monitoring unavailable ' +
+    'in production. Set this env var ' +
+    'to your proxy URL.'
+  )
+}
 
 export function useStarlink() {
   const [status, setStatus] = useState(null)
