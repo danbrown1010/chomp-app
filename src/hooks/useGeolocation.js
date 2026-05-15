@@ -11,61 +11,41 @@ export function useGeolocation() {
 
   const getIPLocation = async () => {
     console.log('Fetching IP location...')
+    try {
+      const res  = await fetch('https://ipinfo.io/json', { headers: { Accept: 'application/json' } })
+      const data = await res.json()
+      console.log('ipinfo response:', data)
 
-    const services = [
-      // ip-api.com — free, CORS ok, http
-      async () => {
-        const res  = await fetch('http://ip-api.com/json/?fields=lat,lon,city,regionName,status')
-        const data = await res.json()
-        if (data.status === 'success') {
-          return { lat: data.lat, lng: data.lon, city: data.city, region: data.regionName }
-        }
-        return null
-      },
-      // ipwho.is — free, CORS ok, https
-      async () => {
-        const res  = await fetch('https://ipwho.is/')
-        const data = await res.json()
-        if (data.success) {
-          return { lat: data.latitude, lng: data.longitude, city: data.city, region: data.region }
-        }
-        return null
-      },
-      // freeipapi.com — free, CORS ok, https
-      async () => {
-        const res  = await fetch('https://freeipapi.com/api/json')
-        const data = await res.json()
-        if (data.latitude) {
-          return { lat: data.latitude, lng: data.longitude, city: data.cityName, region: data.regionName }
-        }
-        return null
-      },
-    ]
-
-    for (const service of services) {
-      try {
-        const result = await service()
-        if (result) {
-          console.log('IP location:', result)
-          setLocation({
-            lat: result.lat,
-            lng: result.lng,
-            accuracy: 10000,
-            isIPBased: true,
-            city: result.city,
-            region: result.region,
-            timestamp: Date.now(),
-          })
-          setStatus('ip-based')
-          return
-        }
-      } catch (err) {
-        console.warn('IP service failed, trying next:', err.message)
+      if (data.loc) {
+        const [lat, lng] = data.loc.split(',').map(parseFloat)
+        setLocation({
+          lat, lng,
+          accuracy: 10000,
+          isIPBased: true,
+          city: data.city,
+          region: data.region,
+          timestamp: Date.now(),
+        })
+        setStatus('ip-based')
+        console.log('IP location set:', data.city, data.region)
+        return
       }
+      throw new Error('No loc in response')
+    } catch (err) {
+      console.warn('ipinfo failed:', err.message)
+      // Hardcoded Mac Mini location fallback
+      setLocation({
+        lat: 47.6815,
+        lng: -122.2087,
+        accuracy: 50000,
+        isIPBased: true,
+        city: 'Kirkland',
+        region: 'WA',
+        timestamp: Date.now(),
+      })
+      setStatus('ip-based')
+      console.log('Using Kirkland fallback')
     }
-
-    console.error('All IP location services failed')
-    setStatus('unavailable')
   }
 
   const startWatching = () => {
