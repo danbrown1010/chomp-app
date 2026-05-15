@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { AppProvider, useAppStore } from './store/index'
 import { useSyncOnLogin } from './hooks/useSyncOnLogin'
@@ -8,18 +8,19 @@ import { getPendingTripSaves, removePendingTripSave, getPendingTripDeletes, remo
 import { syncGearToSupabase, deleteGearFromSupabase, syncTripToSupabase, deleteTripFromSupabase } from './utils/syncManager'
 import BottomNav from './components/BottomNav'
 import HomePage from './pages/HomePage'
-import TripPage from './pages/TripPage'
-import SafetyPage from './pages/SafetyPage'
-import RigPage from './pages/RigPage'
-import MorePage from './pages/MorePage'
-import CreateTripPage from './pages/CreateTripPage'
-import EditTripPage from './pages/EditTripPage'
-import SettingsPage from './pages/SettingsPage'
-import SurvivalAgentPage from './pages/SurvivalAgentPage'
-import KnowledgeBasePage from './pages/KnowledgeBasePage'
-import MealPlanningPage from './pages/MealPlanningPage'
-import GearRegistryPage from './pages/GearRegistryPage'
 import AuthPage from './pages/AuthPage'
+
+const TripPage         = lazy(() => import('./pages/TripPage'))
+const SafetyPage       = lazy(() => import('./pages/SafetyPage'))
+const RigPage          = lazy(() => import('./pages/RigPage'))
+const MorePage         = lazy(() => import('./pages/MorePage'))
+const CreateTripPage   = lazy(() => import('./pages/CreateTripPage'))
+const EditTripPage     = lazy(() => import('./pages/EditTripPage'))
+const SettingsPage     = lazy(() => import('./pages/SettingsPage'))
+const SurvivalAgentPage = lazy(() => import('./pages/SurvivalAgentPage'))
+const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'))
+const MealPlanningPage = lazy(() => import('./pages/MealPlanningPage'))
+const GearRegistryPage = lazy(() => import('./pages/GearRegistryPage'))
 
 export default function App() {
   const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
@@ -153,6 +154,7 @@ function AppShell({ user }) {
           {toast}
         </div>
       )}
+      <Suspense fallback={null}>
       {showCreate ? (
         <CreateTripPage
           onClose={closeCreate}
@@ -177,6 +179,7 @@ function AppShell({ user }) {
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>
       )}
+      </Suspense>
     </div>
   )
 }

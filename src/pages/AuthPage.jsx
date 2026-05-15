@@ -47,9 +47,9 @@ export default function AuthPage({ onSignIn, notAllowed = false }) {
         gap: 20,
       }}>
         {/* VELA logo — absolute top-left */}
-        <div style={{ position: 'absolute', top: 44, left: 24, zIndex: 3, color: '#F0EDE4' }}>
+        <a href="https://www.vela-go.com" style={{ position: 'absolute', top: 44, left: 24, zIndex: 3, color: '#F0EDE4', textDecoration: 'none' }}>
           <VelaLogo size={36} transparent textShadow="0 1px 8px rgba(0,0,0,0.5)" />
-        </div>
+        </a>
 
         {/* Headline */}
         <div style={{

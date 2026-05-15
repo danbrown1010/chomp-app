@@ -21,6 +21,8 @@ export default defineConfig({
         description: 'Engineered for Independence. Your expedition companion for overlanding and off-grid adventure.',
         theme_color: '#1C2117',
         background_color: '#1C2117',
+        start_url: '/',
+        scope: '/',
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [
