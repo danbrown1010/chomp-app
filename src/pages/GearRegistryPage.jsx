@@ -333,7 +333,7 @@ export default function GearRegistryPage({ onBack }) {
                   {!collapsedCategories[category] && (
                     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
                       {catItems.map((item, i) => (
-                        <div key={item.id} style={{ padding: '10px 14px', borderBottom: i < catItems.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div key={item.id} data-testid="gear-item" style={{ padding: '10px 14px', borderBottom: i < catItems.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 8, height: 8, borderRadius: '50%', background: CONDITION_COLORS[item.condition], flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
