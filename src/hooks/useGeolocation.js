@@ -1,27 +1,40 @@
 import { useState, useEffect, useRef } from 'react'
 
+const MAX_RETRIES = 3
+
 export function useGeolocation() {
   const [location, setLocation] = useState(null)
   const [status, setStatus]     = useState('requesting')
-  const watchIdRef = useRef(null)
-  const retryRef   = useRef(null)
+  const watchIdRef     = useRef(null)
+  const retryRef       = useRef(null)
+  const retryCountRef  = useRef(0)
 
   const getIPLocation = async () => {
+    console.log('Fetching IP location...')
     try {
-      const res  = await fetch('https://ipapi.co/json/')
+      const res  = await fetch('https://ipwho.is/')
       const data = await res.json()
-      if (data.latitude) {
+      console.log('IP location data:', data)
+
+      if (data.latitude && data.longitude) {
         setLocation({
-          lat: data.latitude,
-          lng: data.longitude,
-          accuracy: 10000, // ~10 km
+          lat: parseFloat(data.latitude),
+          lng: parseFloat(data.longitude),
+          accuracy: 10000,
           isIPBased: true,
+          city: data.city,
+          region: data.region,
           timestamp: Date.now(),
         })
         setStatus('ip-based')
+        console.log('IP location set:', data.city, data.region)
+      } else {
+        console.warn('IP location returned no coordinates:', data)
+        setStatus('unavailable')
       }
     } catch (err) {
-      console.warn('IP location failed:', err)
+      console.error('IP location failed:', err)
+      setStatus('unavailable')
     }
   }
 
@@ -41,6 +54,7 @@ export function useGeolocation() {
           timestamp: pos.timestamp,
         })
         setStatus('locked')
+        retryCountRef.current = 0
         if (retryRef.current) {
           clearTimeout(retryRef.current)
           retryRef.current = null
@@ -48,18 +62,31 @@ export function useGeolocation() {
       },
       (err) => {
         console.warn('GPS error:', err.code, err.message)
+
         if (err.code === 1) {
-          // Permission denied — don't retry
+          // Permission denied — never retry
           setStatus('denied')
-        } else {
-          // Timeout or position unavailable — retry in 10s
+        } else if (err.code === 2) {
+          // Position unavailable (no GPS hardware) — retry up to MAX_RETRIES then IP
+          if (retryCountRef.current < MAX_RETRIES) {
+            retryCountRef.current++
+            console.log(`GPS retry ${retryCountRef.current}/${MAX_RETRIES}`)
+            setStatus('unavailable')
+            retryRef.current = setTimeout(() => {
+              if (watchIdRef.current) {
+                navigator.geolocation.clearWatch(watchIdRef.current)
+              }
+              startWatching()
+            }, 5000)
+          } else {
+            console.log('GPS unavailable after retries — using IP fallback')
+            setStatus('unavailable')
+            getIPLocation()
+          }
+        } else if (err.code === 3) {
+          // Timeout — go straight to IP fallback
           setStatus('unavailable')
-          retryRef.current = setTimeout(() => {
-            if (watchIdRef.current) {
-              navigator.geolocation.clearWatch(watchIdRef.current)
-            }
-            startWatching()
-          }, 10000)
+          getIPLocation()
         }
       },
       {
@@ -77,16 +104,6 @@ export function useGeolocation() {
       if (retryRef.current)   clearTimeout(retryRef.current)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // IP-based fallback if GPS doesn't lock within 5 seconds
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      if (status === 'unavailable' || status === 'requesting') {
-        getIPLocation()
-      }
-    }, 5000)
-    return () => clearTimeout(fallbackTimer)
-  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { location, status }
 }

@@ -128,9 +128,9 @@ const GPS_COLORS = {
 const GPS_LABELS = {
   locked:      (loc) => `GPS LOCKED · ±${Math.round(loc?.accuracy ?? 0)}M`,
   requesting:  () => 'GPS ACQUIRING...',
-  unavailable: () => 'GPS UNAVAILABLE · RETRYING',
+  unavailable: () => 'GPS UNAVAILABLE',
   denied:      () => 'GPS DENIED · CHECK PERMISSIONS',
-  'ip-based':  () => 'LOCATION · IP APPROXIMATE',
+  'ip-based':  (loc) => `${loc?.city ?? 'LOCATION'} · IP APPROXIMATE`,
 }
 
 function GpsStatus() {
