@@ -12,7 +12,7 @@ export function useGeolocation() {
   const getIPLocation = async () => {
     console.log('Fetching IP location...')
     try {
-      const res  = await fetch('https://ipinfo.io/json', { headers: { Accept: 'application/json' } })
+      const res  = await fetch(`https://ipinfo.io/json?token=${import.meta.env.VITE_IPINFO_TOKEN}`, { headers: { Accept: 'application/json' } })
       const data = await res.json()
       console.log('ipinfo response:', data)
 

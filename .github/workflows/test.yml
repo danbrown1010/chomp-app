@@ -25,6 +25,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          VITE_IPINFO_TOKEN: ${{ secrets.VITE_IPINFO_TOKEN }}
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
