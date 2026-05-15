@@ -1,5 +1,9 @@
 const CHECKOUT_FN = import.meta.env.VITE_SUPABASE_URL + '/functions/v1/create-checkout-session'
 
+const baseUrl = import.meta.env.DEV
+  ? 'http://localhost:5173'
+  : 'https://app.vela-go.com'
+
 export async function redirectToCheckout(priceId, userEmail, userId) {
   const res = await fetch(CHECKOUT_FN, {
     method: 'POST',
@@ -11,8 +15,8 @@ export async function redirectToCheckout(priceId, userEmail, userId) {
       priceId,
       userEmail,
       userId,
-      successUrl: `${window.location.origin}?upgraded=true`,
-      cancelUrl:  `${window.location.origin}?cancelled=true`,
+      successUrl: `${baseUrl}?upgraded=true`,
+      cancelUrl:  `${baseUrl}?cancelled=true`,
     }),
   })
 
