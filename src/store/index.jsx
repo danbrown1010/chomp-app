@@ -221,7 +221,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
 
   const refreshHomeData = useCallback(() => setDataBust(k => k + 1), [])
 
-  const { location, error: locationError, loading: locationLoading } = useGeolocation()
+  const { location, status: gpsStatus } = useGeolocation()
   const { weather, forecast: weatherForecast, loading: weatherLoading, error: weatherError } = useWeather(location?.lat, location?.lng, dataBust)
   const { aqi, loading: aqiLoading, error: aqiError } = useAirQuality(location?.lat, location?.lng, dataBust)
 
@@ -244,7 +244,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
       syncStatus, setSyncStatus,
       trips, activeTrip, setActiveTrip, createTrip, updateTrip, deleteTrip, setActiveTripById, deactivateTrip,
       accent, setAccent, theme, setTheme,
-      location, locationError, locationLoading,
+      location, gpsStatus,
       weather, weatherForecast, weatherLoading, weatherError,
       aqi, aqiLoading, aqiError,
       refreshHomeData,

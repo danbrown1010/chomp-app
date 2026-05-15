@@ -117,17 +117,31 @@ function WeatherCard() {
 
 // ─── GPS status ───────────────────────────────────────────────────────────────
 
+const GPS_COLORS = {
+  locked:      'var(--safe)',
+  requesting:  '#C4521A',
+  unavailable: '#C4521A',
+  denied:      'var(--danger, #8B2E2E)',
+  'ip-based':  '#6B7D5E',
+}
+
+const GPS_LABELS = {
+  locked:      (loc) => `GPS LOCKED · ±${Math.round(loc?.accuracy ?? 0)}M`,
+  requesting:  () => 'GPS ACQUIRING...',
+  unavailable: () => 'GPS UNAVAILABLE · RETRYING',
+  denied:      () => 'GPS DENIED · CHECK PERMISSIONS',
+  'ip-based':  () => 'LOCATION · IP APPROXIMATE',
+}
+
 function GpsStatus() {
-  const { location, locationError, locationLoading } = useAppStore()
-  let color, text
-  if (locationLoading)    { color = 'var(--text-tertiary)'; text = 'GPS ACQUIRING' }
-  else if (locationError) { color = 'var(--danger)';        text = 'GPS UNAVAILABLE' }
-  else if (location)      { color = 'var(--safe)';          text = 'GPS LOCKED' }
-  if (!color) return null
+  const { location, gpsStatus } = useAppStore()
+  const color = GPS_COLORS[gpsStatus] ?? 'var(--text-tertiary)'
+  const label = GPS_LABELS[gpsStatus]?.(location) ?? ''
+  const pulsing = gpsStatus !== 'locked'
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 11, color }}>
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
-      {text}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 11, fontFamily: 'var(--font-mono)', color, letterSpacing: '0.06em' }}>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0, animation: pulsing ? 'pulse 1.5s ease-in-out infinite' : 'none' }} />
+      {label}
     </div>
   )
 }
