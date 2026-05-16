@@ -342,7 +342,15 @@ export default function TravelDocsPage({ onBack }) {
                   <span>{new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
               </div>
-              {doc.is_sensitive && <IconLock />}
+              {(doc.is_secret || doc.is_sensitive) && (
+                <svg viewBox="0 0 24 24" fill="none"
+                  stroke={doc.is_secret ? 'var(--danger)' : 'var(--text-tertiary)'}
+                  strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ width: 12, height: 12, flexShrink: 0 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+              )}
               <IconChevron />
             </div>
           ))
@@ -367,6 +375,7 @@ function AddDocView({ onBack, onSave, user }) {
   const [tags, setTags]           = useState('')
   const [file, setFile]           = useState(null)
   const [useMarkdown, setUseMarkdown] = useState(false)
+  const [isSecret, setIsSecret] = useState(false)
   const [resDate, setResDate]           = useState('')
   const [resConfirmation, setResConfirmation] = useState('')
   const [resLocation, setResLocation]   = useState('')
@@ -421,6 +430,7 @@ function AddDocView({ onBack, onSave, user }) {
         extracted_text: extractedText,
         tags:           tags.split(',').map(t => t.trim()).filter(Boolean),
         is_sensitive:   true,
+        is_secret:      isSecret,
         metadata,
       })
       if (dbError) throw dbError
@@ -665,6 +675,34 @@ function AddDocView({ onBack, onSave, user }) {
             Stored in a private encrypted bucket. Only you can access these documents.
           </div>
         </div>
+
+        {/* Secret toggle */}
+        <div
+          onClick={() => setIsSecret(s => !s)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 12px', cursor: 'pointer',
+            background: isSecret ? 'color-mix(in srgb, var(--danger) 8%, transparent)' : 'transparent',
+            border: `1px solid ${isSecret ? 'color-mix(in srgb, var(--danger) 40%, transparent)' : 'var(--border)'}`,
+            borderRadius: 8,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke={isSecret ? 'var(--danger)' : 'var(--text-tertiary)'}
+              strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+              style={{ width: 14, height: 14, flexShrink: 0 }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: isSecret ? 'var(--danger)' : 'var(--text-primary)' }}>Secret</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>Hidden from Survival Agent and trip context</div>
+            </div>
+          </div>
+          <div style={{ width: 36, height: 20, borderRadius: 10, background: isSecret ? 'var(--danger)' : 'var(--border)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
+            <div style={{ position: 'absolute', top: 2, left: isSecret ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -673,11 +711,13 @@ function AddDocView({ onBack, onSave, user }) {
 // ─── Doc detail ────────────────────────────────────────────────────────────────
 
 function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
+  const { trips } = useAppStore()
   const [signedUrl, setSignedUrl]   = useState(null)
   const [loadingUrl, setLoadingUrl] = useState(false)
   const [editing, setEditing]       = useState(false)
   const [editTitle, setEditTitle]   = useState(doc.title)
   const [editContent, setEditContent] = useState(doc.content ?? '')
+  const [editIsSecret, setEditIsSecret] = useState(doc.is_secret ?? false)
   const [showMarkdown, setShowMarkdown] = useState(true)
   const [saving, setSaving]         = useState(false)
 
@@ -692,7 +732,7 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
 
   async function handleSave() {
     setSaving(true)
-    await onUpdate({ title: editTitle.trim(), content: editContent || null })
+    await onUpdate({ title: editTitle.trim(), content: editContent || null, is_secret: editIsSecret })
     setEditing(false)
     setSaving(false)
   }
@@ -724,6 +764,11 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {doc.title}
             </div>
+          )}
+          {doc.is_secret && (
+            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--danger)', background: 'color-mix(in srgb, var(--danger) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--danger) 40%, transparent)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.08em', display: 'inline-block', marginTop: 1 }}>
+              SECRET · OWNER ONLY
+            </span>
           )}
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 1, textTransform: 'capitalize' }}>
             {doc.category || doc.type} · {new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -855,6 +900,36 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
           </div>
         )}
 
+        {/* Secret toggle — edit mode */}
+        {editing && (
+          <div
+            onClick={() => setEditIsSecret(s => !s)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 12px', cursor: 'pointer', marginBottom: 0,
+              background: editIsSecret ? 'color-mix(in srgb, var(--danger) 8%, transparent)' : 'transparent',
+              border: `1px solid ${editIsSecret ? 'color-mix(in srgb, var(--danger) 40%, transparent)' : 'var(--border)'}`,
+              borderRadius: 8,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke={editIsSecret ? 'var(--danger)' : 'var(--text-tertiary)'}
+                strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                style={{ width: 14, height: 14, flexShrink: 0 }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: editIsSecret ? 'var(--danger)' : 'var(--text-primary)' }}>Secret</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>Hidden from Survival Agent and trip context</div>
+              </div>
+            </div>
+            <div style={{ width: 36, height: 20, borderRadius: 10, background: editIsSecret ? 'var(--danger)' : 'var(--border)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
+              <div style={{ position: 'absolute', top: 2, left: editIsSecret ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+            </div>
+          </div>
+        )}
+
         {/* Extracted text preview */}
         {doc.extracted_text && !editing && (
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
@@ -883,6 +958,41 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
           <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>{doc.file_name}</span>
             <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>{formatFileSize(doc.file_size)}</span>
+          </div>
+        )}
+
+        {/* Trip link */}
+        {!doc.is_secret && !editing && trips.length > 0 && (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Trip</div>
+            {doc.trip_id ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  {trips.find(t => t.id === doc.trip_id)?.name ?? 'Unknown trip'}
+                </div>
+                <button
+                  onClick={async () => { await onUpdate({ trip_id: null }) }}
+                  style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                >
+                  Detach
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 6 }}>Not linked to a trip</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 130, overflowY: 'auto' }}>
+                  {trips.map(trip => (
+                    <button
+                      key={trip.id}
+                      onClick={async () => { await onUpdate({ trip_id: trip.id }) }}
+                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 10px', fontSize: 12, color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-body)' }}
+                    >
+                      {trip.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

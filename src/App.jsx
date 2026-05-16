@@ -182,7 +182,7 @@ function AppShell({ user }) {
       ) : (
         <>
           <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} onEditTrip={openEdit} />}
+            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} onEditTrip={openEdit} onNavigateToDocs={() => { setActiveTab('more'); setMoreSubview('travel-docs') }} />}
             {activeTab === 'trip'   && <TripPage />}
             {activeTab === 'safety' && <SafetyPage />}
             {activeTab === 'rig'    && <RigPage />}

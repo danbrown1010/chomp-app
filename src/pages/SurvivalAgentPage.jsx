@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { supabase } from '../lib/supabase'
 import { useFireData } from '../hooks/useFireData'
 import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
@@ -67,6 +68,21 @@ function aqiColors(category) {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+function buildDocContext(docs) {
+  if (!docs.length) return null
+  const lines = docs.map(doc => {
+    const parts = [`[${doc.category || doc.type}] ${doc.title}`]
+    if (doc.type === 'reservation' && doc.metadata) {
+      if (doc.metadata.confirmation) parts.push(`  Confirmation: ${doc.metadata.confirmation}`)
+      if (doc.metadata.date) parts.push(`  Date: ${doc.metadata.date}`)
+      if (doc.metadata.location) parts.push(`  Location: ${doc.metadata.location}`)
+    }
+    if (doc.content) parts.push(`  Notes: ${doc.content.slice(0, 200)}`)
+    return parts.join('\n')
+  })
+  return `Travel documents on file:\n${lines.join('\n\n')}`
+}
+
 const SUGGESTIONS = [
   "Water source looks questionable — how do I treat it?",
   "Signs of altitude sickness in my group",
@@ -92,11 +108,23 @@ export default function SurvivalAgentPage({ onBack }) {
   const [loading, setLoading]         = useState(false)
   const [gearSummary, setGearSummary] = useState(null)
   const [apiKey, setApiKey]           = useState(null)
+  const [docContext, setDocContext]    = useState([])
   const messagesEndRef = useRef(null)
   const inputRef       = useRef(null)
 
   useEffect(() => { getGearSummary().then(setGearSummary) }, [])
   useEffect(() => { getAnthropicKey(user?.id).then(setApiKey) }, [user?.id])
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('travel_documents')
+      .select('title, type, category, content, metadata, tags')
+      .eq('user_id', user.id)
+      .eq('is_secret', false)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => setDocContext(data ?? []))
+  }, [user?.id])
 
   const hasUserMessage = messages.some(m => m.role === 'user')
 
@@ -145,6 +173,8 @@ Current situational context:`,
       parts.push(gearSummary)
     else
       parts.push('Equipment: No gear registry configured yet.')
+    const docCtx = buildDocContext(docContext)
+    if (docCtx) parts.push(docCtx)
     parts.push(`Expertise areas:
 - Vehicle recovery (winching, traction boards, high-lift jack, kinetic rope)
 - Navigation and route-finding
@@ -283,6 +313,15 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
             <div style={{ ...chipBase, display: 'flex', alignItems: 'center', gap: 4 }}>
               <IconTent style={{ width: 11, height: 11, flexShrink: 0 }} />
               {activeTrip.name}
+            </div>
+          )}
+          {docContext.length > 0 && (
+            <div style={{ ...chipBase, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"
+                strokeLinecap="round" strokeLinejoin="round" style={{ width: 11, height: 11, flexShrink: 0 }}>
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+              {docContext.length} doc{docContext.length !== 1 ? 's' : ''}
             </div>
           )}
           {!location && !weather && !aqi && (

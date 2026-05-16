@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { useTripPhase } from '../hooks/useTripPhase'
 import { useAppStore } from '../store/index'
 import { getGearItems } from '../utils/gearStorage'
@@ -10,12 +11,12 @@ import { TypeBadge } from '../components/TripTypeIcons'
 import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind, IconPlus, IconEdit, IconTrash, IconCheck, IconChevronRight } from '../components/icons'
 import { CrewWatchModal } from '../components/CrewWatchModal'
 
-export default function HomePage({ onPlanTrip, onEditTrip }) {
+export default function HomePage({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   const tripPhase = useTripPhase()
   if (tripPhase.phase === 'pre-trip')  return <PreTripHome  {...tripPhase} onEditTrip={onEditTrip} />
   if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} onEditTrip={onEditTrip} />
   if (tripPhase.phase === 'post-trip') return <PostTripHome {...tripPhase} onEditTrip={onEditTrip} />
-  return <IdleHome onPlanTrip={onPlanTrip} onEditTrip={onEditTrip} />
+  return <IdleHome onPlanTrip={onPlanTrip} onEditTrip={onEditTrip} onNavigateToDocs={onNavigateToDocs} />
 }
 
 // ─── Pull-to-refresh ──────────────────────────────────────────────────────────
@@ -149,11 +150,24 @@ function GpsStatus() {
 
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
-function IdleHome({ onPlanTrip, onEditTrip }) {
+function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip, publishTrip, unpublishTrip } = useAppStore()
   const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
   const [watchTrip, setWatchTrip] = useState(null)
+  const [tripDocs, setTripDocs] = useState([])
+
+  useEffect(() => {
+    if (!activeTrip || !user) { setTripDocs([]); return }
+    supabase
+      .from('travel_documents')
+      .select('id, title, type, category')
+      .eq('user_id', user.id)
+      .eq('trip_id', activeTrip.id)
+      .eq('is_secret', false)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setTripDocs(data ?? []))
+  }, [activeTrip?.id, user?.id])
 
   const now = new Date()
 
@@ -264,6 +278,34 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
                   {activeTrip.is_published ? 'Stop' : 'Broadcast'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTrip && tripDocs.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+              Trip Documents
+            </div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+              {tripDocs.map((doc, i) => (
+                <button
+                  key={doc.id}
+                  onClick={onNavigateToDocs}
+                  className="w-full text-left active:opacity-70 transition-opacity"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < tripDocs.length - 1 ? '1px solid var(--border)' : 'none' }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.75"
+                    strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, flexShrink: 0 }}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', textTransform: 'capitalize' }}>{doc.category || doc.type}</div>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         )}
