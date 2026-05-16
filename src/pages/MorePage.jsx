@@ -1,5 +1,6 @@
 import { StatusBadge } from '../components/StatusBadge'
 import { useAppStore } from '../store/index'
+
 import { UserAvatar } from '../components/UserAvatar'
 import {
   IconPeople, IconPaw, IconShield, IconBook,
@@ -7,13 +8,6 @@ import {
   IconBell, IconFolder, IconWifi, IconCog,
   IconSignal, IconChevronRight,
 } from '../components/icons'
-
-const CONNECTED = [
-  { id: 'onx',      title: 'OnX Offroad', sub: 'Maps & route planning'   },
-  { id: 'gaia',     title: 'Gaia GPS',    sub: 'Topo + satellite layers'  },
-  { id: 'ecoflow',  title: 'EcoFlow',     sub: 'Power station telemetry'  },
-  { id: 'starlink', title: 'Starlink',    sub: 'Satellite internet'       },
-]
 
 const SECTIONS = [
   {
@@ -101,22 +95,6 @@ export default function MorePage({ onNavigate }) {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, letterSpacing: '0.04em' }}>PRIMARY RIG · URSA MINOR</p>
             </div>
             <StatusBadge status="safe" label="READY" dot={false} />
-          </div>
-        </div>
-
-        {/* Connected services */}
-        <div>
-          <SectionLabel>Connected</SectionLabel>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-            {CONNECTED.map((s, i) => (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i < CONNECTED.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{s.title}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{s.sub}</p>
-                </div>
-                <StatusBadge status="linked" label="LINKED" dot={false} />
-              </div>
-            ))}
           </div>
         </div>
 

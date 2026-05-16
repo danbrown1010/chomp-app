@@ -4,6 +4,14 @@ import { useAppStore } from '../store/index'
 import { saveAnthropicKey, clearAnthropicKey, hasAnthropicKey } from '../utils/secretsManager'
 import { UserAvatar } from '../components/UserAvatar'
 import { getFirstName } from '../utils/userHelpers'
+import { StatusBadge } from '../components/StatusBadge'
+
+const CONNECTED_APPS = [
+  { id: 'onx',      title: 'OnX Offroad', sub: 'Maps & route planning'  },
+  { id: 'gaia',     title: 'Gaia GPS',    sub: 'Topo + satellite layers' },
+  { id: 'ecoflow',  title: 'EcoFlow',     sub: 'Power station telemetry' },
+  { id: 'starlink', title: 'Starlink',    sub: 'Satellite internet'      },
+]
 
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -241,7 +249,18 @@ export default function SettingsPage({ onBack }) {
           <AccountRow label="Vehicle profiles"  value="2014 Jeep JKU — Chomp" />
           <AccountRow label="Household"         value={`${getFirstName(profile, user, 'You')} + Emily`} />
           <AccountRow label="Subscription"      value={profile?.plan === 'pro' ? 'Pro' : 'Free'} valueColor={profile?.plan === 'pro' ? 'var(--accent)' : undefined} />
-          <AccountRow label="Connected apps"    value="OnX, Gaia GPS" />
+          <div style={{ borderTop: '1px solid var(--border)' }}>
+            <div style={{ padding: '10px 16px 4px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Connected apps</div>
+            {CONNECTED_APPS.map(app => (
+              <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{app.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>{app.sub}</div>
+                </div>
+                <StatusBadge status="linked" label="LINKED" dot={false} />
+              </div>
+            ))}
+          </div>
           {isPro && (
             <button
               className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
