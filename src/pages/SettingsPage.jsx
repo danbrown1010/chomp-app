@@ -28,6 +28,9 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
+  const [subPage, setSubPage] = useState(null)
+  if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} />
+
   const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled } = useAppStore()
 
   const [keySet, setKeySet]           = useState(() => !!localStorage.getItem('vela-anthropic-key'))
@@ -249,18 +252,7 @@ export default function SettingsPage({ onBack }) {
           <AccountRow label="Vehicle profiles"  value="2014 Jeep JKU — Chomp" />
           <AccountRow label="Household"         value={`${getFirstName(profile, user, 'You')} + Emily`} />
           <AccountRow label="Subscription"      value={profile?.plan === 'pro' ? 'Pro' : 'Free'} valueColor={profile?.plan === 'pro' ? 'var(--accent)' : undefined} />
-          <div style={{ borderTop: '1px solid var(--border)' }}>
-            <div style={{ padding: '10px 16px 4px', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Connected apps</div>
-            {CONNECTED_APPS.map(app => (
-              <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderTop: '1px solid var(--border)' }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{app.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>{app.sub}</div>
-                </div>
-                <StatusBadge status="linked" label="LINKED" dot={false} />
-              </div>
-            ))}
-          </div>
+          <AccountRow label="Connected apps" value="OnX, Gaia GPS" onTap={() => setSubPage('connectedApps')} />
           {isPro && (
             <button
               className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
@@ -450,15 +442,49 @@ function ToggleRow({ label, sub, on, onToggle }) {
   )
 }
 
-function AccountRow({ label, value, valueColor }) {
+function AccountRow({ label, value, valueColor, onTap }) {
   return (
-    <button className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity">
+    <button onClick={onTap} className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity">
       <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-sm" style={{ color: valueColor || 'var(--text-secondary)' }}>{value}</span>
         <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
       </div>
     </button>
+  )
+}
+
+// ─── Connected Apps sub-page ──────────────────────────────────────────────────
+
+function ConnectedAppsPage({ onBack }) {
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={onBack}
+            style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', flexShrink: 0 }}
+          >
+            <IconChevronLeft style={{ width: 16, height: 16, color: 'var(--text-primary)' }} />
+          </button>
+          <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Connected Apps</h1>
+        </div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+          {CONNECTED_APPS.map((app, i) => (
+            <div
+              key={app.id}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: i < CONNECTED_APPS.length - 1 ? '1px solid var(--border)' : 'none' }}
+            >
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{app.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>{app.sub}</div>
+              </div>
+              <StatusBadge status="linked" label="LINKED" dot={false} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
