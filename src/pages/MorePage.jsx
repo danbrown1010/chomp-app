@@ -5,7 +5,7 @@ import { useAppStore } from '../store/index'
 import { UserAvatar } from '../components/UserAvatar'
 import {
   IconPeople, IconPaw, IconShield, IconBook,
-  IconCalendar, IconStar, IconBackpack, IconUtensils,
+  IconStar, IconBackpack, IconUtensils,
   IconBell, IconFolder, IconWifi, IconCog,
   IconSignal, IconChevronRight,
 } from '../components/icons'
@@ -14,9 +14,8 @@ const SECTIONS = [
   {
     label: 'Expedition',
     items: [
-      { id: 'crew',         title: 'My Crew',      sub: 'Invite copilots and observers', Icon: IconPeople   },
-      { id: 'reservations', title: 'Reservations', sub: 'Camps, hotels, Airbnb',         Icon: IconCalendar },
-      { id: 'badges',       title: 'Badges',       sub: 'Your trail record',             Icon: IconStar     },
+      { id: 'crew',   title: 'My Crew', sub: 'Invite copilots and observers', Icon: IconPeople },
+      { id: 'badges', title: 'Badges',  sub: 'Your trail record',             Icon: IconStar   },
     ],
   },
   {
@@ -30,17 +29,17 @@ const SECTIONS = [
   {
     label: 'Gear & Prep',
     items: [
-      { id: 'gear',  title: 'Gear & Packing', sub: 'Checklists, fish & game', Icon: IconBackpack },
-      { id: 'meals', title: 'Meal Planning',  sub: 'AI off-grid meals',       Icon: IconUtensils },
-      { id: 'pets',  title: 'Pets',           sub: 'Care, food, vets',        Icon: IconPaw      },
+      { id: 'travel-docs', title: 'Travel Documents', sub: 'Permits · reservations · insurance', Icon: IconFolder   },
+      { id: 'gear',        title: 'Gear & Packing',   sub: 'Checklists, fish & game',            Icon: IconBackpack },
+      { id: 'meals',       title: 'Meal Planning',    sub: 'AI off-grid meals',                  Icon: IconUtensils },
+      { id: 'pets',        title: 'Pets',             sub: 'Care, food, vets',                   Icon: IconPaw      },
     ],
   },
   {
     label: 'Admin',
     items: [
-      { id: 'docs',     title: 'Travel Documents', sub: 'Insurance, permits',        Icon: IconFolder },
-      { id: 'comms',    title: 'Comms & Network',  sub: 'Starlink, hotspots, radio', Icon: IconWifi   },
-      { id: 'settings', title: 'Settings',         sub: 'Appearance, account',       Icon: IconCog    },
+      { id: 'comms',    title: 'Comms & Network', sub: 'Starlink, hotspots, radio', Icon: IconWifi },
+      { id: 'settings', title: 'Settings',        sub: 'Appearance, account',       Icon: IconCog  },
     ],
   },
 ]

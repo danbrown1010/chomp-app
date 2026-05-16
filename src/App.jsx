@@ -24,6 +24,7 @@ const MealPlanningPage = lazy(() => import('./pages/MealPlanningPage'))
 const GearRegistryPage = lazy(() => import('./pages/GearRegistryPage'))
 const CrewPage         = lazy(() => import('./pages/CrewPage'))
 const PetsPage         = lazy(() => import('./pages/PetsPage'))
+const TravelDocsPage   = lazy(() => import('./pages/TravelDocsPage'))
 
 export default function App() {
   const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
@@ -192,8 +193,9 @@ function AppShell({ user }) {
             {activeTab === 'more'   && moreSubview === 'knowledge' && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'meals'     && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'gear'      && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'crew'      && <CrewPage          onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'pets'      && <PetsPage          onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'crew'        && <CrewPage          onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'pets'        && <PetsPage          onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'travel-docs' && <TravelDocsPage    onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>
