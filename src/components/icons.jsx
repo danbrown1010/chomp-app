@@ -1,14 +1,61 @@
-import {
-  PawPrint, Mountain, Route, Shield, Truck, MoreHorizontal,
-  Tent, Clock, Flame, ChefHat, Beef, Package, Zap, Snowflake,
-  Wrench, Lock, Battery, Check, PenLine, X, Plus, Upload, Download,
-  ShieldCheck, BookOpen, Sun, Cloud, CloudSun, CloudRain, CloudSnow,
-  Wind, Thermometer, Droplets, MapPin, Users,
-  Calendar, Star, Backpack, Utensils, Bell, Folder, Wifi, Settings2,
-  ChevronRight, ChevronLeft, ChevronDown,
-  ArrowLeft, Trash2, AlertTriangle, Search, Send, ExternalLink,
-  RefreshCw, FileText, PlugZap, Usb, Car, Camera,
-} from 'lucide-react'
+import PawPrint      from 'lucide-react/dist/esm/icons/paw-print.mjs'
+import Mountain      from 'lucide-react/dist/esm/icons/mountain.mjs'
+import Route         from 'lucide-react/dist/esm/icons/route.mjs'
+import Shield        from 'lucide-react/dist/esm/icons/shield.mjs'
+import Truck         from 'lucide-react/dist/esm/icons/truck.mjs'
+import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal.mjs'
+import Tent          from 'lucide-react/dist/esm/icons/tent.mjs'
+import Clock         from 'lucide-react/dist/esm/icons/clock.mjs'
+import Flame         from 'lucide-react/dist/esm/icons/flame.mjs'
+import ChefHat       from 'lucide-react/dist/esm/icons/chef-hat.mjs'
+import Beef          from 'lucide-react/dist/esm/icons/beef.mjs'
+import Package       from 'lucide-react/dist/esm/icons/package.mjs'
+import Zap           from 'lucide-react/dist/esm/icons/zap.mjs'
+import Snowflake     from 'lucide-react/dist/esm/icons/snowflake.mjs'
+import Wrench        from 'lucide-react/dist/esm/icons/wrench.mjs'
+import Lock          from 'lucide-react/dist/esm/icons/lock.mjs'
+import Battery       from 'lucide-react/dist/esm/icons/battery.mjs'
+import Check         from 'lucide-react/dist/esm/icons/check.mjs'
+import PenLine       from 'lucide-react/dist/esm/icons/pen-line.mjs'
+import X             from 'lucide-react/dist/esm/icons/x.mjs'
+import Plus          from 'lucide-react/dist/esm/icons/plus.mjs'
+import Upload        from 'lucide-react/dist/esm/icons/upload.mjs'
+import Download      from 'lucide-react/dist/esm/icons/download.mjs'
+import ShieldCheck   from 'lucide-react/dist/esm/icons/shield-check.mjs'
+import BookOpen      from 'lucide-react/dist/esm/icons/book-open.mjs'
+import Sun           from 'lucide-react/dist/esm/icons/sun.mjs'
+import Cloud         from 'lucide-react/dist/esm/icons/cloud.mjs'
+import CloudSun      from 'lucide-react/dist/esm/icons/cloud-sun.mjs'
+import CloudRain     from 'lucide-react/dist/esm/icons/cloud-rain.mjs'
+import CloudSnow     from 'lucide-react/dist/esm/icons/cloud-snow.mjs'
+import Wind          from 'lucide-react/dist/esm/icons/wind.mjs'
+import Thermometer   from 'lucide-react/dist/esm/icons/thermometer.mjs'
+import Droplets      from 'lucide-react/dist/esm/icons/droplets.mjs'
+import MapPin        from 'lucide-react/dist/esm/icons/map-pin.mjs'
+import Users         from 'lucide-react/dist/esm/icons/users.mjs'
+import Calendar      from 'lucide-react/dist/esm/icons/calendar.mjs'
+import Star          from 'lucide-react/dist/esm/icons/star.mjs'
+import Backpack      from 'lucide-react/dist/esm/icons/backpack.mjs'
+import Utensils      from 'lucide-react/dist/esm/icons/utensils.mjs'
+import Bell          from 'lucide-react/dist/esm/icons/bell.mjs'
+import Folder        from 'lucide-react/dist/esm/icons/folder.mjs'
+import Wifi          from 'lucide-react/dist/esm/icons/wifi.mjs'
+import Settings2     from 'lucide-react/dist/esm/icons/settings-2.mjs'
+import ChevronRight  from 'lucide-react/dist/esm/icons/chevron-right.mjs'
+import ChevronLeft   from 'lucide-react/dist/esm/icons/chevron-left.mjs'
+import ChevronDown   from 'lucide-react/dist/esm/icons/chevron-down.mjs'
+import ArrowLeft     from 'lucide-react/dist/esm/icons/arrow-left.mjs'
+import Trash2        from 'lucide-react/dist/esm/icons/trash-2.mjs'
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle.mjs'
+import Search        from 'lucide-react/dist/esm/icons/search.mjs'
+import Send          from 'lucide-react/dist/esm/icons/send.mjs'
+import ExternalLink  from 'lucide-react/dist/esm/icons/external-link.mjs'
+import RefreshCw     from 'lucide-react/dist/esm/icons/refresh-cw.mjs'
+import FileText      from 'lucide-react/dist/esm/icons/file-text.mjs'
+import PlugZap       from 'lucide-react/dist/esm/icons/plug-zap.mjs'
+import Usb           from 'lucide-react/dist/esm/icons/usb.mjs'
+import Car           from 'lucide-react/dist/esm/icons/car.mjs'
+import Camera        from 'lucide-react/dist/esm/icons/camera.mjs'
 
 const W = 1.75
 

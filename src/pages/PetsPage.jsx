@@ -3,7 +3,11 @@ import { useAppStore } from '../store/index'
 import { getAnthropicKey } from '../utils/secretsManager'
 import { supabase } from '../lib/supabase'
 import { uploadPetPhoto } from '../utils/petPhotoUpload'
-import { Dog, Cat, Bird, Rabbit, PawPrint } from 'lucide-react'
+import Dog      from 'lucide-react/dist/esm/icons/dog.mjs'
+import Cat      from 'lucide-react/dist/esm/icons/cat.mjs'
+import Bird     from 'lucide-react/dist/esm/icons/bird.mjs'
+import Rabbit   from 'lucide-react/dist/esm/icons/rabbit.mjs'
+import PawPrint from 'lucide-react/dist/esm/icons/paw-print.mjs'
 import { IconArrowLeft, IconSend, IconCamera, IconPlus } from '../components/icons'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
