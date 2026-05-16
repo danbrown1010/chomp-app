@@ -109,21 +109,30 @@ export default function SurvivalAgentPage({ onBack }) {
   const [gearSummary, setGearSummary] = useState(null)
   const [apiKey, setApiKey]           = useState(null)
   const [docContext, setDocContext]    = useState([])
+  const [docsLoaded, setDocsLoaded]   = useState(false)
+  const docContextRef                 = useRef([])
   const messagesEndRef = useRef(null)
   const inputRef       = useRef(null)
 
   useEffect(() => { getGearSummary().then(setGearSummary) }, [])
   useEffect(() => { getAnthropicKey(user?.id).then(setApiKey) }, [user?.id])
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id) { setDocsLoaded(true); return }
     supabase
       .from('travel_documents')
-      .select('title, type, category, content, metadata, tags')
+      .select('id, title, type, category, content, tags, metadata, extracted_text')
       .eq('user_id', user.id)
       .eq('is_secret', false)
       .order('created_at', { ascending: false })
       .limit(20)
-      .then(({ data }) => setDocContext(data ?? []))
+      .then(({ data, error }) => {
+        if (error) console.warn('[SurvivalAgent] Doc context load failed:', error)
+        const docs = data ?? []
+        console.log('[SurvivalAgent] Doc context loaded:', docs.length, docs)
+        docContextRef.current = docs
+        setDocContext(docs)
+        setDocsLoaded(true)
+      })
   }, [user?.id])
 
   const hasUserMessage = messages.some(m => m.role === 'user')
@@ -173,7 +182,8 @@ Current situational context:`,
       parts.push(gearSummary)
     else
       parts.push('Equipment: No gear registry configured yet.')
-    const docCtx = buildDocContext(docContext)
+    const docCtx = buildDocContext(docContextRef.current)
+    console.log('[SurvivalAgent] System prompt doc section:', docCtx)
     if (docCtx) parts.push(docCtx)
     parts.push(`Expertise areas:
 - Vehicle recovery (winching, traction boards, high-lift jack, kinetic rope)
@@ -196,7 +206,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
 
   const sendMessage = async (override) => {
     const content = (override ?? input).trim()
-    if (!content || loading) return
+    if (!content || loading || !docsLoaded) return
 
     if (!apiKey) {
       setMessages(prev => [...prev, {
@@ -372,7 +382,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
       </div>
 
       {/* ─── Suggestions ────────────────────────────────────────────────── */}
-      {!hasUserMessage && (
+      {!hasUserMessage && docsLoaded && (
         <div style={{
           display: 'flex', gap: 8, padding: '6px 16px 8px',
           overflowX: 'auto', scrollbarWidth: 'none',
@@ -403,23 +413,25 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          placeholder="Ask anything..."
+          placeholder={docsLoaded ? 'Ask anything...' : 'Loading context…'}
+          disabled={!docsLoaded}
           style={{
             flex: 1, background: 'var(--bg-card)',
             border: '1px solid var(--border)', borderRadius: 20,
             padding: '10px 16px', color: 'var(--text-primary)',
             fontFamily: 'var(--font-body)', fontSize: 14, outline: 'none',
+            opacity: docsLoaded ? 1 : 0.5,
           }}
         />
         <button
           onClick={() => sendMessage()}
-          disabled={!input.trim() || loading}
+          disabled={!input.trim() || loading || !docsLoaded}
           style={{
             width: 40, height: 40, borderRadius: '50%',
-            background: input.trim() && !loading ? 'var(--accent)' : 'var(--bg-card)',
+            background: input.trim() && !loading && docsLoaded ? 'var(--accent)' : 'var(--bg-card)',
             border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: input.trim() && !loading ? 'pointer' : 'default',
+            cursor: input.trim() && !loading && docsLoaded ? 'pointer' : 'default',
             flexShrink: 0, transition: 'background 0.15s',
           }}
         >
