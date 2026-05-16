@@ -20,19 +20,19 @@ const SECTIONS = [
     ],
   },
   {
-    label: 'Gear & Prep',
-    items: [
-      { id: 'gear',  title: 'Gear & Packing', sub: 'Checklists, fish & game', Icon: IconBackpack },
-      { id: 'meals', title: 'Meal Planning',  sub: 'AI off-grid meals',       Icon: IconUtensils },
-      { id: 'pets',  title: 'Pets',           sub: 'Care, food, vets',        Icon: IconPaw      },
-    ],
-  },
-  {
     label: 'Intelligence',
     items: [
       { id: 'survival',  title: 'Survival Agent', sub: 'AI wilderness expert', Icon: IconShield, pro: true },
       { id: 'knowledge', title: 'Knowledge Base', sub: 'Manuals, RAG search',  Icon: IconBook,   pro: true },
       { id: 'campbot',   title: 'Campsite Bot',   sub: 'Availability alerts',  Icon: IconBell,   pro: true },
+    ],
+  },
+  {
+    label: 'Gear & Prep',
+    items: [
+      { id: 'gear',  title: 'Gear & Packing', sub: 'Checklists, fish & game', Icon: IconBackpack },
+      { id: 'meals', title: 'Meal Planning',  sub: 'AI off-grid meals',       Icon: IconUtensils },
+      { id: 'pets',  title: 'Pets',           sub: 'Care, food, vets',        Icon: IconPaw      },
     ],
   },
   {
