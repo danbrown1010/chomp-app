@@ -4,8 +4,9 @@ import { useAppStore } from '../store/index'
 
 export function usePositionBroadcast() {
   const { location, activeTrip, user } = useAppStore()
-  const intervalRef     = useRef(null)
-  const lastLocationRef = useRef(null)
+  const intervalRef      = useRef(null)
+  const lastLocationRef  = useRef(null)
+  const wasPublishedRef  = useRef(false)
 
   const getUpdateInterval = () => {
     const freq = localStorage.getItem('vela-position-frequency') ?? 'standard'
@@ -39,7 +40,16 @@ export function usePositionBroadcast() {
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
-    if (!activeTrip?.is_published) return
+    if (!activeTrip?.is_published) {
+      wasPublishedRef.current = false
+      return
+    }
+
+    // Reset movement threshold whenever broadcast (re)starts so position sends immediately
+    if (!wasPublishedRef.current) {
+      lastLocationRef.current = null
+    }
+    wasPublishedRef.current = true
 
     broadcastPosition()
     intervalRef.current = setInterval(broadcastPosition, getUpdateInterval())
