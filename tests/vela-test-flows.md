@@ -251,6 +251,118 @@ pending saves are cleared after a successful flush in `useSyncOnLogin`
 
 ---
 
+---
+
+## TF-014 · Travel Documents
+
+### TF-014-01 · Add text note
+1. More → Travel Documents → + Add
+2. Select "Text note"
+3. Title: "Gate code — FR 500"
+4. Category: Note
+5. Content: "Gate code: 1234*"
+6. Toggle Markdown ON
+7. Add tags: "methow, 2026"
+8. Tap Save
+9. Verify doc appears in list
+10. Verify lock icon visible
+11. Tap doc → verify content renders
+12. Tap RAW → verify raw text shows
+13. Verify tags appear as pills
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-02 · Add reservation
+1. + Add → Reservation
+2. Title: "Harts Pass — Night 2"
+3. Confirmation: "NRRS-12345678"
+4. Date: select a future date
+5. Location: "Harts Pass, Site 7"
+6. Notes: "No hookups, pit toilet"
+7. Save
+8. Verify reservation card shows confirmation number prominently
+9. Verify date and location show
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-03 · Add PDF
+1. + Add → PDF document
+2. Upload a small PDF
+3. Title auto-fills from filename
+4. Save
+5. Verify PDF preview loads in iframe
+6. Verify "Open in new tab" link works
+7. Verify file size shows in list
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-04 · Search
+1. Add 3 documents with different content
+2. Type in search bar
+3. Verify only matching docs show
+4. Search content inside a text note
+5. Verify it matches text content
+6. Clear search → all docs return
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-05 · Type filters
+1. Add one of each type
+2. Tap PDF filter → only PDFs show
+3. Tap Image → only images show
+4. Tap Reservation → only reservations
+5. Tap All → everything returns
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-06 · Delete document
+1. Tap a document
+2. Tap Delete
+3. Confirm dialog appears
+4. Confirm deletion
+5. Verify removed from list
+6. Verify file removed from Supabase Storage bucket
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
+### TF-014-07 · Security — private bucket
+1. Open Supabase Storage → travel-docs
+2. Find an uploaded file
+3. Copy the storage path
+4. Try to access it directly via URL
+5. Verify access is denied (403)
+6. Only signed URLs work
+
+**Pass / Fail:** ___
+
+**Notes / observations:**
+
+---
+
 ## Regression Checklist
 
 Run before each production deploy:
