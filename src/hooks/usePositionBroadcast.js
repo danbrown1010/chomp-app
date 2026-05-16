@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAppStore } from '../store/index'
 
 export function usePositionBroadcast() {
-  const { location, activeTrip, user } = useAppStore()
+  const { location, activeTrip, user, ecoflowSoc } = useAppStore()
   const intervalRef      = useRef(null)
   const lastLocationRef  = useRef(null)
   const wasPublishedRef  = useRef(false)
@@ -27,12 +27,13 @@ export function usePositionBroadcast() {
     const { error } = await supabase
       .from('trip_positions')
       .upsert({
-        trip_id:     activeTrip.id,
-        user_id:     user.id,
-        lat:         location.lat,
-        lng:         location.lng,
-        accuracy:    location.accuracy,
-        recorded_at: new Date().toISOString(),
+        trip_id:      activeTrip.id,
+        user_id:      user.id,
+        lat:          location.lat,
+        lng:          location.lng,
+        accuracy:     location.accuracy,
+        ecoflow_soc:  ecoflowSoc,
+        recorded_at:  new Date().toISOString(),
       }, { onConflict: 'trip_id,user_id' })
 
     if (error) console.error('Position broadcast error:', error)
