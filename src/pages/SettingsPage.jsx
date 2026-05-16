@@ -27,9 +27,9 @@ const ACCENTS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage({ onBack }) {
+export default function SettingsPage({ onBack, onNavigateTab }) {
   const [subPage, setSubPage] = useState(null)
-  if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} />
+  if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} onNavigateTab={onNavigateTab} />
 
   const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled } = useAppStore()
 
@@ -456,7 +456,18 @@ function AccountRow({ label, value, valueColor, onTap }) {
 
 // ─── Connected Apps sub-page ──────────────────────────────────────────────────
 
-function ConnectedAppsPage({ onBack }) {
+const STARLINK_PROXY = import.meta.env.VITE_STARLINK_PROXY ?? null
+
+function ConnectedAppsPage({ onBack, onNavigateTab }) {
+  const [starlinkSheet, setStarlinkSheet] = useState(false)
+
+  const handleTap = (id) => {
+    if (id === 'onx')      window.open('https://www.onxmaps.com/offroad/app', '_blank')
+    if (id === 'gaia')     window.open('https://www.gaiagps.com', '_blank')
+    if (id === 'ecoflow')  onNavigateTab?.('rig')
+    if (id === 'starlink') setStarlinkSheet(true)
+  }
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
@@ -469,21 +480,83 @@ function ConnectedAppsPage({ onBack }) {
           </button>
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Connected Apps</h1>
         </div>
+
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
           {CONNECTED_APPS.map((app, i) => (
-            <div
+            <button
               key={app.id}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: i < CONNECTED_APPS.length - 1 ? '1px solid var(--border)' : 'none' }}
+              onClick={() => handleTap(app.id)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 16px', width: '100%', textAlign: 'left',
+                borderBottom: i < CONNECTED_APPS.length - 1 ? '1px solid var(--border)' : 'none',
+                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                background: 'transparent',
+              }}
+              className="active:opacity-70 transition-opacity"
             >
               <div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{app.title}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>{app.sub}</div>
               </div>
-              <StatusBadge status="linked" label="LINKED" dot={false} />
-            </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <StatusBadge status="linked" label="LINKED" dot={false} />
+                <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)' }} />
+              </div>
+            </button>
           ))}
         </div>
       </div>
+
+      {/* Starlink bottom sheet */}
+      {starlinkSheet && (
+        <div
+          onClick={() => setStarlinkSheet(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+          >
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 20px' }} />
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>Starlink</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20 }}>Satellite internet · connection info</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>Status</span>
+                <StatusBadge status={STARLINK_PROXY ? 'linked' : 'danger'} label={STARLINK_PROXY ? 'CONNECTED' : 'OFFLINE'} dot={false} />
+              </div>
+
+              {STARLINK_PROXY && (
+                <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Proxy URL</div>
+                  <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', wordBreak: 'break-all' }}>{STARLINK_PROXY}</div>
+                </div>
+              )}
+
+              {!STARLINK_PROXY && (
+                <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>To enable proxy</div>
+                  <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', lineHeight: 1.7 }}>
+                    1. Connect to Starlink network{'\n'}
+                    2. Run the proxy on your laptop{'\n'}
+                    3. Set VITE_STARLINK_PROXY in .env
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => window.open('https://www.starlink.com', '_blank')}
+                style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', fontSize: 14, fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer', textAlign: 'center' }}
+                className="active:opacity-70 transition-opacity"
+              >
+                starlink.com →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

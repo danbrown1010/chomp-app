@@ -187,7 +187,7 @@ function AppShell({ user }) {
             {activeTab === 'rig'    && <RigPage />}
             {activeTab === 'pets'   && <PetsPage />}
             {activeTab === 'more'   && moreSubview === null        && <MorePage          onNavigate={setMoreSubview} />}
-            {activeTab === 'more'   && moreSubview === 'settings'  && <SettingsPage      onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'settings'  && <SettingsPage      onBack={() => setMoreSubview(null)} onNavigateTab={handleTabChange} />}
             {activeTab === 'more'   && moreSubview === 'survival'  && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'knowledge' && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'meals'     && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
