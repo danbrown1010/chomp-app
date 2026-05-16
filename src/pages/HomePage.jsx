@@ -155,6 +155,8 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
 
   const now = new Date()
 
+  const broadcastingTrip = !activeTrip ? trips.find(t => t.is_published) : null
+
   const upcomingTrips = trips.filter(t =>
     t.status !== 'completed' &&
     t.status !== 'cancelled' &&
@@ -204,6 +206,21 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
         </div>
 
         <WeatherCard />
+
+        {broadcastingTrip && (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--safe)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--safe)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', marginBottom: 2 }}>● Broadcasting</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{broadcastingTrip.name}</div>
+            </div>
+            <button
+              onClick={() => unpublishTrip(broadcastingTrip.id)}
+              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', color: 'var(--text-secondary)', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Stop
+            </button>
+          </div>
+        )}
 
         {activeTrip && (
           <div style={{ background: 'var(--accent)', padding: '12px 16px', borderRadius: 12 }}>
