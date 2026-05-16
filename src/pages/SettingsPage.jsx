@@ -111,127 +111,6 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Settings</h1>
         </div>
 
-        {/* ── Appearance ─────────────────────────────────────────────────────── */}
-        <Section label="Appearance">
-
-          {/* Theme cards */}
-          <div className="px-4 py-3 flex flex-col gap-3">
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Theme</p>
-            <div className="flex gap-3">
-              <ThemeCard
-                label="Dark"
-                selected={theme === 'dark'}
-                onSelect={() => setTheme('dark')}
-                preview={<DarkPreview />}
-              />
-              <ThemeCard
-                label="Light"
-                selected={theme === 'light'}
-                onSelect={() => setTheme('light')}
-                preview={<LightPreview />}
-              />
-            </div>
-          </div>
-
-          {/* Accent swatches */}
-          <div className="px-4 py-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--text-primary)]">Accent color</p>
-            <div className="flex items-center gap-2">
-              {ACCENTS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setAccent(c)}
-                  className="w-6 h-6 rounded-full transition-transform active:scale-90"
-                  style={{
-                    background: c,
-                    boxShadow: accent === c ? `0 0 0 2px var(--bg-primary), 0 0 0 4px ${c}` : 'none',
-                    transform: accent === c ? 'scale(1.15)' : 'scale(1)',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-        </Section>
-
-        {/* ── Trip Sharing ────────────────────────────────────────────────────── */}
-        <Section label="Trip Sharing">
-          <div className="px-4 py-3 flex flex-col gap-3">
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Position update frequency</p>
-            {[
-              { id: 'battery', label: 'Battery saver', sub: 'Every 5 minutes', proOnly: false },
-              { id: 'standard', label: 'Standard', sub: 'Every 60 seconds', proOnly: false },
-              { id: 'live', label: 'Live', sub: 'Every 10 seconds · PRO', proOnly: true },
-            ].map(opt => {
-              const selected = updateFrequency === opt.id
-              const disabled = opt.proOnly && !isPro
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => !disabled && handleFrequency(opt.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 12px', borderRadius: 10, textAlign: 'left',
-                    border: `1px solid ${selected ? accent : 'var(--border)'}`,
-                    background: selected ? `${accent}18` : 'var(--bg-secondary)',
-                    cursor: disabled ? 'default' : 'pointer',
-                    opacity: disabled ? 0.5 : 1,
-                  }}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{opt.label}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{opt.sub}</p>
-                  </div>
-                  {selected && (
-                    <IconCheck style={{ width: 16, height: 16, flexShrink: 0, color: accent }} />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </Section>
-
-        {/* ── Trip lifecycle ──────────────────────────────────────────────────── */}
-        <Section label="Trip Lifecycle">
-          <ToggleRow
-            label="Phase-aware home screen"
-            sub="Adapt dashboard to trip phase"
-            on={tripToggles.phaseAware}
-            onToggle={() => toggleTrip('phaseAware')}
-          />
-          <ToggleRow
-            label="Auto-detect on-trip"
-            sub="Use GPS + trip dates"
-            on={tripToggles.autoDetect}
-            onToggle={() => toggleTrip('autoDetect')}
-          />
-          <ToggleRow
-            label="Post-trip reminders"
-            sub="Media sync, trail reports"
-            on={tripToggles.postTripReminders}
-            onToggle={() => toggleTrip('postTripReminders')}
-          />
-        </Section>
-
-        {/* ── Notifications ───────────────────────────────────────────────────── */}
-        <Section label="Notifications">
-          <ToggleRow label="Fire alerts"            on={notifToggles.fire}        onToggle={() => toggleNotif('fire')}        />
-          <ToggleRow label="Burn ban changes"       on={notifToggles.burnBan}     onToggle={() => toggleNotif('burnBan')}     />
-          <ToggleRow label="Private land warnings"  on={notifToggles.privateLand} onToggle={() => toggleNotif('privateLand')} />
-          <ToggleRow label="Campsite availability"  on={notifToggles.campsite}    onToggle={() => toggleNotif('campsite')}    />
-          <ToggleRow label="Check-in reminders"     on={notifToggles.checkIn}     onToggle={() => toggleNotif('checkIn')}     />
-        </Section>
-
-        {/* ── App Features ────────────────────────────────────────────────────── */}
-        <Section label="App Features">
-          <ToggleRow
-            label="Pet companion"
-            sub="Trail profiles for your dogs"
-            on={petsEnabled}
-            onToggle={() => setPetsEnabled(!petsEnabled)}
-          />
-        </Section>
-
         {/* ── Account ─────────────────────────────────────────────────────────── */}
         <Section label="Account">
           {/* Profile header */}
@@ -275,6 +154,84 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
           >
             <span className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Sign out</span>
           </button>
+        </Section>
+
+        {/* ── App Features ────────────────────────────────────────────────────── */}
+        <Section label="App Features">
+          <ToggleRow
+            label="Pet companion"
+            sub="Trail profiles for your dogs"
+            on={petsEnabled}
+            onToggle={() => setPetsEnabled(!petsEnabled)}
+          />
+        </Section>
+
+        {/* ── Notifications ───────────────────────────────────────────────────── */}
+        <Section label="Notifications">
+          <ToggleRow label="Fire alerts"            on={notifToggles.fire}        onToggle={() => toggleNotif('fire')}        />
+          <ToggleRow label="Burn ban changes"       on={notifToggles.burnBan}     onToggle={() => toggleNotif('burnBan')}     />
+          <ToggleRow label="Private land warnings"  on={notifToggles.privateLand} onToggle={() => toggleNotif('privateLand')} />
+          <ToggleRow label="Campsite availability"  on={notifToggles.campsite}    onToggle={() => toggleNotif('campsite')}    />
+          <ToggleRow label="Check-in reminders"     on={notifToggles.checkIn}     onToggle={() => toggleNotif('checkIn')}     />
+        </Section>
+
+        {/* ── Trip Lifecycle ──────────────────────────────────────────────────── */}
+        <Section label="Trip Lifecycle">
+          <ToggleRow
+            label="Phase-aware home screen"
+            sub="Adapt dashboard to trip phase"
+            on={tripToggles.phaseAware}
+            onToggle={() => toggleTrip('phaseAware')}
+          />
+          <ToggleRow
+            label="Auto-detect on-trip"
+            sub="Use GPS + trip dates"
+            on={tripToggles.autoDetect}
+            onToggle={() => toggleTrip('autoDetect')}
+          />
+          <ToggleRow
+            label="Post-trip reminders"
+            sub="Media sync, trail reports"
+            on={tripToggles.postTripReminders}
+            onToggle={() => toggleTrip('postTripReminders')}
+          />
+        </Section>
+
+        {/* ── Trip Sharing ────────────────────────────────────────────────────── */}
+        <Section label="Trip Sharing">
+          <div className="px-4 py-3 flex flex-col gap-3">
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Position update frequency</p>
+            {[
+              { id: 'battery', label: 'Battery saver', sub: 'Every 5 minutes', proOnly: false },
+              { id: 'standard', label: 'Standard', sub: 'Every 60 seconds', proOnly: false },
+              { id: 'live', label: 'Live', sub: 'Every 10 seconds · PRO', proOnly: true },
+            ].map(opt => {
+              const selected = updateFrequency === opt.id
+              const disabled = opt.proOnly && !isPro
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => !disabled && handleFrequency(opt.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 10, textAlign: 'left',
+                    border: `1px solid ${selected ? accent : 'var(--border)'}`,
+                    background: selected ? `${accent}18` : 'var(--bg-secondary)',
+                    cursor: disabled ? 'default' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                  }}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{opt.label}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{opt.sub}</p>
+                  </div>
+                  {selected && (
+                    <IconCheck style={{ width: 16, height: 16, flexShrink: 0, color: accent }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </Section>
 
         {/* ── AI Configuration ────────────────────────────────────────────────── */}
@@ -342,6 +299,34 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
                 </button>
               </div>
             )}
+          </div>
+        </Section>
+
+        {/* ── Appearance ─────────────────────────────────────────────────────── */}
+        <Section label="Appearance">
+          <div className="px-4 py-3 flex flex-col gap-3">
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Theme</p>
+            <div className="flex gap-3">
+              <ThemeCard label="Dark"  selected={theme === 'dark'}  onSelect={() => setTheme('dark')}  preview={<DarkPreview />}  />
+              <ThemeCard label="Light" selected={theme === 'light'} onSelect={() => setTheme('light')} preview={<LightPreview />} />
+            </div>
+          </div>
+          <div className="px-4 py-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-[var(--text-primary)]">Accent color</p>
+            <div className="flex items-center gap-2">
+              {ACCENTS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setAccent(c)}
+                  className="w-6 h-6 rounded-full transition-transform active:scale-90"
+                  style={{
+                    background: c,
+                    boxShadow: accent === c ? `0 0 0 2px var(--bg-primary), 0 0 0 4px ${c}` : 'none',
+                    transform: accent === c ? 'scale(1.15)' : 'scale(1)',
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </Section>
 
