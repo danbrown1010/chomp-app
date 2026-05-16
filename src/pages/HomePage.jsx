@@ -120,10 +120,10 @@ function WeatherCard() {
 
 const GPS_COLORS = {
   locked:      'var(--safe)',
-  requesting:  '#C4521A',
-  unavailable: '#C4521A',
-  denied:      'var(--danger, #8B2E2E)',
-  'ip-based':  '#6B7D5E',
+  requesting:  'var(--accent)',
+  unavailable: 'var(--accent)',
+  denied:      'var(--danger)',
+  'ip-based':  'var(--text-tertiary)',
 }
 
 const GPS_LABELS = {

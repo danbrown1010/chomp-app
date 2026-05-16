@@ -10,11 +10,9 @@ export function useGeolocation() {
   const retryCountRef  = useRef(0)
 
   const getIPLocation = async () => {
-    console.log('Fetching IP location...')
     try {
       const res  = await fetch(`https://ipinfo.io/json?token=${import.meta.env.VITE_IPINFO_TOKEN}`, { headers: { Accept: 'application/json' } })
       const data = await res.json()
-      console.log('ipinfo response:', data)
 
       if (data.loc) {
         const [lat, lng] = data.loc.split(',').map(parseFloat)
@@ -27,7 +25,6 @@ export function useGeolocation() {
           timestamp: Date.now(),
         })
         setStatus('ip-based')
-        console.log('IP location set:', data.city, data.region)
         return
       }
       throw new Error('No loc in response')
@@ -44,7 +41,6 @@ export function useGeolocation() {
         timestamp: Date.now(),
       })
       setStatus('ip-based')
-      console.log('Using Kirkland fallback')
     }
   }
 
@@ -80,7 +76,6 @@ export function useGeolocation() {
           // Position unavailable (no GPS hardware) — retry up to MAX_RETRIES then IP
           if (retryCountRef.current < MAX_RETRIES) {
             retryCountRef.current++
-            console.log(`GPS retry ${retryCountRef.current}/${MAX_RETRIES}`)
             setStatus('unavailable')
             retryRef.current = setTimeout(() => {
               if (watchIdRef.current) {
@@ -89,7 +84,6 @@ export function useGeolocation() {
               startWatching()
             }, 5000)
           } else {
-            console.log('GPS unavailable after retries — using IP fallback')
             setStatus('unavailable')
             getIPLocation()
           }

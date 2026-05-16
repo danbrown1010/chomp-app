@@ -292,9 +292,9 @@ function FireMap({ location, fires, lastUpdated }) {
           {location && (
             <Marker longitude={location.lng} latitude={location.lat} anchor="center">
               <div style={{ position: 'relative', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', width: 32, height: 32, borderRadius: '50%', background: '#C4521A33', animation: 'gps-pulse 2s ease-out infinite' }} />
-                <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: '#C4521A4d', animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.5s' }} />
-                <div style={{ position: 'relative', width: 12, height: 12, borderRadius: '50%', background: '#C4521A', border: '2.5px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', zIndex: 1 }} />
+                <div style={{ position: 'absolute', width: 32, height: 32, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 20%, transparent)', animation: 'gps-pulse 2s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 20, height: 20, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 30%, transparent)', animation: 'gps-pulse 2s ease-out infinite', animationDelay: '0.5s' }} />
+                <div style={{ position: 'relative', width: 12, height: 12, borderRadius: '50%', background: 'var(--accent)', border: '2.5px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', zIndex: 1 }} />
               </div>
             </Marker>
           )}
@@ -341,7 +341,7 @@ function SOSButton() {
     setProgress(0)
   }, [])
 
-  const handleConfirm = () => { console.log('SOS SENT'); setShowModal(false); setProgress(0) }
+  const handleConfirm = () => { setShowModal(false); setProgress(0) }
   const handleCancel  = () => { setShowModal(false); setProgress(0) }
   const ringOffset = RING_CIRC - (progress / 100) * RING_CIRC
 

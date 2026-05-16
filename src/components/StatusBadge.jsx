@@ -1,11 +1,11 @@
 const STYLES = {
-  safe:     { bg: 'rgba(74,124,63,0.15)',  border: '#4A7C3F', color: '#4A7C3F' },
-  advisory: { bg: 'rgba(196,82,26,0.12)',  border: '#C4521A', color: '#C4521A' },
-  warn:     { bg: 'rgba(196,82,26,0.20)',  border: '#C4521A', color: '#C4521A' },
-  danger:   { bg: 'rgba(139,46,46,0.15)',  border: '#8B2E2E', color: '#C4521A' },
-  monitor:  { bg: 'rgba(45,74,45,0.20)',   border: '#4A7C3F', color: '#4A7C3F' },
-  linked:   { bg: 'rgba(74,124,63,0.15)',  border: '#4A7C3F', color: '#4A7C3F' },
-  off:      { bg: 'rgba(107,125,94,0.10)', border: '#6B7D5E', color: '#6B7D5E' },
+  safe:     { bg: 'color-mix(in srgb, var(--safe) 15%, transparent)',    border: 'var(--safe)',    color: 'var(--safe)'    },
+  advisory: { bg: 'color-mix(in srgb, var(--accent) 12%, transparent)',  border: 'var(--accent)',  color: 'var(--accent)'  },
+  warn:     { bg: 'color-mix(in srgb, var(--accent) 20%, transparent)',  border: 'var(--accent)',  color: 'var(--accent)'  },
+  danger:   { bg: 'color-mix(in srgb, var(--danger) 15%, transparent)',  border: 'var(--danger)',  color: 'var(--accent)'  },
+  monitor:  { bg: 'color-mix(in srgb, var(--safe) 20%, transparent)',    border: 'var(--safe)',    color: 'var(--safe)'    },
+  linked:   { bg: 'color-mix(in srgb, var(--safe) 15%, transparent)',    border: 'var(--safe)',    color: 'var(--safe)'    },
+  off:      { bg: 'color-mix(in srgb, var(--text-tertiary) 10%, transparent)', border: 'var(--text-tertiary)', color: 'var(--text-tertiary)' },
 }
 
 export function StatusBadge({ status, label, dot = true }) {

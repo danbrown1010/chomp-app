@@ -76,7 +76,6 @@ export async function clearAnthropicKey(userId) {
     if (error) console.error('Failed to clear key from Supabase:', error)
   }
 
-  console.log('API key cleared from localStorage and Supabase')
 }
 
 export async function hasAnthropicKey(userId) {

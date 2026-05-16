@@ -430,7 +430,7 @@ function MealCard({ meal, expanded, onToggle, checked, onCheck }) {
             <div style={{ display: 'flex', gap: 8, padding: '8px 10px', background: 'rgba(196,82,26,0.08)', border: '1px solid rgba(196,82,26,0.2)', borderRadius: 8 }}>
               <IconPackage size={16} style={{ flexShrink: 0, color: 'var(--accent)' }} />
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
-                <strong style={{ color: 'var(--accent, #C4521A)' }}>Prep at home: </strong>{meal.prepAhead}
+                <strong style={{ color: 'var(--accent)' }}>Prep at home: </strong>{meal.prepAhead}
               </p>
             </div>
           )}
@@ -792,7 +792,6 @@ Return this exact JSON:
       }
 
       const text = data.content?.[0]?.text ?? ''
-      console.log('Raw response length:', text.length, '| stop_reason:', data.stop_reason)
 
       const clean = text
         .replace(/```json\n?/g, '')

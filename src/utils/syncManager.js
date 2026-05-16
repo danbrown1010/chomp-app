@@ -30,8 +30,6 @@ function gearRow(item, userId) {
 // ─── TRIPS ────────────────────────────────────────────────────────────────────
 
 export async function syncTripToSupabase(trip, userId) {
-  console.log('[syncTrip] called — userId:', userId, '| trip.id:', trip.id, '| trip.name:', trip.name)
-
   const row = {
     id: toUUID(trip.id),
     user_id: userId,
@@ -53,16 +51,12 @@ export async function syncTripToSupabase(trip, userId) {
     updated_at: new Date().toISOString(),
   }
 
-  console.log('[syncTrip] upsert row:', JSON.stringify(row, null, 2))
-
   const { data, error } = await supabase
     .from('trips')
     .upsert(row, { onConflict: 'id' })
 
   if (error) {
     console.error('[syncTrip] UPSERT ERROR:', error)
-  } else {
-    console.log('[syncTrip] upsert SUCCESS — data:', data)
   }
 
   return { data, error }

@@ -10,7 +10,7 @@ const CONDITIONS = ['good', 'worn', 'replace']
 
 const CONDITION_COLORS = {
   good:    'var(--safe)',
-  worn:    '#C4521A',
+  worn:    'var(--accent)',
   replace: '#ef4444',
 }
 
@@ -273,7 +273,7 @@ export default function GearRegistryPage({ onBack }) {
                 { label: 'Need attention', value: needsAttention },
               ].map((stat, i, arr) => (
                 <div key={stat.label} style={{ flex: 1, textAlign: 'center', padding: '8px 4px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: i > 0 ? 'none' : '1px solid var(--border)', borderRadius: i === 0 ? '10px 0 0 10px' : i === arr.length - 1 ? '0 10px 10px 0' : 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: stat.label === 'Need attention' && stat.value > 0 ? '#C4521A' : 'var(--text-primary)' }}>{stat.value}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: stat.label === 'Need attention' && stat.value > 0 ? 'var(--accent)' : 'var(--text-primary)' }}>{stat.value}</div>
                   <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 1 }}>{stat.label}</div>
                 </div>
               ))}
@@ -306,10 +306,10 @@ export default function GearRegistryPage({ onBack }) {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {catItems.some(i => i.condition === 'replace') && (
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger, #8B2E2E)' }} />
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)' }} />
                       )}
                       {catItems.some(i => i.condition === 'worn') && (
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C4521A' }} />
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
                       )}
                       <button
                         onClick={e => { e.stopPropagation(); handleDeleteCategory(category, catItems) }}
@@ -743,7 +743,6 @@ function PasteListView({ categories, onSave, onCancel }) {
   const parseText = () => {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
     const result = lines.map(parseLine)
-    result.forEach((item, i) => console.log(`Line ${i + 1}:`, { name: item.name, quantity: item.quantity, vendor: item.vendor, purchasedFrom: item.purchasedFrom, notes: item.notes }))
     setParsed(result)
     setStep('review')
   }

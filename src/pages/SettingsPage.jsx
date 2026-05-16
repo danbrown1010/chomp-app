@@ -180,9 +180,7 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
           <button
             className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity"
             onClick={async () => {
-              console.log('Sign out clicked')
               await signOut()
-              console.log('Sign out complete')
             }}
           >
             <span className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Sign out</span>

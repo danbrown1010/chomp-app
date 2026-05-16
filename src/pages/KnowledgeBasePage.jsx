@@ -290,7 +290,7 @@ function KnowledgeBaseInner({ onBack }) {
                 maxWidth: msg.role === 'user' ? '80%' : '88%',
                 padding: '10px 14px',
                 borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                background: msg.role === 'user' ? 'var(--accent, #C4521A)' : 'var(--bg-card)',
+                background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-card)',
                 border: msg.role === 'user' ? 'none' : '1px solid var(--border)',
                 color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
                 fontFamily: 'var(--font-body)', fontSize: 14,

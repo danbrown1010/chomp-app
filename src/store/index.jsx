@@ -130,7 +130,6 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
     setActiveTrip(next)
 
     // Sync in background — don't block the UI or throw
-    console.log('[createTrip] user:', user?.id ?? 'NO USER — skipping sync', '| next.id:', next.id)
     if (user) {
       syncTripToSupabase(next, user.id)
         .then(({ error }) => {
@@ -138,7 +137,6 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
             console.warn('[createTrip] sync failed, queuing pending save:', error)
             addPendingTripSave(next)
           } else {
-            console.log('[createTrip] sync succeeded, removing pending save for:', next.id)
             removePendingTripSave(next.id)
           }
         })

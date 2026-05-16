@@ -110,7 +110,7 @@ export default function RigPage() {
             bottom: 0,
             left: 0,
             right: 0,
-            background: 'var(--bg-card, #1C2117)',
+            background: 'var(--bg-card)',
             borderRadius: '16px 16px 0 0',
             padding: '0 0 env(safe-area-inset-bottom)',
             zIndex: 101,
@@ -121,7 +121,7 @@ export default function RigPage() {
             <div style={{
               width: 36, height: 4,
               borderRadius: 2,
-              background: 'var(--border, #3A4A32)',
+              background: 'var(--border)',
               margin: '12px auto 16px',
             }} />
 
@@ -132,7 +132,7 @@ export default function RigPage() {
               <div style={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: 'var(--text-primary, #F0EDE4)',
+                color: 'var(--text-primary)',
                 marginBottom: 4,
                 fontFamily: 'var(--font-body)',
               }}>
@@ -142,14 +142,14 @@ export default function RigPage() {
               {/* Model */}
               <div style={{
                 fontSize: 13,
-                color: 'var(--text-secondary, #A8B89A)',
+                color: 'var(--text-secondary)',
                 marginBottom: 16,
                 fontFamily: 'var(--font-body)',
               }}>
                 {currentDevice.model}
               </div>
 
-              <div style={{ height: 1, background: 'var(--border, #3A4A32)', marginBottom: 16 }} />
+              <div style={{ height: 1, background: 'var(--border)', marginBottom: 16 }} />
 
               {/* Info rows */}
               {[
@@ -161,7 +161,7 @@ export default function RigPage() {
                 currentDevice.capacity > 0 && batteryData?.soc != null && {
                   label: 'Current charge',
                   value: `${batteryData.soc}% · ${Math.round((batteryData.soc / 100) * currentDevice.capacity).toLocaleString()} Wh`,
-                  color: batteryData.soc > 50 ? '#4A7C3F' : batteryData.soc > 20 ? '#C4521A' : '#8B2E2E',
+                  color: batteryData.soc > 50 ? 'var(--safe)' : batteryData.soc > 20 ? 'var(--accent)' : 'var(--danger)',
                 },
                 currentDevice.capacity > 0 && batteryData?.cycles != null && {
                   label: 'Charge cycles',
@@ -174,15 +174,15 @@ export default function RigPage() {
                   alignItems: 'center',
                   paddingBottom: 12,
                   marginBottom: 12,
-                  borderBottom: '1px solid var(--border, #3A4A32)',
+                  borderBottom: '1px solid var(--border)',
                 }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary, #A8B89A)', fontFamily: 'var(--font-body)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
                     {row.label}
                   </div>
                   <div style={{
                     fontSize: 13,
                     fontWeight: 500,
-                    color: row.color ?? 'var(--text-primary, #F0EDE4)',
+                    color: row.color ?? 'var(--text-primary)',
                     fontFamily: row.mono ? 'var(--font-mono)' : 'var(--font-body)',
                     textAlign: 'right',
                     maxWidth: '60%',
@@ -193,7 +193,7 @@ export default function RigPage() {
                 </div>
               ))}
 
-              <div style={{ height: 1, background: 'var(--border, #3A4A32)', marginBottom: 16 }} />
+              <div style={{ height: 1, background: 'var(--border)', marginBottom: 16 }} />
 
               {/* Links */}
               {[
@@ -208,11 +208,11 @@ export default function RigPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '10px 0',
-                    borderBottom: i === 0 ? '1px solid var(--border, #3A4A32)' : 'none',
+                    borderBottom: i === 0 ? '1px solid var(--border)' : 'none',
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontSize: 14, color: 'var(--accent, #C4521A)', fontFamily: 'var(--font-body)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--accent)', fontFamily: 'var(--font-body)' }}>
                     {link.label}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>↗</div>
@@ -227,9 +227,9 @@ export default function RigPage() {
                   marginTop: 16,
                   padding: '12px',
                   borderRadius: 10,
-                  border: '1px solid var(--border, #3A4A32)',
+                  border: '1px solid var(--border)',
                   background: 'transparent',
-                  color: 'var(--text-secondary, #A8B89A)',
+                  color: 'var(--text-secondary)',
                   fontSize: 14,
                   fontFamily: 'var(--font-body)',
                   cursor: 'pointer',

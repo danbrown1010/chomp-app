@@ -43,7 +43,6 @@ export default function CreateTripPage({ onClose, onCreated }) {
     setCreating(true)
     setError(null)
     try {
-      console.log('Creating trip:', form)
       await createTrip({
         name:          form.name || 'New Trip',
         type:          form.types[0] ?? 'Overlanding',
@@ -52,7 +51,6 @@ export default function CreateTripPage({ onClose, onCreated }) {
         returnDate:    form.returnDate    || '2026-06-05',
         region:        form.region,
       })
-      console.log('Trip created — calling onCreated')
       onCreated()
     } catch (err) {
       console.error('Create trip error:', err)

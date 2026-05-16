@@ -110,8 +110,8 @@ export function CrewWatchModal({ trip, onClose }) {
             {position && (
               <Marker longitude={position.lng} latitude={position.lat} anchor="center">
                 <div style={{ position: 'relative', width: 16, height: 16 }}>
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#C4521A', animation: 'crew-ripple 2s ease-out infinite' }} />
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#C4521A', border: '2px solid #fff', zIndex: 1 }} />
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'crew-ripple 2s ease-out infinite' }} />
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', border: '2px solid #fff', zIndex: 1 }} />
                 </div>
               </Marker>
             )}

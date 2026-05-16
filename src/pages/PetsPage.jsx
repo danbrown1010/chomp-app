@@ -135,10 +135,22 @@ function trailScore(pet) {
 }
 
 function ScoreChip({ score }) {
-  const color = score >= 8 ? '#4A7C3F' : score >= 5 ? '#d97706' : '#c0392b'
-  const label = score >= 8 ? 'TRAIL READY' : score >= 5 ? 'MOSTLY READY' : 'NEEDS SETUP'
+  const isReady    = score >= 8
+  const isMostly   = score >= 5
+  const color      = isReady ? 'var(--safe)' : isMostly ? '#d97706' : 'var(--danger)'
+  const bgColor    = isReady
+    ? 'color-mix(in srgb, var(--safe) 13%, transparent)'
+    : isMostly
+    ? 'rgba(217,119,6,0.13)'
+    : 'color-mix(in srgb, var(--danger) 13%, transparent)'
+  const borderColor = isReady
+    ? 'color-mix(in srgb, var(--safe) 33%, transparent)'
+    : isMostly
+    ? 'rgba(217,119,6,0.33)'
+    : 'color-mix(in srgb, var(--danger) 33%, transparent)'
+  const label = isReady ? 'TRAIL READY' : isMostly ? 'MOSTLY READY' : 'NEEDS SETUP'
   return (
-    <div style={{ fontSize: 10, padding: '3px 8px', borderRadius: 8, background: `${color}22`, border: `1px solid ${color}55`, color, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+    <div style={{ fontSize: 10, padding: '3px 8px', borderRadius: 8, background: bgColor, border: `1px solid ${borderColor}`, color, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
       {label}
     </div>
   )
@@ -204,7 +216,7 @@ function Card({ label, children }) {
 function TraitRow({ icon, label, ok }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 12, color: ok ? '#4A7C3F' : '#c0392b', flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 12, color: ok ? 'var(--safe)' : 'var(--danger)', flexShrink: 0 }}>{icon}</span>
       <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>{label}</span>
     </div>
   )
