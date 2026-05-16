@@ -251,14 +251,12 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
                 {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                {activeTrip.is_published && (
-                  <button
-                    onClick={() => setWatchTrip(activeTrip)}
-                    style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-                  >
-                    Watch
-                  </button>
-                )}
+                <button
+                  onClick={() => activeTrip.is_published && setWatchTrip(activeTrip)}
+                  style={{ background: activeTrip.is_published ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '4px 10px', color: activeTrip.is_published ? 'var(--accent)' : 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: activeTrip.is_published ? 'pointer' : 'default' }}
+                >
+                  Watch
+                </button>
                 <button
                   onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
                   style={{ background: activeTrip.is_published ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: activeTrip.is_published ? '#fff' : 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
@@ -407,14 +405,12 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
           {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {activeTrip.is_published && (
-            <button
-              onClick={() => setWatchTrip(activeTrip)}
-              style={{ background: accent, border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-            >
-              Watch
-            </button>
-          )}
+          <button
+            onClick={() => activeTrip.is_published && setWatchTrip(activeTrip)}
+            style={{ background: activeTrip.is_published ? accent : 'var(--bg-secondary)', border: activeTrip.is_published ? 'none' : '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? '#fff' : 'var(--text-tertiary)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: activeTrip.is_published ? 'pointer' : 'default' }}
+          >
+            Watch
+          </button>
           <button
             onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
             style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
@@ -491,14 +487,12 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
           {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {activeTrip.is_published && (
-            <button
-              onClick={() => setWatchTrip(activeTrip)}
-              style={{ background: accent, border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-            >
-              Watch
-            </button>
-          )}
+          <button
+            onClick={() => activeTrip.is_published && setWatchTrip(activeTrip)}
+            style={{ background: activeTrip.is_published ? accent : 'var(--bg-secondary)', border: activeTrip.is_published ? 'none' : '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? '#fff' : 'var(--text-tertiary)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: activeTrip.is_published ? 'pointer' : 'default' }}
+          >
+            Watch
+          </button>
           <button
             onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
             style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
