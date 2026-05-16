@@ -29,9 +29,9 @@ const ACCENTS = [
 
 export default function SettingsPage({ onBack, onNavigateTab }) {
   const [subPage, setSubPage] = useState(null)
-  if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} onNavigateTab={onNavigateTab} />
-
   const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled } = useAppStore()
+
+  if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} onNavigateTab={onNavigateTab} />
 
   const [keySet, setKeySet]           = useState(() => !!localStorage.getItem('vela-anthropic-key'))
   const [apiKeyInput, setApiKeyInput] = useState('')
