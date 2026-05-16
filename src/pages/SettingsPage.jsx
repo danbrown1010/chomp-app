@@ -405,12 +405,22 @@ function LightPreview() {
 // ─── Shared components ────────────────────────────────────────────────────────
 
 function Section({ label, children }) {
+  const [open, setOpen] = useState(false)
   return (
     <div>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{label}</p>
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="divide-y divide-[var(--border)]">
-        {children}
-      </div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between"
+        style={{ marginBottom: open ? 8 : 0, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</p>
+        <IconChevronRight style={{ width: 14, height: 14, color: 'var(--text-tertiary)', flexShrink: 0, transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+      </button>
+      {open && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }} className="divide-y divide-[var(--border)]">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
