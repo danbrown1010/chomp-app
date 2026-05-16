@@ -61,13 +61,14 @@ export function CrewWatchModal({ trip, onClose }) {
   const dayLabel = tripDayLabel(trip)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+    <div style={{ position: 'relative', width: '90%', height: '90%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '12px 16px', background: 'rgba(28,33,23,0.97)',
         borderBottom: '1px solid var(--border)', flexShrink: 0,
-        paddingTop: 'calc(12px + env(safe-area-inset-top))',
+        paddingTop: 12,
       }}>
         <div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2, color: live ? 'var(--safe)' : 'var(--text-tertiary)' }}>
@@ -135,6 +136,7 @@ export function CrewWatchModal({ trip, onClose }) {
       </div>
 
       <style>{`@keyframes crew-ripple { 0% { transform:scale(1); opacity:0.6; } 100% { transform:scale(3); opacity:0; } }`}</style>
+    </div>
     </div>
   )
 }
