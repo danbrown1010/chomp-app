@@ -246,6 +246,9 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
       .eq('id', tripId)
       .eq('user_id', user.id)
 
+    // Delete position row — signals the watch page via realtime DELETE event
+    await supabase.from('trip_positions').delete().eq('trip_id', tripId)
+
     if (!error) {
       setTrips(prev => prev.map(t => t.id === tripId ? { ...t, is_published: false } : t))
       setActiveTrip(prev => prev?.id === tripId ? { ...prev, is_published: false } : prev)
