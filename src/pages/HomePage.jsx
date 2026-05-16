@@ -8,6 +8,7 @@ import { StatusBadge } from '../components/StatusBadge'
 import { getFirstName } from '../utils/userHelpers'
 import { TypeBadge } from '../components/TripTypeIcons'
 import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind, IconPlus, IconEdit, IconTrash, IconCheck, IconChevronRight } from '../components/icons'
+import { CrewWatchModal } from '../components/CrewWatchModal'
 
 export default function HomePage({ onPlanTrip, onEditTrip }) {
   const tripPhase = useTripPhase()
@@ -152,6 +153,7 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
   const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip, publishTrip, unpublishTrip } = useAppStore()
   const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
+  const [watchTrip, setWatchTrip] = useState(null)
 
   const now = new Date()
 
@@ -213,12 +215,20 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
               <div style={{ fontSize: 12, color: 'var(--safe)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', marginBottom: 2 }}>● Broadcasting</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{broadcastingTrip.name}</div>
             </div>
-            <button
-              onClick={() => unpublishTrip(broadcastingTrip.id)}
-              style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', color: 'var(--text-secondary)', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              Stop
-            </button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                onClick={() => setWatchTrip(broadcastingTrip)}
+                style={{ background: accent, border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+              >
+                Watch
+              </button>
+              <button
+                onClick={() => unpublishTrip(broadcastingTrip.id)}
+                style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', color: 'var(--text-secondary)', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+              >
+                Stop
+              </button>
+            </div>
           </div>
         )}
 
@@ -240,12 +250,22 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
               <div style={{ fontSize: 12, fontFamily: 'var(--font-body)', color: activeTrip.is_published ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)' }}>
                 {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
               </div>
-              <button
-                onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
-                style={{ background: activeTrip.is_published ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: activeTrip.is_published ? '#fff' : 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-              >
-                {activeTrip.is_published ? 'Stop broadcasting' : 'Broadcast'}
-              </button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {activeTrip.is_published && (
+                  <button
+                    onClick={() => setWatchTrip(activeTrip)}
+                    style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+                  >
+                    Watch
+                  </button>
+                )}
+                <button
+                  onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+                  style={{ background: activeTrip.is_published ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: activeTrip.is_published ? '#fff' : 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+                >
+                  {activeTrip.is_published ? 'Stop' : 'Broadcast'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -310,6 +330,8 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
       >
         <IconPlus style={{ width: 24, height: 24, color: '#fff' }} />
       </button>
+
+      {watchTrip && <CrewWatchModal trip={watchTrip} onClose={() => setWatchTrip(null)} />}
     </div>
   )
 }
@@ -323,6 +345,7 @@ const PRE_TRIP_CHECKLIST = [
 
 function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
   const { accent, weather, aqi, deactivateTrip, publishTrip, unpublishTrip } = useAppStore()
+  const [watchTrip, setWatchTrip] = useState(null)
   const [checked, setChecked] = useState([])
   const [gearChecklist, setGearChecklist] = useState([])
   const [gearChecked, setGearChecked] = useState(new Set())
@@ -383,13 +406,25 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
         <div style={{ fontSize: 13, color: activeTrip.is_published ? 'var(--safe)' : 'var(--text-tertiary)' }}>
           {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
         </div>
-        <button
-          onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
-          style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-        >
-          {activeTrip.is_published ? 'Stop' : 'Broadcast'}
-        </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {activeTrip.is_published && (
+            <button
+              onClick={() => setWatchTrip(activeTrip)}
+              style={{ background: accent, border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Watch
+            </button>
+          )}
+          <button
+            onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+            style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+          >
+            {activeTrip.is_published ? 'Stop' : 'Broadcast'}
+          </button>
+        </div>
       </div>
+
+      {watchTrip && <CrewWatchModal trip={watchTrip} onClose={() => setWatchTrip(null)} />}
 
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -430,6 +465,7 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
   const { accent, deactivateTrip, publishTrip, unpublishTrip } = useAppStore()
+  const [watchTrip, setWatchTrip] = useState(null)
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -454,13 +490,25 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
         <div style={{ fontSize: 13, color: activeTrip.is_published ? 'var(--safe)' : 'var(--text-tertiary)' }}>
           {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
         </div>
-        <button
-          onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
-          style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-        >
-          {activeTrip.is_published ? 'Stop' : 'Broadcast'}
-        </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {activeTrip.is_published && (
+            <button
+              onClick={() => setWatchTrip(activeTrip)}
+              style={{ background: accent, border: 'none', borderRadius: 8, padding: '5px 12px', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Watch
+            </button>
+          )}
+          <button
+            onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+            style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+          >
+            {activeTrip.is_published ? 'Stop' : 'Broadcast'}
+          </button>
+        </div>
       </div>
+
+      {watchTrip && <CrewWatchModal trip={watchTrip} onClose={() => setWatchTrip(null)} />}
 
       <div className="grid grid-cols-3 gap-2">
         <LiveStat label="EcoFlow" value="87%" ok />
