@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../store/index'
 import { ProGate } from '../components/ProGate'
-import { IconCampsite, IconClock, IconChef, IconFire, IconProtein, IconPackage, IconZap, IconSnowflake } from '../components/icons'
+import { IconCampsite, IconClock, IconChef, IconFire, IconProtein, IconPackage, IconZap, IconSnowflake, IconArrowLeft, IconChevronDown, IconCheck } from '../components/icons'
 import { getAnthropicKey } from '../utils/secretsManager'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -154,10 +154,7 @@ function SectionHeader({ title, expanded, onToggle, right }) {
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {right}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        <IconChevronDown style={{ width: 14, height: 14, color: 'var(--text-tertiary)', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
       </div>
     </button>
   )
@@ -176,9 +173,7 @@ function CheckRow({ label, checked, onToggle }) {
         transition: 'all 0.15s',
       }}>
         {checked && (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          <IconCheck style={{ width: 10, height: 10, color: '#fff' }} />
         )}
       </div>
       <span style={{
@@ -208,9 +203,7 @@ function SetupView({ config, setConfig, onGenerate, generating, error, onBack, h
             border: '1px solid var(--border)', background: 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
+            <IconArrowLeft style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
           </button>
           <div style={{ flex: 1 }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.08em', margin: 0 }}>MEAL PLANNER</p>
@@ -386,10 +379,7 @@ function MealCard({ meal, expanded, onToggle, checked, onCheck }) {
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 3px', fontFamily: 'var(--font-body)' }}>{meal.name}</p>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4, fontFamily: 'var(--font-body)' }}>{meal.description}</p>
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ flexShrink: 0, marginTop: 2, transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
+          <IconChevronDown style={{ width: 14, height: 14, color: 'var(--text-tertiary)', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
         </div>
 
         {/* Stat pills */}
@@ -495,9 +485,7 @@ function PlanView({ plan, config, onRegenerate, onNewPlan, onBack, checked, onCh
       <div style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 10px' }}>
           <button onClick={onBack} style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--border)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
+            <IconArrowLeft style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -546,10 +534,7 @@ function PlanView({ plan, config, onRegenerate, onNewPlan, onBack, checked, onCh
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   {day.totalCalories && <Chip icon={<IconFire size={10} />}>{day.totalCalories} cal</Chip>}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
+                  <IconChevronDown style={{ width: 14, height: 14, color: 'var(--text-tertiary)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
                 </div>
               </button>
 

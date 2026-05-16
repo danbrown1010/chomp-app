@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../store/index'
 import { getDisplayName, getInitials } from '../utils/userHelpers'
 import { TypeSelector, TypeBadge } from '../components/TripTypeIcons'
+import { IconChevronLeft, IconCheck, IconPlus, IconSignal } from '../components/icons'
 
 const STEP_LABELS = ['Basics', 'Rig', 'People', 'Review']
 
@@ -91,9 +92,7 @@ function StepHeader({ step, onBack, onNext, creating }) {
           onClick={onBack}
           style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-primary)' }}>
-            <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <IconChevronLeft style={{ width: 20, height: 20, color: 'var(--text-primary)' }} />
         </button>
 
         <span style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>New Trip</span>
@@ -214,25 +213,17 @@ function Step2Rig({ form, updateGear }) {
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-[var(--text-secondary)]" viewBox="0 0 24 24" fill="none">
-                <path d="M3 12l2-4h14l2 4M3 12v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="7" cy="16" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-                <circle cx="17" cy="16" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
+              <IconSignal style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--text-primary)]">2014 Jeep JKU — Chomp</p>
               <p className="text-xs text-[var(--text-secondary)]">Primary rig</p>
             </div>
-            <svg className="w-4 h-4 text-[#22c55e] shrink-0" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <IconCheck style={{ width: 16, height: 16, color: '#22c55e', flexShrink: 0 }} />
           </div>
           <button className="w-full flex items-center gap-3 px-4 py-3 active:opacity-60 transition-opacity">
             <div className="w-8 h-8 rounded-lg border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
-              <svg className="w-3.5 h-3.5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <IconPlus style={{ width: 14, height: 14, color: 'var(--text-tertiary)' }} />
             </div>
             <span className="text-sm text-[var(--text-tertiary)]">Add vehicle</span>
           </button>
@@ -391,9 +382,7 @@ function GhostRow({ label }) {
   return (
     <button className="w-full flex items-center gap-3 px-4 py-3 active:opacity-60 transition-opacity">
       <div className="w-5 h-5 rounded-full border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
-        <svg className="w-2.5 h-2.5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
+        <IconPlus style={{ width: 10, height: 10, color: 'var(--text-tertiary)' }} />
       </div>
       <span className="text-sm text-[var(--text-tertiary)]">{label}</span>
     </button>

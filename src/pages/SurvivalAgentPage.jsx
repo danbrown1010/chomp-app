@@ -4,7 +4,7 @@ import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
 import { ProGate } from '../components/ProGate'
 import { getAnthropicKey } from '../utils/secretsManager'
-import { IconMapPin, IconThermometer, IconWind, IconFlame, IconTent } from '../components/icons'
+import { IconMapPin, IconThermometer, IconWind, IconFlame, IconTent, IconArrowLeft, IconSend } from '../components/icons'
 import distance from '@turf/distance'
 import { point } from '@turf/helpers'
 
@@ -237,11 +237,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
               cursor: 'pointer', flexShrink: 0,
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="var(--text-secondary)" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
+            <IconArrowLeft style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
           </button>
           <div style={{ flex: 1 }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.08em', margin: 0 }}>
@@ -388,11 +384,7 @@ Keep responses concise and scannable. Use short paragraphs. Lead with the most c
             flexShrink: 0, transition: 'background 0.15s',
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke={input.trim() && !loading ? '#fff' : 'var(--text-tertiary)'}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
-          </svg>
+          <IconSend style={{ width: 16, height: 16 }} />
         </button>
       </div>
     </div>

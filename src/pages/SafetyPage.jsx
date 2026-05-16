@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
+import { IconAlert } from '../components/icons'
 import { Skeleton } from '../components/Skeleton'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -190,9 +191,7 @@ function FireStatus({ nearest, loading, error, updatedStr }) {
             </p>
           </div>
         </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#f87171', flexShrink: 0, marginTop: 2 }}>
-          <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <IconAlert style={{ width: 20, height: 20, color: '#f87171', flexShrink: 0, marginTop: 2 }} />
       </div>
     )
   }
@@ -366,9 +365,7 @@ function SOSButton() {
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 24, width: '100%', maxWidth: 360 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(139,46,46,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#f87171' }}>
-                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <IconAlert style={{ width: 20, height: 20, color: '#f87171' }} />
               </div>
               <div>
                 <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>Broadcast SOS?</p>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { IconChevronLeft, IconChevronRight, IconCheck } from '../components/icons'
 import { useAppStore } from '../store/index'
 import { saveAnthropicKey, clearAnthropicKey, hasAnthropicKey } from '../utils/secretsManager'
 import { UserAvatar } from '../components/UserAvatar'
@@ -19,7 +20,7 @@ const ACCENTS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack }) {
-  const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut } = useAppStore()
+  const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled } = useAppStore()
 
   const [keySet, setKeySet]           = useState(() => !!localStorage.getItem('vela-anthropic-key'))
   const [apiKeyInput, setApiKeyInput] = useState('')
@@ -58,6 +59,15 @@ export default function SettingsPage({ onBack }) {
     showToast('API key removed')
   }
 
+  const [updateFrequency, setUpdateFrequency] = useState(
+    () => localStorage.getItem('vela-position-frequency') ?? 'standard'
+  )
+
+  const handleFrequency = (id) => {
+    setUpdateFrequency(id)
+    localStorage.setItem('vela-position-frequency', id)
+  }
+
   const [tripToggles, setTripToggles] = useState({
     phaseAware:        true,
     autoDetect:        true,
@@ -85,9 +95,7 @@ export default function SettingsPage({ onBack }) {
             onClick={onBack}
             style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', flexShrink: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-primary)' }}>
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <IconChevronLeft style={{ width: 16, height: 16, color: 'var(--text-primary)' }} />
           </button>
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Settings</h1>
         </div>
@@ -135,6 +143,43 @@ export default function SettingsPage({ onBack }) {
 
         </Section>
 
+        {/* ── Trip Sharing ────────────────────────────────────────────────────── */}
+        <Section label="Trip Sharing">
+          <div className="px-4 py-3 flex flex-col gap-3">
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Position update frequency</p>
+            {[
+              { id: 'battery', label: 'Battery saver', sub: 'Every 5 minutes', proOnly: false },
+              { id: 'standard', label: 'Standard', sub: 'Every 60 seconds', proOnly: false },
+              { id: 'live', label: 'Live', sub: 'Every 10 seconds · PRO', proOnly: true },
+            ].map(opt => {
+              const selected = updateFrequency === opt.id
+              const disabled = opt.proOnly && !isPro
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => !disabled && handleFrequency(opt.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 10, textAlign: 'left',
+                    border: `1px solid ${selected ? accent : 'var(--border)'}`,
+                    background: selected ? `${accent}18` : 'var(--bg-secondary)',
+                    cursor: disabled ? 'default' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                  }}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{opt.label}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{opt.sub}</p>
+                  </div>
+                  {selected && (
+                    <IconCheck style={{ width: 16, height: 16, flexShrink: 0, color: accent }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </Section>
+
         {/* ── Trip lifecycle ──────────────────────────────────────────────────── */}
         <Section label="Trip Lifecycle">
           <ToggleRow
@@ -164,6 +209,16 @@ export default function SettingsPage({ onBack }) {
           <ToggleRow label="Private land warnings"  on={notifToggles.privateLand} onToggle={() => toggleNotif('privateLand')} />
           <ToggleRow label="Campsite availability"  on={notifToggles.campsite}    onToggle={() => toggleNotif('campsite')}    />
           <ToggleRow label="Check-in reminders"     on={notifToggles.checkIn}     onToggle={() => toggleNotif('checkIn')}     />
+        </Section>
+
+        {/* ── App Features ────────────────────────────────────────────────────── */}
+        <Section label="App Features">
+          <ToggleRow
+            label="Pet companion"
+            sub="Trail profiles for your dogs"
+            on={petsEnabled}
+            onToggle={() => setPetsEnabled(!petsEnabled)}
+          />
         </Section>
 
         {/* ── Account ─────────────────────────────────────────────────────────── */}
@@ -196,9 +251,7 @@ export default function SettingsPage({ onBack }) {
                 <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Manage subscription</div>
                 <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>Billing · Cancel · Receipts</div>
               </div>
-              <svg className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
             </button>
           )}
           <button
@@ -294,9 +347,7 @@ export default function SettingsPage({ onBack }) {
               className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
             >
               <span className="text-sm font-medium text-[var(--text-primary)]">Knowledge base</span>
-              <svg className="w-4 h-4 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)' }} />
             </a>
         </Section>
 
@@ -322,9 +373,7 @@ function ThemeCard({ label, selected, onSelect, preview }) {
       >
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: label === 'Light' ? '#1C2117' : '#F0EDE4' }}>{label}</span>
         {selected && (
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" style={{ color: accent }}>
-            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <IconCheck style={{ width: 14, height: 14, color: accent }} />
         )}
       </div>
     </button>
@@ -388,9 +437,7 @@ function AccountRow({ label, value, valueColor }) {
       <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-sm" style={{ color: valueColor || 'var(--text-secondary)' }}>{value}</span>
-        <svg className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
       </div>
     </button>
   )

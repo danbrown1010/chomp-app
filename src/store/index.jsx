@@ -219,7 +219,54 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
     }
   }, [activeTrip, user])
 
+  const publishTrip = useCallback(async (tripId) => {
+    await supabase
+      .from('trips')
+      .update({ is_published: false, unpublished_at: new Date().toISOString() })
+      .eq('user_id', user.id)
+      .eq('is_published', true)
+
+    const { error } = await supabase
+      .from('trips')
+      .update({ is_published: true, published_at: new Date().toISOString() })
+      .eq('id', tripId)
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setTrips(prev => prev.map(t => ({ ...t, is_published: t.id === tripId })))
+    }
+  }, [user])
+
+  const unpublishTrip = useCallback(async (tripId) => {
+    const { error } = await supabase
+      .from('trips')
+      .update({ is_published: false, unpublished_at: new Date().toISOString() })
+      .eq('id', tripId)
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setTrips(prev => prev.map(t => t.id === tripId ? { ...t, is_published: false } : t))
+    }
+  }, [user])
+
   const refreshHomeData = useCallback(() => setDataBust(k => k + 1), [])
+
+  const [pendingInviteCount, setPendingInviteCount] = useState(0)
+  useEffect(() => {
+    if (!user) { setPendingInviteCount(0); return }
+    supabase
+      .from('crew_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .then(({ count }) => setPendingInviteCount(count ?? 0))
+  }, [user?.id])
+
+  const [petsEnabled, setPetsEnabledState] = useState(() => localStorage.getItem('vela-pets-enabled') === 'true')
+  const setPetsEnabled = useCallback((v) => {
+    setPetsEnabledState(v)
+    localStorage.setItem('vela-pets-enabled', v ? 'true' : 'false')
+  }, [])
 
   const { location, status: gpsStatus } = useGeolocation()
   const { weather, forecast: weatherForecast, loading: weatherLoading, error: weatherError } = useWeather(location?.lat, location?.lng, dataBust)
@@ -242,8 +289,10 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
     <AppContext.Provider value={{
       user, profile: profileState, isPro, setProfile, signOut, signInWithGoogle,
       syncStatus, setSyncStatus,
-      trips, activeTrip, setActiveTrip, createTrip, updateTrip, deleteTrip, setActiveTripById, deactivateTrip,
+      trips, activeTrip, setActiveTrip, createTrip, updateTrip, deleteTrip, setActiveTripById, deactivateTrip, publishTrip, unpublishTrip,
       accent, setAccent, theme, setTheme,
+      pendingInviteCount, setPendingInviteCount,
+      petsEnabled, setPetsEnabled,
       location, gpsStatus,
       weather, weatherForecast, weatherLoading, weatherError,
       aqi, aqiLoading, aqiError,

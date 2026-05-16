@@ -7,7 +7,7 @@ import { VelaLogo } from '../components/VelaLogo'
 import { StatusBadge } from '../components/StatusBadge'
 import { getFirstName } from '../utils/userHelpers'
 import { TypeBadge } from '../components/TripTypeIcons'
-import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind } from '../components/icons'
+import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind, IconPlus, IconEdit, IconTrash, IconCheck, IconChevronRight } from '../components/icons'
 
 export default function HomePage({ onPlanTrip, onEditTrip }) {
   const tripPhase = useTripPhase()
@@ -149,7 +149,7 @@ function GpsStatus() {
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
 function IdleHome({ onPlanTrip, onEditTrip }) {
-  const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip } = useAppStore()
+  const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip, publishTrip, unpublishTrip } = useAppStore()
   const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
 
@@ -206,17 +206,30 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
         <WeatherCard />
 
         {activeTrip && (
-          <div style={{ background: 'var(--accent)', padding: '12px 16px', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active Trip</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', fontFamily: 'var(--font-body)' }}>{activeTrip.name}</div>
+          <div style={{ background: 'var(--accent)', padding: '12px 16px', borderRadius: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active Trip</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', fontFamily: 'var(--font-body)' }}>{activeTrip.name}</div>
+              </div>
+              <button
+                onClick={deactivateTrip}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+              >
+                Deactivate
+              </button>
             </div>
-            <button
-              onClick={deactivateTrip}
-              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-            >
-              Deactivate
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+              <div style={{ fontSize: 12, fontFamily: 'var(--font-body)', color: activeTrip.is_published ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)' }}>
+                {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
+              </div>
+              <button
+                onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+                style={{ background: activeTrip.is_published ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '4px 10px', color: activeTrip.is_published ? '#fff' : 'var(--accent)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+              >
+                {activeTrip.is_published ? 'Stop broadcasting' : 'Broadcast'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -278,9 +291,7 @@ function IdleHome({ onPlanTrip, onEditTrip }) {
         className="absolute bottom-4 right-4 w-14 h-14 rounded-full flex items-center justify-center active:opacity-80 transition-opacity"
         style={{ background: accent, boxShadow: `0 4px 20px ${accent}73`, border: 'none', cursor: 'pointer' }}
       >
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" style={{ color: '#fff' }}>
-          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
+        <IconPlus style={{ width: 24, height: 24, color: '#fff' }} />
       </button>
     </div>
   )
@@ -525,22 +536,14 @@ function TripCard({ trip, onSetActive, onDeactivate, onDelete, onEdit, isActive 
                 style={{ background: 'transparent', border: 'none', padding: '2px 4px', cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}
                 aria-label="Edit trip"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
+                <IconEdit style={{ width: 14, height: 14 }} />
               </button>
               <button
                 onClick={() => setConfirmDelete(v => !v)}
                 style={{ background: 'transparent', border: 'none', padding: '2px 4px', cursor: 'pointer', color: confirmDelete ? 'var(--danger)' : 'var(--text-tertiary)', lineHeight: 1 }}
                 aria-label="Delete trip"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14H6L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4h6v2" />
-                </svg>
+                <IconTrash style={{ width: 14, height: 14 }} />
               </button>
             </div>
           )
@@ -638,9 +641,7 @@ function ActionRow({ label, sub, accent = null }) {
         <div style={{ fontSize: 14, fontWeight: 500, color: accent || 'var(--text-primary)' }}>{label}</div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{sub}</div>
       </div>
-      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-tertiary)' }}>
-        <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
     </button>
   )
 }
@@ -652,9 +653,7 @@ function TripRow({ name, detail }) {
         <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{name}</div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{detail}</div>
       </div>
-      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-tertiary)' }}>
-        <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
     </button>
   )
 }
@@ -676,9 +675,7 @@ function CheckItem({ label, checked, onToggle, accent }) {
     <button className="flex items-center gap-3 text-left w-full" onClick={onToggle}>
       <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${checked ? accent : 'var(--border)'}`, background: checked ? accent : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
         {checked && (
-          <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" style={{ color: '#fff' }}>
-            <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <IconCheck style={{ width: 12, height: 12, color: '#fff' }} />
         )}
       </div>
       <span style={{ fontSize: 14, color: checked ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: checked ? 'line-through' : 'none', transition: 'color 0.15s' }}>

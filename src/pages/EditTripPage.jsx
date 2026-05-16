@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/index'
 import { TypeSelector } from '../components/TripTypeIcons'
+import { IconChevronLeft } from '../components/icons'
 
 export default function EditTripPage({ trip, onClose }) {
   const { accent, updateTrip } = useAppStore()
@@ -46,9 +47,7 @@ export default function EditTripPage({ trip, onClose }) {
           onClick={onClose}
           style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-primary)' }}>
-            <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <IconChevronLeft style={{ width: 20, height: 20, color: 'var(--text-primary)' }} />
         </button>
         <span style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Trip</span>
         <button

@@ -4,7 +4,7 @@ import { GEAR_CATEGORIES, PRESET_GEAR } from '../data/presetGear'
 import { BrandLogo } from '../components/BrandLogo'
 import { getVendorLogo, getStoreLogo } from '../utils/brandLogos'
 import { ProGate } from '../components/ProGate'
-import { IconTool, IconEdit, IconX, IconCheck, IconPlus, IconDownload, IconUpload } from '../components/icons'
+import { IconTool, IconEdit, IconX, IconCheck, IconPlus, IconDownload, IconUpload, IconArrowLeft, IconSearch, IconTrash, IconExternalLink } from '../components/icons'
 
 const CONDITIONS = ['good', 'worn', 'replace']
 
@@ -175,9 +175,7 @@ export default function GearRegistryPage({ onBack }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 5l-7 7 7 7" />
-              </svg>
+              <IconArrowLeft style={{ width: 20, height: 20 }} />
             </button>
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-primary)', textTransform: 'uppercase' }}>
@@ -231,9 +229,7 @@ export default function GearRegistryPage({ onBack }) {
           {/* Search bar */}
           <div style={{ padding: '10px 16px 0', flexShrink: 0 }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg style={{ position: 'absolute', left: 12, color: 'var(--text-tertiary)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
+              <IconSearch style={{ position: 'absolute', left: 12, width: 14, height: 14, color: 'var(--text-tertiary)' }} />
               <input
                 value={myGearSearch}
                 onChange={e => {
@@ -319,9 +315,7 @@ export default function GearRegistryPage({ onBack }) {
                         onClick={e => { e.stopPropagation(); handleDeleteCategory(category, catItems) }}
                         style={{ background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', lineHeight: 1 }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-                        </svg>
+                        <IconTrash style={{ width: 12, height: 12 }} />
                       </button>
                       <div style={{ fontSize: 10, color: 'var(--text-tertiary)', transform: collapsedCategories[category] ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>▾</div>
                     </div>
@@ -360,9 +354,7 @@ export default function GearRegistryPage({ onBack }) {
                                 )}
                                 {item.purchaseLink && (
                                   <a href={item.purchaseLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
-                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                                    </svg>
+                                    <IconExternalLink style={{ width: 9, height: 9 }} />
                                     View
                                   </a>
                                 )}

@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { AppProvider, useAppStore } from './store/index'
 import { useSyncOnLogin } from './hooks/useSyncOnLogin'
+import { usePositionBroadcast } from './hooks/usePositionBroadcast'
 import { supabase } from './lib/supabase'
 import { getPendingDeletes, removePendingDelete, getPendingSaves, removePendingSave } from './utils/gearStorage'
 import { getPendingTripSaves, removePendingTripSave, getPendingTripDeletes, removePendingTripDelete } from './utils/tripStorage'
@@ -21,6 +22,8 @@ const SurvivalAgentPage = lazy(() => import('./pages/SurvivalAgentPage'))
 const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'))
 const MealPlanningPage = lazy(() => import('./pages/MealPlanningPage'))
 const GearRegistryPage = lazy(() => import('./pages/GearRegistryPage'))
+const CrewPage         = lazy(() => import('./pages/CrewPage'))
+const PetsPage         = lazy(() => import('./pages/PetsPage'))
 
 export default function App() {
   const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
@@ -55,6 +58,7 @@ export default function App() {
 function AppShell({ user }) {
   const { setSyncStatus, setProfile } = useAppStore()
   useSyncOnLogin(user, setSyncStatus)
+  usePositionBroadcast()
 
   const [toast, setToast] = useState(null)
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
@@ -130,6 +134,18 @@ function AppShell({ user }) {
     setMoreSubview(null)
   }
 
+  // Handle ?invite=xxx deep link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const inviteId = params.get('invite')
+    if (inviteId && user) {
+      window.history.replaceState({}, '', window.location.pathname)
+      setActiveTab('more')
+      setMoreSubview('crew')
+      showToast('You have a crew invite waiting!')
+    }
+  }, [user])
+
   return (
     <div style={{
       display: 'flex',
@@ -169,12 +185,15 @@ function AppShell({ user }) {
             {activeTab === 'trip'   && <TripPage />}
             {activeTab === 'safety' && <SafetyPage />}
             {activeTab === 'rig'    && <RigPage />}
+            {activeTab === 'pets'   && <PetsPage />}
             {activeTab === 'more'   && moreSubview === null        && <MorePage          onNavigate={setMoreSubview} />}
             {activeTab === 'more'   && moreSubview === 'settings'  && <SettingsPage      onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'survival'  && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'knowledge' && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'meals'     && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'gear'      && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'crew'      && <CrewPage          onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'pets'      && <PetsPage          onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>

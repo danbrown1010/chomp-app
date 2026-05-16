@@ -21,6 +21,7 @@
     "@turf/helpers": "^7.3.5",
     "crypto-js": "^4.2.0",
     "idb": "^8.0.3",
+    "lucide-react": "^1.16.0",
     "maplibre-gl": "^5.24.0",
     "pdfjs-dist": "^5.7.284",
     "react": "^19.2.5",

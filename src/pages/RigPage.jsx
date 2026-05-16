@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { IconSun, IconPlugZap, IconZap, IconCar, IconUsb, IconRefresh } from '../components/icons'
 import { useAppStore } from '../store/index'
 import { useEcoFlow } from '../hooks/useEcoFlow'
 import { ECOFLOW_DEVICES } from '../config/devices'
@@ -348,71 +349,34 @@ function PowerFlowCard({ type, data }) {
         {
           label: 'Solar',
           watts: data?.solarWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-            </svg>
-          ),
+          icon: <IconSun style={{ width: 12, height: 12 }} />,
         },
         {
           label: 'AC Mains',
           watts: data?.acInputWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22V12M7 7h10v4a5 5 0 0 1-10 0z"/>
-              <line x1="5" y1="7" x2="5" y2="3"/>
-              <line x1="19" y1="7" x2="19" y2="3"/>
-            </svg>
-          ),
+          icon: <IconPlugZap style={{ width: 12, height: 12 }} />,
         },
         {
           label: 'Alternator',
           watts: data?.alternatorWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="14" rx="2"/>
-              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-              <line x1="12" y1="12" x2="12" y2="16"/>
-              <line x1="10" y1="14" x2="14" y2="14"/>
-            </svg>
-          ),
+          icon: <IconZap style={{ width: 12, height: 12 }} />,
         },
       ]
     : [
         {
           label: 'AC',
           watts: data?.acOutputWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22V12M7 7h10v4a5 5 0 0 1-10 0z"/>
-              <line x1="5" y1="7" x2="5" y2="3"/>
-              <line x1="19" y1="7" x2="19" y2="3"/>
-            </svg>
-          ),
+          icon: <IconPlugZap style={{ width: 12, height: 12 }} />,
         },
         {
           label: 'DC 12V',
           watts: data?.dcOutputWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2h-3"/>
-              <circle cx="9" cy="17" r="3"/>
-              <circle cx="17" cy="17" r="3"/>
-            </svg>
-          ),
+          icon: <IconCar style={{ width: 12, height: 12 }} />,
         },
         {
           label: 'USB',
           watts: data?.usbOutputWatts ?? 0,
-          icon: (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v12M9 7l3-5 3 5"/>
-              <circle cx="7" cy="16" r="3"/>
-              <circle cx="17" cy="16" r="3"/>
-              <path d="M7 13v-2h10v2"/>
-            </svg>
-          ),
+          icon: <IconUsb style={{ width: 12, height: 12 }} />,
         },
       ]
 
@@ -554,12 +518,7 @@ function EcoflowSection({ onShowInfo }) {
               style={{ background: 'var(--bg-secondary)' }}
               aria-label="Refresh"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
+              <IconRefresh style={{ width: 14, height: 14 }} />
             </button>
           </div>
         </div>
@@ -652,13 +611,7 @@ function EcoflowSection({ onShowInfo }) {
                 enabled={data?.acEnabled ?? false}
                 accent={accent}
                 onToggle={() => showToast('Port control coming in Phase 5')}
-                icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22V12M7 7h10v4a5 5 0 0 1-10 0z"/>
-                    <line x1="5" y1="7" x2="5" y2="3"/>
-                    <line x1="19" y1="7" x2="19" y2="3"/>
-                  </svg>
-                }
+                icon={<IconPlugZap style={{ width: 14, height: 14 }} />}
               />
               <PortToggleRow
                 label="12V DC"
@@ -666,13 +619,7 @@ function EcoflowSection({ onShowInfo }) {
                 enabled={data?.dcEnabled ?? false}
                 accent={accent}
                 onToggle={() => showToast('Port control coming in Phase 5')}
-                icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2h-3"/>
-                    <circle cx="9" cy="17" r="3"/>
-                    <circle cx="17" cy="17" r="3"/>
-                  </svg>
-                }
+                icon={<IconCar style={{ width: 14, height: 14 }} />}
               />
               <PortToggleRow
                 label="USB & Type-C"
@@ -680,14 +627,7 @@ function EcoflowSection({ onShowInfo }) {
                 enabled={data?.usbEnabled ?? false}
                 accent={accent}
                 onToggle={() => showToast('Port control coming in Phase 5')}
-                icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2v12M9 7l3-5 3 5"/>
-                    <circle cx="7" cy="16" r="3"/>
-                    <circle cx="17" cy="16" r="3"/>
-                    <path d="M7 13v-2h10v2"/>
-                  </svg>
-                }
+                icon={<IconUsb style={{ width: 14, height: 14 }} />}
               />
             </div>
           </>
@@ -750,12 +690,7 @@ function StarlinkSection() {
             style={{ background: 'var(--bg-secondary)' }}
             aria-label="Refresh"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-              <path d="M21 3v5h-5"/>
-              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-              <path d="M3 21v-5h5"/>
-            </svg>
+            <IconRefresh style={{ width: 14, height: 14 }} />
           </button>
         </div>
 

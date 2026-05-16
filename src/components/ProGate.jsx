@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconLock, IconCheck } from '../components/icons'
 import { redirectToCheckout } from '../utils/stripe'
 import { useAppStore } from '../store/index'
 
@@ -38,11 +39,7 @@ export function ProGate({ children, feature }) {
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.75"
-          strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0110 0v4"/>
-        </svg>
+        <IconLock style={{ width: 48, height: 48, marginBottom: 12, opacity: 0.7, color: 'var(--accent)' }} />
       </div>
 
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -71,10 +68,7 @@ export function ProGate({ children, feature }) {
           'Bulk gear import',
         ].map((f) => (
           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--safe)" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, flexShrink: 0 }}>
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+            <IconCheck style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--safe)' }} />
             {f}
           </div>
         ))}

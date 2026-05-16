@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { IconChevronRight } from '../components/icons'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore } from '../store/index'
@@ -285,9 +286,7 @@ function BottomSheet({ expanded, onToggle, accent }) {
                 <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{wp.name}</p>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{wp.night} · {wp.distanceMi}mi</p>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}>
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
             </div>
           ))}
         </div>
