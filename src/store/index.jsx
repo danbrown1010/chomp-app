@@ -107,6 +107,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
         departureDate: t.departure_date,
         returnDate: t.return_date,
         status: t.status,
+        is_published: t.is_published ?? false,
         waypoints: t.waypoints ?? [],
         campsites: t.campsites ?? [],
         ...(t.data ?? {}),
@@ -234,6 +235,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
 
     if (!error) {
       setTrips(prev => prev.map(t => ({ ...t, is_published: t.id === tripId })))
+      setActiveTrip(prev => prev ? { ...prev, is_published: prev.id === tripId } : prev)
     }
   }, [user])
 
@@ -246,6 +248,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
 
     if (!error) {
       setTrips(prev => prev.map(t => t.id === tripId ? { ...t, is_published: false } : t))
+      setActiveTrip(prev => prev?.id === tripId ? { ...prev, is_published: false } : prev)
     }
   }, [user])
 

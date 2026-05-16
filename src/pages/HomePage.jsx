@@ -305,7 +305,7 @@ const PRE_TRIP_CHECKLIST = [
 ]
 
 function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
-  const { accent, weather, aqi, deactivateTrip } = useAppStore()
+  const { accent, weather, aqi, deactivateTrip, publishTrip, unpublishTrip } = useAppStore()
   const [checked, setChecked] = useState([])
   const [gearChecklist, setGearChecklist] = useState([])
   const [gearChecked, setGearChecked] = useState(new Set())
@@ -362,6 +362,18 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
         <GpsStatus />
       </div>
 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px' }}>
+        <div style={{ fontSize: 13, color: activeTrip.is_published ? 'var(--safe)' : 'var(--text-tertiary)' }}>
+          {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
+        </div>
+        <button
+          onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+          style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+        >
+          {activeTrip.is_published ? 'Stop' : 'Broadcast'}
+        </button>
+      </div>
+
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>Packing readiness</p>
@@ -400,7 +412,7 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
 // ─── On-trip ──────────────────────────────────────────────────────────────────
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
-  const { accent, deactivateTrip } = useAppStore()
+  const { accent, deactivateTrip, publishTrip, unpublishTrip } = useAppStore()
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -420,6 +432,17 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
             Deactivate
           </button>
         </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px' }}>
+        <div style={{ fontSize: 13, color: activeTrip.is_published ? 'var(--safe)' : 'var(--text-tertiary)' }}>
+          {activeTrip.is_published ? '● Broadcasting to observers' : '○ Not broadcasting'}
+        </div>
+        <button
+          onClick={() => activeTrip.is_published ? unpublishTrip(activeTrip.id) : publishTrip(activeTrip.id)}
+          style={{ background: activeTrip.is_published ? 'transparent' : accent, border: activeTrip.is_published ? '1px solid var(--border)' : 'none', borderRadius: 8, padding: '5px 12px', color: activeTrip.is_published ? 'var(--text-secondary)' : '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+        >
+          {activeTrip.is_published ? 'Stop' : 'Broadcast'}
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
