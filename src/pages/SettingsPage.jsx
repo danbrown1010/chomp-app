@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { IconChevronLeft, IconChevronRight, IconCheck } from '../components/icons'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../lib/supabase'
+import { IconChevronLeft, IconChevronRight, IconCheck, IconZap, IconMap, IconWifi, IconCog, IconBook, IconPaw } from '../components/icons'
 import { useAppStore } from '../store/index'
 import { saveAnthropicKey, clearAnthropicKey, hasAnthropicKey } from '../utils/secretsManager'
 import { UserAvatar } from '../components/UserAvatar'
@@ -25,6 +26,15 @@ const ACCENTS = [
   '#94a3b8', // slate
 ]
 
+const FREQ_OPTIONS = [
+  { id: 'battery',  label: 'Battery saver', desc: 'Every 5 minutes',  proOnly: false },
+  { id: 'standard', label: 'Standard',      desc: 'Every 60 seconds', proOnly: false },
+  { id: 'live',     label: 'Live · PRO',    desc: 'Every 10 seconds', proOnly: true  },
+]
+
+const STARLINK_PROXY = import.meta.env.VITE_STARLINK_PROXY || null
+const HA_URL         = import.meta.env.VITE_HA_URL         || null
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ onBack, onNavigateTab }) {
@@ -40,6 +50,14 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
 
   useEffect(() => {
     hasAnthropicKey(user?.id).then(setKeySet)
+  }, [user?.id])
+
+  const [pets, setPets] = useState([])
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('pets').select('id,name,photo_url').eq('user_id', user.id).order('created_at', { ascending: true }).then(({ data }) => {
+      if (data) setPets(data)
+    })
   }, [user?.id])
 
   const showToast = (msg) => {
@@ -73,10 +91,21 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
   const [updateFrequency, setUpdateFrequency] = useState(
     () => localStorage.getItem('vela-position-frequency') ?? 'standard'
   )
+  const [showProNote, setShowProNote]   = useState(false)
+  const [starlinkSheet, setStarlinkSheet] = useState(false)
+  const [haSheet, setHaSheet]             = useState(false)
 
-  const handleFrequency = (id) => {
-    setUpdateFrequency(id)
-    localStorage.setItem('vela-position-frequency', id)
+  const handleFrequencyTap = (opt) => {
+    if (opt.proOnly && !isPro) {
+      setUpdateFrequency('standard')
+      localStorage.setItem('vela-position-frequency', 'standard')
+      setShowProNote(true)
+      setTimeout(() => setShowProNote(false), 3000)
+    } else {
+      setUpdateFrequency(opt.id)
+      localStorage.setItem('vela-position-frequency', opt.id)
+      setShowProNote(false)
+    }
   }
 
   const [tripToggles, setTripToggles] = useState({
@@ -112,7 +141,7 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
         </div>
 
         {/* ── Account ─────────────────────────────────────────────────────────── */}
-        <Section label="Account">
+        <Section label="Account" defaultOpen>
           {/* Profile header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
             <UserAvatar profile={profile} user={user} size={48} />
@@ -128,22 +157,26 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
               </div>
             </div>
           </div>
-          <AccountRow label="Vehicle profiles"  value="2014 Jeep JKU — Chomp" />
-          <AccountRow label="Household"         value={`${getFirstName(profile, user, 'You')} + Emily`} />
-          <AccountRow label="Subscription"      value={profile?.plan === 'pro' ? 'Pro' : 'Free'} valueColor={profile?.plan === 'pro' ? 'var(--accent)' : undefined} />
-          <AccountRow label="Connected apps" value="OnX, Gaia GPS" onTap={() => setSubPage('connectedApps')} />
-          {isPro && (
-            <button
-              className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
-              onClick={() => window.open('https://billing.stripe.com/p/login/5kQ9AT2zygVuf4ZfOzaAw00', '_blank')}
-            >
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Manage subscription</div>
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>Billing · Cancel · Receipts</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>Household</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <UserAvatar profile={profile} user={user} size={26} />
+                <div style={{ marginLeft: -8 }}>
+                  <UserAvatar profile={{ name: 'Emily' }} size={26} />
+                </div>
+                {pets.map((pet, i) => (
+                  <div key={pet.id} style={{ marginLeft: -8 }}>
+                    <PetAvatar pet={pet} size={26} />
+                  </div>
+                ))}
               </div>
-              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
-            </button>
-          )}
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
+                {[getFirstName(profile, user, 'You'), 'Emily', ...pets.map(p => p.name)].join(' + ')}
+              </span>
+            </div>
+          </div>
+          <AccountRow label="Active Vehicle"  value="2014 Jeep JKU — Chomp" />
           <button
             className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity"
             onClick={async () => {
@@ -156,87 +189,10 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
           </button>
         </Section>
 
-        {/* ── App Features ────────────────────────────────────────────────────── */}
-        <Section label="App Features">
-          <ToggleRow
-            label="Pet companion"
-            sub="Trail profiles for your dogs"
-            on={petsEnabled}
-            onToggle={() => setPetsEnabled(!petsEnabled)}
-          />
-        </Section>
-
-        {/* ── Notifications ───────────────────────────────────────────────────── */}
-        <Section label="Notifications">
-          <ToggleRow label="Fire alerts"            on={notifToggles.fire}        onToggle={() => toggleNotif('fire')}        />
-          <ToggleRow label="Burn ban changes"       on={notifToggles.burnBan}     onToggle={() => toggleNotif('burnBan')}     />
-          <ToggleRow label="Private land warnings"  on={notifToggles.privateLand} onToggle={() => toggleNotif('privateLand')} />
-          <ToggleRow label="Campsite availability"  on={notifToggles.campsite}    onToggle={() => toggleNotif('campsite')}    />
-          <ToggleRow label="Check-in reminders"     on={notifToggles.checkIn}     onToggle={() => toggleNotif('checkIn')}     />
-        </Section>
-
-        {/* ── Trip Lifecycle ──────────────────────────────────────────────────── */}
-        <Section label="Trip Lifecycle">
-          <ToggleRow
-            label="Phase-aware home screen"
-            sub="Adapt dashboard to trip phase"
-            on={tripToggles.phaseAware}
-            onToggle={() => toggleTrip('phaseAware')}
-          />
-          <ToggleRow
-            label="Auto-detect on-trip"
-            sub="Use GPS + trip dates"
-            on={tripToggles.autoDetect}
-            onToggle={() => toggleTrip('autoDetect')}
-          />
-          <ToggleRow
-            label="Post-trip reminders"
-            sub="Media sync, trail reports"
-            on={tripToggles.postTripReminders}
-            onToggle={() => toggleTrip('postTripReminders')}
-          />
-        </Section>
-
-        {/* ── Trip Sharing ────────────────────────────────────────────────────── */}
-        <Section label="Trip Sharing">
-          <div className="px-4 py-3 flex flex-col gap-3">
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Position update frequency</p>
-            {[
-              { id: 'battery', label: 'Battery saver', sub: 'Every 5 minutes', proOnly: false },
-              { id: 'standard', label: 'Standard', sub: 'Every 60 seconds', proOnly: false },
-              { id: 'live', label: 'Live', sub: 'Every 10 seconds · PRO', proOnly: true },
-            ].map(opt => {
-              const selected = updateFrequency === opt.id
-              const disabled = opt.proOnly && !isPro
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => !disabled && handleFrequency(opt.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 12px', borderRadius: 10, textAlign: 'left',
-                    border: `1px solid ${selected ? accent : 'var(--border)'}`,
-                    background: selected ? `${accent}18` : 'var(--bg-secondary)',
-                    cursor: disabled ? 'default' : 'pointer',
-                    opacity: disabled ? 0.5 : 1,
-                  }}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{opt.label}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{opt.sub}</p>
-                  </div>
-                  {selected && (
-                    <IconCheck style={{ width: 16, height: 16, flexShrink: 0, color: accent }} />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </Section>
-
-        {/* ── AI Configuration ────────────────────────────────────────────────── */}
-        <Section label="AI Configuration">
-          <div className="px-4 py-3 flex flex-col gap-3">
+        {/* ── Integrations ────────────────────────────────────────────────── */}
+        <Section label="Integrations">
+          {/* Anthropic API key */}
+          <div className="px-4 py-3 flex flex-col gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
             {toast && (
               <div style={{
                 padding: '8px 12px', borderRadius: 8,
@@ -300,6 +256,79 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
               </div>
             )}
           </div>
+          <IntegrationRow Icon={IconWifi}  title="Starlink"        sub="Local dish proxy"          badge={{ status: STARLINK_PROXY ? 'linked' : 'off', label: STARLINK_PROXY ? 'CONFIGURED' : 'NOT SET' }} onTap={() => setStarlinkSheet(true)} />
+          <IntegrationRow Icon={IconZap}   title="EcoFlow"         sub="Power station telemetry"   badge={{ status: 'linked', label: 'LINKED' }} onTap={() => onNavigateTab?.('rig')} />
+          <IntegrationRow Icon={IconMap}   title="OnX Offroad"     sub="Maps & route planning"     badge={{ status: 'linked', label: 'LINKED' }} onTap={() => window.open('https://www.onxmaps.com/offroad/app', '_blank')} />
+          <IntegrationRow Icon={IconBook}  title="Gaia GPS"        sub="Topo + satellite layers"   badge={{ status: 'linked', label: 'LINKED' }} onTap={() => window.open('https://www.gaiagps.com', '_blank')} />
+          <IntegrationRow Icon={IconCog}   title="Home Assistant"  sub="Departure automation"      badge={{ status: HA_URL ? 'linked' : 'off', label: HA_URL ? 'CONFIGURED' : 'NOT SET' }} onTap={() => setHaSheet(true)} last />
+        </Section>
+
+        {/* ── Notifications ───────────────────────────────────────────────────── */}
+        <Section label="Notifications">
+          <ToggleRow label="Fire alerts"            on={notifToggles.fire}        onToggle={() => toggleNotif('fire')}        />
+          <ToggleRow label="Burn ban changes"       on={notifToggles.burnBan}     onToggle={() => toggleNotif('burnBan')}     />
+          <ToggleRow label="Private land warnings"  on={notifToggles.privateLand} onToggle={() => toggleNotif('privateLand')} />
+          <ToggleRow label="Campsite availability"  on={notifToggles.campsite}    onToggle={() => toggleNotif('campsite')}    />
+          <ToggleRow label="Check-in reminders"     on={notifToggles.checkIn}     onToggle={() => toggleNotif('checkIn')}     />
+        </Section>
+
+        {/* ── Features ────────────────────────────────────────────────────── */}
+        <Section label="Features">
+          <ToggleRow
+            label="Pet companion"
+            sub="Trail profiles for your dogs"
+            on={petsEnabled}
+            onToggle={() => setPetsEnabled(!petsEnabled)}
+          />
+          <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>Position update frequency</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>How often your location is shared during active trips</p>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {FREQ_OPTIONS.map(opt => {
+                const selected = updateFrequency === opt.id
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleFrequencyTap(opt)}
+                    style={{
+                      flex: 1, padding: '7px 4px', borderRadius: 8, textAlign: 'center',
+                      border: `1px solid ${selected ? accent : 'var(--border)'}`,
+                      background: selected ? `${accent}20` : 'var(--bg-secondary)',
+                      color: selected ? accent : 'var(--text-secondary)',
+                      fontSize: 11, fontWeight: selected ? 600 : 400,
+                      fontFamily: 'var(--font-body)', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+            <p style={{ fontSize: 11, fontFamily: 'var(--font-body)', color: showProNote ? accent : 'var(--text-tertiary)' }}>
+              {showProNote ? 'Live updates require PRO' : FREQ_OPTIONS.find(o => o.id === updateFrequency)?.desc}
+            </p>
+          </div>
+          <ToggleRow
+            label="Phase-aware home screen"
+            sub="Adapt dashboard to trip phase"
+            on={tripToggles.phaseAware}
+            onToggle={() => toggleTrip('phaseAware')}
+          />
+          <ToggleRow
+            label="Auto-detect on-trip"
+            sub="Use GPS + trip dates"
+            on={tripToggles.autoDetect}
+            onToggle={() => toggleTrip('autoDetect')}
+          />
+          <ToggleRow
+            label="Post-trip reminders"
+            sub="Media sync, trail reports"
+            on={tripToggles.postTripReminders}
+            onToggle={() => toggleTrip('postTripReminders')}
+          />
         </Section>
 
         {/* ── Appearance ─────────────────────────────────────────────────────── */}
@@ -332,10 +361,6 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
 
         {/* ── About ───────────────────────────────────────────────────────────── */}
         <Section label="About">
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-[var(--text-secondary)]">Version</span>
-            <span className="text-sm font-medium text-[var(--text-primary)]">0.1.0 — Phase 3 build</span>
-          </div>
           <a
               href="https://danbrown1010.github.io/chomp-docs"
               target="_blank"
@@ -345,9 +370,67 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
               <span className="text-sm font-medium text-[var(--text-primary)]">Knowledge base</span>
               <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)' }} />
             </a>
+          <AccountRow label="Subscription" value={profile?.plan === 'pro' ? 'Pro' : 'Free'} valueColor={profile?.plan === 'pro' ? 'var(--accent)' : undefined} />
+          {isPro && (
+            <button
+              className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
+              onClick={() => window.open('https://billing.stripe.com/p/login/5kQ9AT2zygVuf4ZfOzaAw00', '_blank')}
+            >
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Manage subscription</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>Billing · Cancel · Receipts</div>
+              </div>
+              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
+            </button>
+          )}
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm text-[var(--text-secondary)]">Version</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">0.1.0 — Phase 3 build</span>
+          </div>
         </Section>
 
       </div>
+
+      {/* ── Starlink bottom sheet ─────────────────────────────────────────────── */}
+      {starlinkSheet && (
+        <div onClick={() => setStarlinkSheet(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 20px' }} />
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>Starlink Proxy</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20, lineHeight: 1.5 }}>Run the starlink-proxy server on your Mac Mini or Raspberry Pi connected to your Starlink router.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Proxy URL</div>
+                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: STARLINK_PROXY ? 'var(--text-primary)' : 'var(--text-tertiary)', wordBreak: 'break-all' }}>{STARLINK_PROXY || 'Not configured'}</div>
+              </div>
+              <button onClick={() => window.open('https://github.com/danbrown1010/vela-app', '_blank')} style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', fontSize: 14, fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer', textAlign: 'center' }} className="active:opacity-70 transition-opacity">
+                View setup guide →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Home Assistant bottom sheet ───────────────────────────────────────── */}
+      {haSheet && (
+        <div onClick={() => setHaSheet(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 20px' }} />
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>Home Assistant</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20, lineHeight: 1.5 }}>Trigger departure and arrival automations via Home Assistant webhooks.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>HA URL</div>
+                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: HA_URL ? 'var(--text-primary)' : 'var(--text-tertiary)', wordBreak: 'break-all' }}>{HA_URL || 'Not configured'}</div>
+              </div>
+              <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>To enable</div>
+                <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', lineHeight: 1.7 }}>1. Set VITE_HA_URL in .env{'\n'}2. Add webhook IDs to config{'\n'}3. Rebuild and redeploy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -404,8 +487,8 @@ function LightPreview() {
 
 // ─── Shared components ────────────────────────────────────────────────────────
 
-function Section({ label, children }) {
-  const [open, setOpen] = useState(false)
+function Section({ label, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <div>
       <button
@@ -437,6 +520,49 @@ function ToggleRow({ label, sub, on, onToggle }) {
   )
 }
 
+function PetAvatar({ pet, size = 26 }) {
+  const [imgError, setImgError] = useState(false)
+  if (pet.photo_url && !imgError) {
+    return (
+      <img
+        src={pet.photo_url}
+        alt={pet.name}
+        onError={() => setImgError(true)}
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1.5px solid var(--border)' }}
+      />
+    )
+  }
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <IconPaw style={{ width: Math.round(size * 0.55), height: Math.round(size * 0.55), color: 'var(--text-tertiary)' }} />
+    </div>
+  )
+}
+
+function IntegrationRow({ Icon, title, sub, badge, onTap, last }) {
+  return (
+    <button
+      onClick={onTap}
+      className="w-full active:opacity-70 transition-opacity"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '12px 16px', textAlign: 'left', background: 'transparent',
+        borderBottom: last ? 'none' : '1px solid var(--border)',
+        cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon style={{ width: 18, height: 18, color: 'var(--text-secondary)' }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{title}</p>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, fontFamily: 'var(--font-body)' }}>{sub}</p>
+      </div>
+      <StatusBadge status={badge.status} label={badge.label} dot={false} />
+    </button>
+  )
+}
+
 function AccountRow({ label, value, valueColor, onTap }) {
   return (
     <button onClick={onTap} className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity">
@@ -451,7 +577,6 @@ function AccountRow({ label, value, valueColor, onTap }) {
 
 // ─── Connected Apps sub-page ──────────────────────────────────────────────────
 
-const STARLINK_PROXY = import.meta.env.VITE_STARLINK_PROXY ?? null
 
 function ConnectedAppsPage({ onBack, onNavigateTab }) {
   const [starlinkSheet, setStarlinkSheet] = useState(false)
