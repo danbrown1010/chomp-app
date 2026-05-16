@@ -278,7 +278,8 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
 
   const { location, status: gpsStatus } = useGeolocation()
   const { data: ecoflowData } = useEcoFlow(ECOFLOW_DEVICES.delta2Max.sn)
-  const ecoflowSoc = ecoflowData?.soc ?? null
+  const ecoflowSoc      = ecoflowData?.soc ?? null
+  const ecoflowCharging = ecoflowData != null ? (ecoflowData.totalInputWatts ?? 0) > 0 : null
   const { weather, forecast: weatherForecast, loading: weatherLoading, error: weatherError } = useWeather(location?.lat, location?.lng, dataBust)
   const { aqi, loading: aqiLoading, error: aqiError } = useAirQuality(location?.lat, location?.lng, dataBust)
 
@@ -304,7 +305,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
       pendingInviteCount, setPendingInviteCount,
       petsEnabled, setPetsEnabled,
       location, gpsStatus,
-      ecoflowSoc,
+      ecoflowSoc, ecoflowCharging,
       weather, weatherForecast, weatherLoading, weatherError,
       aqi, aqiLoading, aqiError,
       refreshHomeData,

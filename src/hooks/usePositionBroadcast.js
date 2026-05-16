@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAppStore } from '../store/index'
 
 export function usePositionBroadcast() {
-  const { location, activeTrip, user, ecoflowSoc } = useAppStore()
+  const { location, activeTrip, user, ecoflowSoc, ecoflowCharging } = useAppStore()
   const intervalRef      = useRef(null)
   const lastLocationRef  = useRef(null)
   const wasPublishedRef  = useRef(false)
@@ -32,7 +32,8 @@ export function usePositionBroadcast() {
         lat:          location.lat,
         lng:          location.lng,
         accuracy:     location.accuracy,
-        ecoflow_soc:  ecoflowSoc,
+        ecoflow_soc:      ecoflowSoc,
+        ecoflow_charging: ecoflowCharging,
         recorded_at:  new Date().toISOString(),
       }, { onConflict: 'trip_id,user_id' })
 

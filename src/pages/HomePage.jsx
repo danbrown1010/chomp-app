@@ -464,7 +464,7 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
 // ─── On-trip ──────────────────────────────────────────────────────────────────
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
-  const { accent, deactivateTrip, publishTrip, unpublishTrip } = useAppStore()
+  const { accent, deactivateTrip, publishTrip, unpublishTrip, ecoflowSoc, ecoflowCharging } = useAppStore()
   const [watchTrip, setWatchTrip] = useState(null)
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
@@ -511,7 +511,12 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
       {watchTrip && <CrewWatchModal trip={watchTrip} onClose={() => setWatchTrip(null)} />}
 
       <div className="grid grid-cols-3 gap-2">
-        <LiveStat label="EcoFlow" value="87%" ok />
+        <LiveStat
+          label="EcoFlow"
+          value={ecoflowSoc != null ? `${ecoflowSoc}%` : '—'}
+          sub={ecoflowSoc != null && ecoflowCharging != null ? (ecoflowCharging ? '⚡ Charging' : 'Discharging') : null}
+          ok={ecoflowSoc == null || ecoflowSoc > 20}
+        />
         <LiveStat label="Fridge"  value="36°F" ok />
         <LiveStat label="Signal"  value="LTE" ok />
       </div>
@@ -699,11 +704,12 @@ function StatCard({ label, value, valueColor }) {
   )
 }
 
-function LiveStat({ label, value, ok = false }) {
+function LiveStat({ label, value, sub = null, ok = false }) {
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 64 }}>
       <div style={{ fontSize: 18, fontWeight: 700, color: ok ? 'var(--text-primary)' : '#f87171', fontFamily: 'var(--font-mono)' }}>{value}</div>
       <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      {sub && <div style={{ fontSize: 9, color: 'var(--safe)', marginTop: 2, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{sub}</div>}
     </div>
   )
 }
