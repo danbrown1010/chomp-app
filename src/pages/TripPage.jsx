@@ -36,8 +36,9 @@ export default function TripPage() {
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
-  const [previewDoc,  setPreviewDoc]  = useState(null)
-  const [previewUrls, setPreviewUrls] = useState({})
+  const [previewDoc,    setPreviewDoc]    = useState(null)
+  const urlCacheRef                       = useRef({})
+  const [loadedDocIds,  setLoadedDocIds]  = useState(new Set())
 
   const toggleLayer = id => setLayers(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -104,7 +105,7 @@ export default function TripPage() {
       <LayerStrip layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} accent={accent} />
       <ZoomControls mapRef={mapRef} />
       <RecenterBtn onPress={recenter} accent={accent} />
-      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} setPreviewDoc={setPreviewDoc} previewUrls={previewUrls} setPreviewUrls={setPreviewUrls} />
+      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} setPreviewDoc={setPreviewDoc} urlCacheRef={urlCacheRef} setLoadedDocIds={setLoadedDocIds} />
 
       {/* Doc preview modal */}
       {previewDoc && (
@@ -138,11 +139,11 @@ export default function TripPage() {
             )}
 
             {previewDoc.file_path && (
-              previewUrls[previewDoc.id] ? (
+              loadedDocIds.has(previewDoc.id) ? (
                 previewDoc.type === 'image' ? (
-                  <img src={previewUrls[previewDoc.id]} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 260, objectFit: 'contain', marginBottom: 12 }} />
+                  <img src={urlCacheRef.current[previewDoc.id]} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 260, objectFit: 'contain', marginBottom: 12 }} />
                 ) : (
-                  <a href={previewUrls[previewDoc.id]} target="_blank" rel="noopener noreferrer"
+                  <a href={urlCacheRef.current[previewDoc.id]} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 8, padding: '10px 16px', fontSize: 13, color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none', marginBottom: 12 }}>
                     Open {previewDoc.file_name} →
                   </a>
@@ -301,7 +302,7 @@ function RecenterBtn({ onPress, accent }) {
 
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
-function BottomSheet({ expanded, onToggle, accent, activeTrip, user, setPreviewDoc, previewUrls, setPreviewUrls }) {
+function BottomSheet({ expanded, onToggle, accent, activeTrip, user, setPreviewDoc, urlCacheRef, setLoadedDocIds }) {
   const { docs, loading: docsLoading, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
   const [docsExpanded, setDocsExpanded] = useState(true)
 
@@ -384,11 +385,12 @@ function BottomSheet({ expanded, onToggle, accent, activeTrip, user, setPreviewD
                     key={doc.id}
                     onClick={async () => {
                         setPreviewDoc(doc)
-                        if (previewUrls[doc.id]) return
+                        if (urlCacheRef.current[doc.id]) return
                         if (doc.file_path) {
                           try {
                             const url = await getDocUrl(doc)
-                            setPreviewUrls(prev => ({ ...prev, [doc.id]: url }))
+                            urlCacheRef.current[doc.id] = url
+                            setLoadedDocIds(prev => new Set([...prev, doc.id]))
                           } catch (err) {
                             console.error('URL error:', err)
                           }
