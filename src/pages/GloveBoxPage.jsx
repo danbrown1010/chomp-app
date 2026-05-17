@@ -145,29 +145,67 @@ const iconBox = {
   color: 'var(--accent)', flexShrink: 0,
 }
 
+// Module-level cache so docs survive re-navigation (component remounts on every nav)
+let _gloveBoxCache = null // { userId, docs } | null
+
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 export default function GloveBoxPage({ onBack }) {
   const { user } = useAppStore()
-  const [docs, setDocs]             = useState([])
-  const [loading, setLoading]       = useState(true)
+
+  const cachedDocs = _gloveBoxCache?.userId === user?.id ? _gloveBoxCache.docs : null
+  const [docs, setDocs]             = useState(cachedDocs ?? [])
+  const [loading, setLoading]       = useState(cachedDocs === null)
   const [search, setSearch]         = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [view, setView]             = useState('list') // 'list' | 'detail' | 'add'
   const [selectedDoc, setSelectedDoc] = useState(null)
   const [signedUrls, setSignedUrls] = useState({})
 
-  useEffect(() => { loadDocs() }, [user])
-
-  async function loadDocs() {
+  useEffect(() => {
     if (!user) { setLoading(false); return }
-    const { data, error } = await supabase
+    let cancelled = false
+    // Only show spinner if no cache; otherwise refresh silently in background
+    if (_gloveBoxCache?.userId !== user.id) setLoading(true)
+    supabase
       .from('glove_box')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (!error) setDocs(data ?? [])
-    setLoading(false)
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) console.error('Glove box load error:', error)
+        const result = data ?? []
+        _gloveBoxCache = { userId: user.id, docs: result }
+        setDocs(result)
+        setLoading(false)
+      })
+      .catch(err => {
+        if (cancelled) return
+        console.error('Glove box fetch error:', err)
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  async function loadDocs() {
+    if (!user) { setLoading(false); return }
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('glove_box')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (error) console.error('Glove box load error:', error)
+      const result = data ?? []
+      _gloveBoxCache = { userId: user.id, docs: result }
+      setDocs(result)
+    } catch (err) {
+      console.error('Glove box fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const filteredDocs = docs.filter(doc => {
@@ -202,7 +240,9 @@ export default function GloveBoxPage({ onBack }) {
     if (!confirm(`Delete "${doc.title}"? This cannot be undone.`)) return
     if (doc.file_path) await deleteDocument(doc.file_path)
     await supabase.from('glove_box').delete().eq('id', doc.id).eq('user_id', user.id)
-    setDocs(prev => prev.filter(d => d.id !== doc.id))
+    const updated = docs.filter(d => d.id !== doc.id)
+    _gloveBoxCache = { userId: user.id, docs: updated }
+    setDocs(updated)
     setSelectedDoc(null)
     setView('list')
   }
