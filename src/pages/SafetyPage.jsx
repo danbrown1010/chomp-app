@@ -101,6 +101,14 @@ export default function SafetyPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Sticky page header */}
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>Safety</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>Keeping a check on things...</div>
+        </div>
+        <StatusBadge status={monitorBadge} label={monitorLabel} />
+      </div>
       <div
         ref={scrollRef}
         style={{ flex: 1, overflowY: 'auto' }}
@@ -113,21 +121,6 @@ export default function SafetyPage() {
             <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--text-tertiary)', borderTopColor: 'transparent', transform: `rotate(${(pullY / 64) * 270}deg)` }} />
           </div>
         )}
-
-        {/* Page header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 16px 4px', paddingRight: 48 }}>
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Safety</h1>
-            {updatedStr && (
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, letterSpacing: '0.06em' }}>
-                CHELAN CO. · UPDATED {updatedStr}
-              </p>
-            )}
-          </div>
-          <div style={{ marginTop: 4 }}>
-            <StatusBadge status={monitorBadge} label={monitorLabel} />
-          </div>
-        </div>
 
         <FireStatus nearest={nearest} loading={fireLoading} error={fireError} updatedStr={updatedStr} />
 

@@ -123,12 +123,12 @@ export default function RigPage() {
 
       {/* Primary vehicle header */}
       {primaryVehicle && (
-        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {primaryVehicle.photo_url ? (
               <img src={primaryVehicle.photo_url} alt={primaryVehicle.nickname} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
                 <rect x="1" y="3" width="15" height="13" rx="2"/>
                 <path d="M16 8h4l3 3v5h-7V8z"/>
                 <circle cx="5.5" cy="18.5" r="2.5"/>
@@ -136,18 +136,13 @@ export default function RigPage() {
               </svg>
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>
               {primaryVehicle.nickname || primaryVehicle.make}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>
               {[primaryVehicle.year, primaryVehicle.make, primaryVehicle.model, primaryVehicle.trim].filter(Boolean).join(' ')}
             </div>
-            {primaryVehicle.current_mileage && (
-              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2, letterSpacing: '0.04em' }}>
-                {primaryVehicle.current_mileage.toLocaleString()} MI
-              </div>
-            )}
           </div>
           <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 8, padding: '2px 6px', letterSpacing: '0.06em', flexShrink: 0 }}>
             PRIMARY

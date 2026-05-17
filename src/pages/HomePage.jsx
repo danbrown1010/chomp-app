@@ -174,11 +174,28 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   ).sort((a, b) => new Date(b.departureDate) - new Date(a.departureDate)).slice(0, 3)
 
   return (
-    <div style={{ position: 'relative', height: '100%' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Sticky header */}
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <VelaLogo size={30} transparent />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
+            GO FURTHER.
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {syncStatus === 'syncing' && (
+            <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+          )}
+          {syncStatus === 'error' && (
+            <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
+          )}
+        </div>
+      </div>
       <div
         ref={scrollRef}
         className="overflow-y-auto"
-        style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -188,28 +205,9 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
             <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--text-tertiary)', borderTopColor: 'transparent', transform: `rotate(${(pullY / 64) * 270}deg)` }} />
           </div>
         )}
-
-        <div style={{ paddingTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <VelaLogo size={22} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-                GO FURTHER.
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {syncStatus === 'syncing' && (
-                <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-              )}
-              {syncStatus === 'error' && (
-                <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
-              )}
-            </div>
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, {firstName}</h1>
-            <GpsStatus />
-          </div>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, {firstName}</h1>
+          <GpsStatus />
         </div>
 
         <WeatherCard />
