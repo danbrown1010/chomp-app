@@ -187,10 +187,14 @@ function VehicleSetupChat({ onComplete, onCancel }) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, system: VEHICLE_SYSTEM_PROMPT, messages: msgs }),
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: maxTokens, system: VEHICLE_SYSTEM_PROMPT, messages: msgs }),
     })
     const data = await res.json()
-    return data.content?.[0]?.text ?? ''
+    console.log('[Fleet] Claude response:', JSON.stringify(data).slice(0, 300))
+    if (data.error) throw new Error(data.error.message || `API error: ${data.error.type}`)
+    const text = data.content?.[0]?.text
+    if (!text) throw new Error('Empty response — check API key in Settings')
+    return text
   }
 
   const startChat = async (key) => {
@@ -201,6 +205,7 @@ function VehicleSetupChat({ onComplete, onCancel }) {
       setMessages([{ role: 'assistant', content: reply }])
     } catch (err) {
       console.error('Chat start error:', err)
+      setMessages([{ role: 'assistant', content: `Setup error: ${err.message}` }])
     } finally {
       setLoading(false)
     }
