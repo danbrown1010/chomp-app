@@ -219,15 +219,19 @@ function VehicleSetupChat({ onComplete, onCancel }) {
     setInput('')
     setLoading(true)
     try {
-      const reply = await callClaude(newMessages, apiKey, 700)
+      const reply = await callClaude(newMessages, apiKey, 1500)
 
       const profileMatch = reply.match(/<vehicle_profile>([\s\S]*?)<\/vehicle_profile>/)
       if (profileMatch) {
         try {
-          setVehicleData(JSON.parse(profileMatch[1].trim()))
+          const jsonStr = profileMatch[1].trim()
+          console.log('[Fleet] Profile JSON:', jsonStr.slice(0, 200))
+          const parsed = JSON.parse(jsonStr)
+          setVehicleData(parsed)
           setSetupDone(true)
         } catch (e) {
-          console.error('Profile parse error:', e)
+          console.error('[Fleet] Profile parse error:', e.message)
+          console.error('[Fleet] Raw JSON:', profileMatch[1].slice(0, 500))
         }
       }
 
@@ -752,11 +756,13 @@ export default function FleetPage({ onBack }) {
   const [selectedVehicle, setSelectedVehicle] = useState(null)
 
   const handleSetupComplete = async (data) => {
+    console.log('[Fleet] Saving vehicle:', data)
     try {
-      await addVehicle(data)
+      const saved = await addVehicle(data)
+      console.log('[Fleet] Vehicle saved:', saved)
       setView('roster')
     } catch (err) {
-      console.error('Add vehicle error:', err)
+      console.error('[Fleet] Add vehicle error:', err)
     }
   }
 
