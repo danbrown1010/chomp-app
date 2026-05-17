@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useFireData } from '../hooks/useFireData'
+import { useTripDocs } from '../hooks/useTripDocs'
 import { useAppStore } from '../store/index'
 import { getGearSummary } from '../utils/gearStorage'
 import { ProGate } from '../components/ProGate'
@@ -68,19 +69,34 @@ function aqiColors(category) {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-function buildDocContext(docs) {
-  if (!docs.length) return null
-  const lines = docs.map(doc => {
-    const parts = [`[${doc.category || doc.type}] ${doc.title}`]
-    if (doc.type === 'reservation' && doc.metadata) {
-      if (doc.metadata.confirmation) parts.push(`  Confirmation: ${doc.metadata.confirmation}`)
-      if (doc.metadata.date) parts.push(`  Date: ${doc.metadata.date}`)
-      if (doc.metadata.location) parts.push(`  Location: ${doc.metadata.location}`)
-    }
-    if (doc.content) parts.push(`  Notes: ${doc.content.slice(0, 200)}`)
-    return parts.join('\n')
-  })
-  return `Glove box documents on file:\n${lines.join('\n\n')}`
+function buildDocContext(docs, tripDocs) {
+  let context = ''
+
+  if (tripDocs.length > 0) {
+    context += `DOCUMENTS ATTACHED TO ACTIVE TRIP (${tripDocs.length} total):\n`
+    tripDocs.forEach(doc => {
+      context += `- "${doc.title}" [${doc.category || doc.type}]`
+      if (doc.metadata?.confirmation) context += ` · Confirmation: ${doc.metadata.confirmation}`
+      if (doc.metadata?.location)     context += ` · Location: ${doc.metadata.location}`
+      if (doc.content)                context += `\n  Content: ${doc.content.slice(0, 300)}`
+      else if (doc.extracted_text)    context += `\n  Extracted: ${doc.extracted_text.slice(0, 300)}`
+      context += '\n'
+    })
+  }
+
+  if (docs.length > 0) {
+    context += `\nALL GLOVE BOX DOCUMENTS (${docs.length} total, secret documents excluded):\n`
+    docs.forEach(doc => {
+      context += `- "${doc.title}" [${doc.category || doc.type}]`
+      if (doc.metadata?.confirmation) context += ` · Confirmation: ${doc.metadata.confirmation}`
+      if (doc.tags?.length)           context += ` · Tags: ${doc.tags.join(', ')}`
+      context += '\n'
+    })
+  }
+
+  if (!context) return null
+
+  return context + `\nNote: For text notes you have full content above. For files (PDFs/images) you have metadata only — ask the user to share the content if needed. Secret documents are never shown here.`
 }
 
 const SUGGESTIONS = [
@@ -102,6 +118,7 @@ const INITIAL_MESSAGES = [
 export default function SurvivalAgentPage({ onBack }) {
   const { location, weather, aqi, activeTrip, user } = useAppStore()
   const { fires } = useFireData()
+  const { docs: tripDocs } = useTripDocs(activeTrip?.id, user?.id)
 
   const [messages, setMessages]       = useState(INITIAL_MESSAGES)
   const [input, setInput]             = useState('')
@@ -182,7 +199,7 @@ Current situational context:`,
       parts.push(gearSummary)
     else
       parts.push('Equipment: No gear registry configured yet.')
-    const docCtx = buildDocContext(docContextRef.current)
+    const docCtx = buildDocContext(docContextRef.current, tripDocs)
     console.log('[SurvivalAgent] System prompt doc section:', docCtx)
     if (docCtx) parts.push(docCtx)
     parts.push(`Expertise areas:

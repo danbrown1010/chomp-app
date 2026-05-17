@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useTripPhase } from '../hooks/useTripPhase'
+import { useTripDocs } from '../hooks/useTripDocs'
 import { useAppStore } from '../store/index'
 import { getGearItems } from '../utils/gearStorage'
 import { Skeleton } from '../components/Skeleton'
@@ -155,19 +156,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
   const [watchTrip, setWatchTrip] = useState(null)
-  const [tripDocs, setTripDocs] = useState([])
-
-  useEffect(() => {
-    if (!activeTrip || !user) { setTripDocs([]); return }
-    supabase
-      .from('glove_box')
-      .select('id, title, type, category')
-      .eq('user_id', user.id)
-      .eq('trip_id', activeTrip.id)
-      .eq('is_secret', false)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setTripDocs(data ?? []))
-  }, [activeTrip?.id, user?.id])
+  const { docs: tripDocs } = useTripDocs(activeTrip?.id, user?.id)
 
   const now = new Date()
 

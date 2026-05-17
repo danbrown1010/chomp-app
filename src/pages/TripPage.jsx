@@ -4,6 +4,7 @@ import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore } from '../store/index'
 import { useFireData } from '../hooks/useFireData'
+import { useTripDocs } from '../hooks/useTripDocs'
 
 const MAP_STYLE   = 'https://tiles.openfreemap.org/styles/liberty'
 const CURRENT_POS = [-120.8830, 47.4521]
@@ -30,7 +31,7 @@ const LAYER_CONFIG = [
 ]
 
 export default function TripPage() {
-  const { accent, location } = useAppStore()
+  const { accent, location, activeTrip, user } = useAppStore()
   const { fires } = useFireData()
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
@@ -99,7 +100,7 @@ export default function TripPage() {
       <LayerStrip layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} accent={accent} />
       <ZoomControls mapRef={mapRef} />
       <RecenterBtn onPress={recenter} accent={accent} />
-      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} />
+      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} />
     </div>
   )
 }
@@ -234,7 +235,13 @@ function RecenterBtn({ onPress, accent }) {
 
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
-function BottomSheet({ expanded, onToggle, accent }) {
+function BottomSheet({ expanded, onToggle, accent, activeTrip, user }) {
+  const { docs, loading: docsLoading, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
+  const [expandedDoc, setExpandedDoc] = useState(null)
+  const [docUrl, setDocUrl]           = useState(null)
+  const [loadingUrl, setLoadingUrl]   = useState(false)
+  const [docsExpanded, setDocsExpanded] = useState(true)
+
   return (
     <div
       style={{
@@ -243,7 +250,7 @@ function BottomSheet({ expanded, onToggle, accent }) {
         borderTop: '1px solid var(--border)',
         borderRadius: '16px 16px 0 0',
         overflow: 'hidden',
-        height: expanded ? 280 : PEEK_H,
+        height: expanded ? 380 : PEEK_H,
         transition: 'height 0.28s cubic-bezier(0.32,0.72,0,1)',
       }}
     >
@@ -260,36 +267,149 @@ function BottomSheet({ expanded, onToggle, accent }) {
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Next waypoint</p>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginTop: 3 }}>Handy Spring · 12mi</p>
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-          <button
-            style={{ flex: 1, background: accent, color: 'white', fontSize: 14, fontWeight: 600, borderRadius: 12, padding: '9px 0', fontFamily: 'var(--font-body)', border: 'none' }}
-          >
+          <button style={{ flex: 1, background: accent, color: 'white', fontSize: 14, fontWeight: 600, borderRadius: 12, padding: '9px 0', fontFamily: 'var(--font-body)', border: 'none' }}>
             Navigate
           </button>
-          <button
-            style={{ flex: 1, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, borderRadius: 12, padding: '9px 0', fontFamily: 'var(--font-body)' }}
-          >
+          <button style={{ flex: 1, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, borderRadius: 12, padding: '9px 0', fontFamily: 'var(--font-body)' }}>
             Add waypoint
           </button>
         </div>
       </div>
 
-      {/* Expanded: waypoint list */}
-      <div style={{ opacity: expanded ? 1 : 0, pointerEvents: expanded ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 16, marginBottom: 8, padding: '0 16px' }}>
+      {/* Expanded: scrollable content */}
+      <div style={{ opacity: expanded ? 1 : 0, pointerEvents: expanded ? 'auto' : 'none', transition: 'opacity 0.2s', overflowY: 'auto', maxHeight: 260, padding: '0 16px 16px' }}>
+        {/* Waypoints */}
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 16, marginBottom: 8 }}>
           All waypoints
         </p>
-        <div style={{ padding: '0 16px' }}>
-          {WAYPOINTS.map((wp, i) => (
-            <div key={wp.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: accent, flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{wp.name}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{wp.night} · {wp.distanceMi}mi</p>
-              </div>
-              <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
+        {WAYPOINTS.map((wp, i) => (
+          <div key={wp.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{wp.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{wp.night} · {wp.distanceMi}mi</p>
             </div>
-          ))}
-        </div>
+            <IconChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', flexShrink: 0 }} />
+          </div>
+        ))}
+
+        {/* Trip Documents */}
+        {(docs.length > 0 || docsLoading) && (
+          <div style={{ marginTop: 16 }}>
+            <button
+              onClick={() => setDocsExpanded(e => !e)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: '0 0 8px', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+                Documents · {docs.length}
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                style={{ width: 12, height: 12, transform: docsExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+
+            {docsExpanded && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {docsLoading ? (
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading documents...</div>
+                ) : docs.map(doc => (
+                  <div key={doc.id}>
+                    <div
+                      onClick={async () => {
+                        if (expandedDoc === doc.id) { setExpandedDoc(null); setDocUrl(null); return }
+                        setExpandedDoc(doc.id)
+                        if (doc.file_path) {
+                          setLoadingUrl(true)
+                          const url = await getDocUrl(doc)
+                          setDocUrl(url)
+                          setLoadingUrl(false)
+                        }
+                      }}
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: `1px solid ${expandedDoc === doc.id ? 'var(--accent)' : 'var(--border)'}`,
+                        borderRadius: expandedDoc === doc.id ? '10px 10px 0 0' : 10,
+                        padding: '10px 12px',
+                        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>
+                        {doc.type === 'pdf' ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                        ) : doc.type === 'image' ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 1, textTransform: 'capitalize' }}>
+                          {doc.category || doc.type}{doc.metadata?.confirmation && ` · ${doc.metadata.confirmation}`}
+                        </div>
+                      </div>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ width: 12, height: 12, transform: expandedDoc === doc.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
+
+                    {expandedDoc === doc.id && (
+                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--accent)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px 14px' }}>
+                        {doc.metadata?.confirmation && (
+                          <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Confirmation</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.06em' }}>{doc.metadata.confirmation}</div>
+                            {doc.metadata.location && (
+                              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginTop: 3 }}>{doc.metadata.location}</div>
+                            )}
+                          </div>
+                        )}
+                        {doc.content && (
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: doc.file_path ? 10 : 0 }}>
+                            {doc.content}
+                          </div>
+                        )}
+                        {doc.file_path && (
+                          loadingUrl ? (
+                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading secure file...</div>
+                          ) : docUrl ? (
+                            doc.type === 'image' ? (
+                              <img src={docUrl} alt={doc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'contain', background: '#000' }} />
+                            ) : (
+                              <a href={docUrl} target="_blank" rel="noopener noreferrer"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--accent)', fontFamily: 'var(--font-body)', textDecoration: 'none' }}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
+                                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                Open {doc.file_name}
+                              </a>
+                            )
+                          ) : null
+                        )}
+                        {doc.extracted_text && !doc.content && (
+                          <div style={{ marginTop: 8, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', lineHeight: 1.5, maxHeight: 80, overflow: 'hidden' }}>
+                            {doc.extracted_text.slice(0, 200)}{doc.extracted_text.length > 200 && '...'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
