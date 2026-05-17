@@ -33,12 +33,11 @@ const LAYER_CONFIG = [
 export default function TripPage() {
   const { accent, location, activeTrip, user } = useAppStore()
   const { fires } = useFireData()
-  const { docs: tripDocs, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
-  const [previewDoc, setPreviewDoc] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewDoc,  setPreviewDoc]  = useState(null)
+  const [previewUrls, setPreviewUrls] = useState({})
 
   const toggleLayer = id => setLayers(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -48,16 +47,7 @@ export default function TripPage() {
     }
   }
 
-  const handleDocTap = async (doc) => {
-    setPreviewDoc(doc)
-    setPreviewUrl(null)
-    if (doc.file_path) {
-      const url = await getDocUrl(doc)
-      setPreviewUrl(url)
-    }
-  }
-
-  const closePreview = () => { setPreviewDoc(null); setPreviewUrl(null) }
+  const closePreview = () => setPreviewDoc(null)
 
   return (
     <div className="relative h-full overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
@@ -114,7 +104,7 @@ export default function TripPage() {
       <LayerStrip layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} accent={accent} />
       <ZoomControls mapRef={mapRef} />
       <RecenterBtn onPress={recenter} accent={accent} />
-      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} onDocTap={handleDocTap} />
+      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} setPreviewDoc={setPreviewDoc} previewUrls={previewUrls} setPreviewUrls={setPreviewUrls} />
 
       {/* Doc preview modal */}
       {previewDoc && (
@@ -148,23 +138,29 @@ export default function TripPage() {
             )}
 
             {previewDoc.file_path && (
-              previewUrl ? (
+              previewUrls[previewDoc.id] ? (
                 previewDoc.type === 'image' ? (
-                  <img src={previewUrl} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 300, objectFit: 'contain' }} />
+                  <img src={previewUrls[previewDoc.id]} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 260, objectFit: 'contain', marginBottom: 12 }} />
                 ) : (
-                  <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none' }}>
-                    Open document →
+                  <a href={previewUrls[previewDoc.id]} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 8, padding: '10px 16px', fontSize: 13, color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none', marginBottom: 12 }}>
+                    Open {previewDoc.file_name} →
                   </a>
                 )
               ) : (
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading secure file...</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginBottom: 12 }}>Loading document...</div>
               )
+            )}
+
+            {previewDoc.extracted_text && !previewDoc.content && (
+              <div style={{ padding: '8px 10px', background: 'var(--bg-card)', borderRadius: 6, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', lineHeight: 1.5, maxHeight: 100, overflow: 'hidden', marginBottom: 12 }}>
+                {previewDoc.extracted_text.slice(0, 300)}...
+              </div>
             )}
 
             <button
               onClick={closePreview}
-              style={{ marginTop: 16, width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
             >
               Close
             </button>
@@ -305,8 +301,8 @@ function RecenterBtn({ onPress, accent }) {
 
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
-function BottomSheet({ expanded, onToggle, accent, activeTrip, user, onDocTap }) {
-  const { docs, loading: docsLoading } = useTripDocs(activeTrip?.id, user?.id)
+function BottomSheet({ expanded, onToggle, accent, activeTrip, user, setPreviewDoc, previewUrls, setPreviewUrls }) {
+  const { docs, loading: docsLoading, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
   const [docsExpanded, setDocsExpanded] = useState(true)
 
   return (
@@ -386,7 +382,18 @@ function BottomSheet({ expanded, onToggle, accent, activeTrip, user, onDocTap })
                 ) : docs.map(doc => (
                   <div
                     key={doc.id}
-                    onClick={() => onDocTap(doc)}
+                    onClick={async () => {
+                        setPreviewDoc(doc)
+                        if (previewUrls[doc.id]) return
+                        if (doc.file_path) {
+                          try {
+                            const url = await getDocUrl(doc)
+                            setPreviewUrls(prev => ({ ...prev, [doc.id]: url }))
+                          } catch (err) {
+                            console.error('URL error:', err)
+                          }
+                        }
+                      }}
                     style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
                   >
                     <div style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>

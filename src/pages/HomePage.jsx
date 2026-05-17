@@ -492,8 +492,12 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
 
 function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays, onNavigateToDocs }) {
   const { accent, deactivateTrip, publishTrip, unpublishTrip, ecoflowSoc, ecoflowCharging, user } = useAppStore()
-  const { docs: tripDocs } = useTripDocs(activeTrip?.id, user?.id)
-  const [watchTrip, setWatchTrip] = useState(null)
+  const { docs: tripDocs, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
+  const [watchTrip, setWatchTrip]     = useState(null)
+  const [previewDoc, setPreviewDoc]   = useState(null)
+  const [previewUrl, setPreviewUrl]   = useState(null)
+
+  const closePreview = () => { setPreviewDoc(null); setPreviewUrl(null) }
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
       <div style={{ paddingTop: 8, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -575,7 +579,18 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays, onNavigateToD
           {tripDocs.map(doc => (
             <div
               key={doc.id}
-              onClick={onNavigateToDocs}
+              onClick={async () => {
+                setPreviewDoc(doc)
+                setPreviewUrl(null)
+                if (doc.file_path) {
+                  try {
+                    const url = await getDocUrl(doc)
+                    setPreviewUrl(url)
+                  } catch (err) {
+                    console.error('URL error:', err)
+                  }
+                }
+              }}
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
             >
               <div style={{ color: 'var(--accent)', flexShrink: 0 }}>
@@ -608,6 +623,68 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays, onNavigateToD
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Doc preview modal */}
+      {previewDoc && (
+        <div
+          onClick={closePreview}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '16px 16px 0 0', padding: 20, maxHeight: '70vh', overflowY: 'auto' }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 2 }}>{previewDoc.title}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginBottom: 14, textTransform: 'capitalize' }}>
+              {previewDoc.category || previewDoc.type}
+            </div>
+
+            {previewDoc.metadata?.confirmation && (
+              <div style={{ marginBottom: 14, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Confirmation</div>
+                <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.06em' }}>{previewDoc.metadata.confirmation}</div>
+                {previewDoc.metadata.location && (
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginTop: 3 }}>{previewDoc.metadata.location}</div>
+                )}
+              </div>
+            )}
+
+            {previewDoc.content && (
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 12 }}>
+                {previewDoc.content}
+              </div>
+            )}
+
+            {previewDoc.file_path && (
+              previewUrl ? (
+                previewDoc.type === 'image' ? (
+                  <img src={previewUrl} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 260, objectFit: 'contain', marginBottom: 12 }} />
+                ) : (
+                  <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 8, padding: '10px 16px', fontSize: 13, color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none', marginBottom: 12 }}>
+                    Open {previewDoc.file_name} →
+                  </a>
+                )
+              ) : (
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginBottom: 12 }}>Loading document...</div>
+              )
+            )}
+
+            {previewDoc.extracted_text && !previewDoc.content && (
+              <div style={{ padding: '8px 10px', background: 'var(--bg-card)', borderRadius: 6, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', lineHeight: 1.5, maxHeight: 100, overflow: 'hidden', marginBottom: 12 }}>
+                {previewDoc.extracted_text.slice(0, 300)}...
+              </div>
+            )}
+
+            <button
+              onClick={closePreview}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>
