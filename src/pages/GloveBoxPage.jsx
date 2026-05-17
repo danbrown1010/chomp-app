@@ -146,7 +146,7 @@ const iconBox = {
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
-export default function TravelDocsPage({ onBack }) {
+export default function GloveBoxPage({ onBack }) {
   const { user } = useAppStore()
   const [docs, setDocs]             = useState([])
   const [loading, setLoading]       = useState(true)
@@ -159,7 +159,7 @@ export default function TravelDocsPage({ onBack }) {
   useEffect(() => { loadDocs() }, [user])
 
   async function loadDocs() {
-    if (!user) return
+    if (!user) { setLoading(false); return }
     const { data, error } = await supabase
       .from('travel_documents')
       .select('*')
@@ -241,7 +241,7 @@ export default function TravelDocsPage({ onBack }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
           <button onClick={onBack} style={backBtn}>←</button>
           <div style={{ flex: 1 }}>
-            <div style={monoLabel}>Travel Documents</div>
+            <div style={monoLabel}>Glove Box</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
               {docs.length} document{docs.length !== 1 ? 's' : ''} · Private + encrypted
             </div>
@@ -315,7 +315,7 @@ export default function TravelDocsPage({ onBack }) {
           <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-tertiary)', fontSize: 14, lineHeight: 1.7 }}>
             {search
               ? `No documents matching "${search}"`
-              : 'No documents yet.\nAdd permits, reservations, insurance cards, and more.'}
+              : 'Nothing in the glove box yet.\nAdd permits, reservations, insurance cards, and more.'}
           </div>
         ) : (
           filteredDocs.map(doc => (

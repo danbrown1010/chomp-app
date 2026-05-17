@@ -80,7 +80,7 @@ function buildDocContext(docs) {
     if (doc.content) parts.push(`  Notes: ${doc.content.slice(0, 200)}`)
     return parts.join('\n')
   })
-  return `Travel documents on file:\n${lines.join('\n\n')}`
+  return `Glove box documents on file:\n${lines.join('\n\n')}`
 }
 
 const SUGGESTIONS = [

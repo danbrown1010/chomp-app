@@ -29,7 +29,7 @@ const SECTIONS = [
   {
     label: 'Gear & Prep',
     items: [
-      { id: 'travel-docs', title: 'Travel Documents', sub: 'Permits · reservations · insurance', Icon: IconFolder   },
+      { id: 'glove-box',   title: 'Glove Box',         sub: 'Permits · reservations · insurance', Icon: IconFolder   },
       { id: 'gear',        title: 'Gear & Packing',   sub: 'Checklists, fish & game',            Icon: IconBackpack },
       { id: 'meals',       title: 'Meal Planning',    sub: 'AI off-grid meals',                  Icon: IconUtensils },
       { id: 'pets',        title: 'Pets',             sub: 'Care, food, vets',                   Icon: IconPaw      },

@@ -24,7 +24,7 @@ const MealPlanningPage = lazy(() => import('./pages/MealPlanningPage'))
 const GearRegistryPage = lazy(() => import('./pages/GearRegistryPage'))
 const CrewPage         = lazy(() => import('./pages/CrewPage'))
 const PetsPage         = lazy(() => import('./pages/PetsPage'))
-const TravelDocsPage   = lazy(() => import('./pages/TravelDocsPage'))
+const GloveBoxPage     = lazy(() => import('./pages/GloveBoxPage'))
 
 export default function App() {
   const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
@@ -182,7 +182,7 @@ function AppShell({ user }) {
       ) : (
         <>
           <div key={activeTab + (moreSubview ?? '')} className="page-enter" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} onEditTrip={openEdit} onNavigateToDocs={() => { setActiveTab('more'); setMoreSubview('travel-docs') }} />}
+            {activeTab === 'home'   && <HomePage onPlanTrip={openCreate} onEditTrip={openEdit} onNavigateToDocs={() => { setActiveTab('more'); setMoreSubview('glove-box') }} />}
             {activeTab === 'trip'   && <TripPage />}
             {activeTab === 'safety' && <SafetyPage />}
             {activeTab === 'rig'    && <RigPage />}
@@ -195,7 +195,7 @@ function AppShell({ user }) {
             {activeTab === 'more'   && moreSubview === 'gear'      && <GearRegistryPage  onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'crew'        && <CrewPage          onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'pets'        && <PetsPage          onBack={() => setMoreSubview(null)} />}
-            {activeTab === 'more'   && moreSubview === 'travel-docs' && <TravelDocsPage    onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'glove-box'   && <GloveBoxPage      onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>
