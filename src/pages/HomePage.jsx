@@ -160,7 +160,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   useEffect(() => {
     if (!activeTrip || !user) { setTripDocs([]); return }
     supabase
-      .from('travel_documents')
+      .from('glove_box')
       .select('id, title, type, category')
       .eq('user_id', user.id)
       .eq('trip_id', activeTrip.id)

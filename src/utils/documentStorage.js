@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-const BUCKET = 'travel-docs'
+const BUCKET = 'glove-box'
 const SIGNED_URL_EXPIRY = 3600
 
 export async function uploadDocument(file, userId) {

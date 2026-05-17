@@ -119,7 +119,7 @@ export default function SurvivalAgentPage({ onBack }) {
   useEffect(() => {
     if (!user?.id) { setDocsLoaded(true); return }
     supabase
-      .from('travel_documents')
+      .from('glove_box')
       .select('id, title, type, category, content, tags, metadata, extracted_text')
       .eq('user_id', user.id)
       .eq('is_secret', false)

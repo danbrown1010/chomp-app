@@ -161,7 +161,7 @@ export default function GloveBoxPage({ onBack }) {
   async function loadDocs() {
     if (!user) { setLoading(false); return }
     const { data, error } = await supabase
-      .from('travel_documents')
+      .from('glove_box')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -200,7 +200,7 @@ export default function GloveBoxPage({ onBack }) {
   async function handleDelete(doc) {
     if (!confirm(`Delete "${doc.title}"? This cannot be undone.`)) return
     if (doc.file_path) await deleteDocument(doc.file_path)
-    await supabase.from('travel_documents').delete().eq('id', doc.id).eq('user_id', user.id)
+    await supabase.from('glove_box').delete().eq('id', doc.id).eq('user_id', user.id)
     setDocs(prev => prev.filter(d => d.id !== doc.id))
     setSelectedDoc(null)
     setView('list')
@@ -214,7 +214,7 @@ export default function GloveBoxPage({ onBack }) {
         onDelete={() => handleDelete(selectedDoc)}
         getSignedUrl={() => getSignedUrlCached(selectedDoc)}
         onUpdate={async (updates) => {
-          await supabase.from('travel_documents')
+          await supabase.from('glove_box')
             .update({ ...updates, updated_at: new Date().toISOString() })
             .eq('id', selectedDoc.id)
           await loadDocs()
@@ -417,7 +417,7 @@ function AddDocView({ onBack, onSave, user }) {
         if (resLocation) metadata.location = resLocation
       }
 
-      const { error: dbError } = await supabase.from('travel_documents').insert({
+      const { error: dbError } = await supabase.from('glove_box').insert({
         user_id:        user.id,
         title:          title.trim(),
         type:           file ? getFileType(file) : docType,
