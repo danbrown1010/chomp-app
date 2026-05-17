@@ -15,7 +15,7 @@ import { CrewWatchModal } from '../components/CrewWatchModal'
 export default function HomePage({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   const tripPhase = useTripPhase()
   if (tripPhase.phase === 'pre-trip')  return <PreTripHome  {...tripPhase} onEditTrip={onEditTrip} />
-  if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} onEditTrip={onEditTrip} />
+  if (tripPhase.phase === 'on-trip')   return <OnTripHome   {...tripPhase} onEditTrip={onEditTrip} onNavigateToDocs={onNavigateToDocs} />
   if (tripPhase.phase === 'post-trip') return <PostTripHome {...tripPhase} onEditTrip={onEditTrip} />
   return <IdleHome onPlanTrip={onPlanTrip} onEditTrip={onEditTrip} onNavigateToDocs={onNavigateToDocs} />
 }
@@ -490,8 +490,9 @@ function PreTripHome({ activeTrip, daysUntil, onEditTrip }) {
 
 // ─── On-trip ──────────────────────────────────────────────────────────────────
 
-function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
-  const { accent, deactivateTrip, publishTrip, unpublishTrip, ecoflowSoc, ecoflowCharging } = useAppStore()
+function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays, onNavigateToDocs }) {
+  const { accent, deactivateTrip, publishTrip, unpublishTrip, ecoflowSoc, ecoflowCharging, user } = useAppStore()
+  const { docs: tripDocs } = useTripDocs(activeTrip?.id, user?.id)
   const [watchTrip, setWatchTrip] = useState(null)
   return (
     <div className="overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: 16, gap: 16, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
@@ -562,6 +563,53 @@ function OnTripHome({ activeTrip, dayOf, daysRemaining, totalDays }) {
         <ActionRow label="Log fuel"  sub="Track range + cost" />
         <ActionRow label="Add note"  sub="Trail conditions, camp notes" />
       </Section>
+
+      {tripDocs.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 11, height: 11 }}>
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+            </svg>
+            Trip documents · {tripDocs.length}
+          </div>
+          {tripDocs.map(doc => (
+            <div
+              key={doc.id}
+              onClick={onNavigateToDocs}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+            >
+              <div style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                {doc.type === 'pdf' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                ) : doc.type === 'image' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>
+                  </svg>
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {doc.title}
+                </div>
+                {doc.metadata?.confirmation && (
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent)', marginTop: 1, letterSpacing: '0.04em' }}>
+                    {doc.metadata.confirmation}
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'capitalize', flexShrink: 0 }}>
+                {doc.category || doc.type}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

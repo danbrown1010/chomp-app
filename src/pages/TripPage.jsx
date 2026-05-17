@@ -33,9 +33,12 @@ const LAYER_CONFIG = [
 export default function TripPage() {
   const { accent, location, activeTrip, user } = useAppStore()
   const { fires } = useFireData()
+  const { docs: tripDocs, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
   const mapRef = useRef(null)
   const [layers,   setLayers]   = useState(() => Object.fromEntries(LAYER_CONFIG.map(l => [l.id, l.on])))
   const [expanded, setExpanded] = useState(false)
+  const [previewDoc, setPreviewDoc] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
 
   const toggleLayer = id => setLayers(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -44,6 +47,17 @@ export default function TripPage() {
       mapRef.current.flyTo({ center: [location.lng, location.lat], zoom: 14, duration: 1000 })
     }
   }
+
+  const handleDocTap = async (doc) => {
+    setPreviewDoc(doc)
+    setPreviewUrl(null)
+    if (doc.file_path) {
+      const url = await getDocUrl(doc)
+      setPreviewUrl(url)
+    }
+  }
+
+  const closePreview = () => { setPreviewDoc(null); setPreviewUrl(null) }
 
   return (
     <div className="relative h-full overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
@@ -100,7 +114,63 @@ export default function TripPage() {
       <LayerStrip layers={LAYER_CONFIG} active={layers} onToggle={toggleLayer} accent={accent} />
       <ZoomControls mapRef={mapRef} />
       <RecenterBtn onPress={recenter} accent={accent} />
-      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} />
+      <BottomSheet expanded={expanded} onToggle={() => setExpanded(e => !e)} accent={accent} activeTrip={activeTrip} user={user} onDocTap={handleDocTap} />
+
+      {/* Doc preview modal */}
+      {previewDoc && (
+        <div
+          onClick={closePreview}
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 50, display: 'flex', alignItems: 'flex-end' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '16px 16px 0 0', padding: 20, maxHeight: '70vh', overflowY: 'auto' }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>{previewDoc.title}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginBottom: 14, textTransform: 'capitalize' }}>
+              {previewDoc.category || previewDoc.type}
+            </div>
+
+            {previewDoc.metadata?.confirmation && (
+              <div style={{ marginBottom: 14, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Confirmation</div>
+                <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.06em' }}>{previewDoc.metadata.confirmation}</div>
+                {previewDoc.metadata.location && (
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginTop: 3 }}>{previewDoc.metadata.location}</div>
+                )}
+              </div>
+            )}
+
+            {previewDoc.content && (
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 12 }}>
+                {previewDoc.content}
+              </div>
+            )}
+
+            {previewDoc.file_path && (
+              previewUrl ? (
+                previewDoc.type === 'image' ? (
+                  <img src={previewUrl} alt={previewDoc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 300, objectFit: 'contain' }} />
+                ) : (
+                  <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, color: '#fff', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none' }}>
+                    Open document →
+                  </a>
+                )
+              ) : (
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading secure file...</div>
+              )
+            )}
+
+            <button
+              onClick={closePreview}
+              style={{ marginTop: 16, width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -235,11 +305,8 @@ function RecenterBtn({ onPress, accent }) {
 
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
-function BottomSheet({ expanded, onToggle, accent, activeTrip, user }) {
-  const { docs, loading: docsLoading, getDocUrl } = useTripDocs(activeTrip?.id, user?.id)
-  const [expandedDoc, setExpandedDoc] = useState(null)
-  const [docUrl, setDocUrl]           = useState(null)
-  const [loadingUrl, setLoadingUrl]   = useState(false)
+function BottomSheet({ expanded, onToggle, accent, activeTrip, user, onDocTap }) {
+  const { docs, loading: docsLoading } = useTripDocs(activeTrip?.id, user?.id)
   const [docsExpanded, setDocsExpanded] = useState(true)
 
   return (
@@ -317,93 +384,33 @@ function BottomSheet({ expanded, onToggle, accent, activeTrip, user }) {
                 {docsLoading ? (
                   <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading documents...</div>
                 ) : docs.map(doc => (
-                  <div key={doc.id}>
-                    <div
-                      onClick={async () => {
-                        if (expandedDoc === doc.id) { setExpandedDoc(null); setDocUrl(null); return }
-                        setExpandedDoc(doc.id)
-                        if (doc.file_path) {
-                          setLoadingUrl(true)
-                          const url = await getDocUrl(doc)
-                          setDocUrl(url)
-                          setLoadingUrl(false)
-                        }
-                      }}
-                      style={{
-                        background: 'var(--bg-secondary)',
-                        border: `1px solid ${expandedDoc === doc.id ? 'var(--accent)' : 'var(--border)'}`,
-                        borderRadius: expandedDoc === doc.id ? '10px 10px 0 0' : 10,
-                        padding: '10px 12px',
-                        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>
-                        {doc.type === 'pdf' ? (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                          </svg>
-                        ) : doc.type === 'image' ? (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                          </svg>
-                        ) : (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>
-                          </svg>
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 1, textTransform: 'capitalize' }}>
-                          {doc.category || doc.type}{doc.metadata?.confirmation && ` · ${doc.metadata.confirmation}`}
-                        </div>
-                      </div>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-                        style={{ width: 12, height: 12, transform: expandedDoc === doc.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
+                  <div
+                    key={doc.id}
+                    onClick={() => onDocTap(doc)}
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                  >
+                    <div style={{ color: 'var(--accent)', flexShrink: 0, display: 'flex' }}>
+                      {doc.type === 'pdf' ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                      ) : doc.type === 'image' ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>
+                        </svg>
+                      )}
                     </div>
-
-                    {expandedDoc === doc.id && (
-                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--accent)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '12px 14px' }}>
-                        {doc.metadata?.confirmation && (
-                          <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Confirmation</div>
-                            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.06em' }}>{doc.metadata.confirmation}</div>
-                            {doc.metadata.location && (
-                              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginTop: 3 }}>{doc.metadata.location}</div>
-                            )}
-                          </div>
-                        )}
-                        {doc.content && (
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: doc.file_path ? 10 : 0 }}>
-                            {doc.content}
-                          </div>
-                        )}
-                        {doc.file_path && (
-                          loadingUrl ? (
-                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '8px 0' }}>Loading secure file...</div>
-                          ) : docUrl ? (
-                            doc.type === 'image' ? (
-                              <img src={docUrl} alt={doc.title} style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'contain', background: '#000' }} />
-                            ) : (
-                              <a href={docUrl} target="_blank" rel="noopener noreferrer"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--accent)', fontFamily: 'var(--font-body)', textDecoration: 'none' }}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
-                                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                                </svg>
-                                Open {doc.file_name}
-                              </a>
-                            )
-                          ) : null
-                        )}
-                        {doc.extracted_text && !doc.content && (
-                          <div style={{ marginTop: 8, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', lineHeight: 1.5, maxHeight: 80, overflow: 'hidden' }}>
-                            {doc.extracted_text.slice(0, 200)}{doc.extracted_text.length > 200 && '...'}
-                          </div>
-                        )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 1, textTransform: 'capitalize' }}>
+                        {doc.category || doc.type}{doc.metadata?.confirmation && ` · ${doc.metadata.confirmation}`}
                       </div>
-                    )}
+                    </div>
+                    <IconChevronRight style={{ width: 12, height: 12, color: 'var(--text-tertiary)', flexShrink: 0 }} />
                   </div>
                 ))}
               </div>
