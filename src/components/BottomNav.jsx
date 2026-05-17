@@ -7,8 +7,8 @@ export default function BottomNav({ active, onChange }) {
   const tabs = [
     { id: 'home',   label: 'Home',   Icon: IconHome   },
     { id: 'trip',   label: 'Trip',   Icon: IconMap    },
-    { id: 'safety', label: 'Safety', Icon: IconFlame  },
     { id: 'rig',    label: 'Rig',    Icon: IconSignal },
+    { id: 'safety', label: 'Safety', Icon: IconFlame  },
     ...(petsEnabled ? [{ id: 'pets', label: 'Pets', Icon: IconPaw }] : []),
     { id: 'more',   label: 'More',   Icon: IconMore   },
   ]

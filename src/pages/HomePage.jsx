@@ -191,7 +191,12 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
 
         <div style={{ paddingTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <VelaLogo size={22} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <VelaLogo size={22} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
+                GO FURTHER.
+              </span>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {syncStatus === 'syncing' && (
                 <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -199,9 +204,6 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
               {syncStatus === 'error' && (
                 <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
               )}
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-                GO FURTHER.
-              </span>
             </div>
           </div>
           <div style={{ marginTop: 16 }}>

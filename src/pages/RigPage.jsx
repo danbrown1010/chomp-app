@@ -78,7 +78,16 @@ export default function RigPage() {
     }
   }
 
-  const ha = useHomeAssistant(integrations.home_assistant)
+  const [activeIntegration, setActiveIntegration] = useState(() =>
+    ['ecoflow', 'starlink', 'home_assistant'].find(k => integrations[k]) ?? 'ecoflow'
+  )
+  const selectIntegration = (key) => {
+    if (!integrations[key]) toggleIntegration(key)
+    setActiveIntegration(key)
+  }
+  const { accent } = useAppStore()
+
+  const ha = useHomeAssistant(integrations.home_assistant || activeIntegration === 'home_assistant')
 
   const haToggleLight = (entityId, isOn) =>
     ha.callService('light', isOn ? 'turn_off' : 'turn_on', { entity_id: entityId })
@@ -146,102 +155,56 @@ export default function RigPage() {
         </div>
       )}
 
-      {/* Integration controls */}
+      {/* Integration selector chips */}
       {primaryVehicle && (
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
-          <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-            Integrations
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[
-              {
-                key: 'ecoflow', label: 'EcoFlow',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                    <rect x="1" y="6" width="18" height="12" rx="2"/>
-                    <line x1="23" y1="11" x2="23" y2="13"/>
-                    <line x1="6" y1="10" x2="6" y2="14"/>
-                    <line x1="10" y1="8" x2="10" y2="16"/>
-                    <line x1="14" y1="10" x2="14" y2="14"/>
-                  </svg>
-                ),
-              },
-              {
-                key: 'starlink', label: 'Starlink',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                    <path d="M1 6l11 6 11-6"/>
-                    <path d="M1 12l11 6 11-6"/>
-                  </svg>
-                ),
-              },
-              {
-                key: 'home_assistant', label: 'Home Asst',
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                ),
-              },
-              {
-                key: 'reserved', label: 'Coming soon', disabled: true,
-                icon: (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                ),
-              },
-            ].map(intg => {
-              const isOn = intg.disabled ? false : integrations[intg.key]
-              return (
-                <button
-                  key={intg.key}
-                  onClick={() => { if (!intg.disabled) toggleIntegration(intg.key) }}
-                  style={{
-                    flex: 1, padding: '8px 6px', borderRadius: 10,
-                    border: `1px solid ${intg.disabled ? 'var(--border)' : isOn ? 'var(--accent)' : 'var(--border)'}`,
-                    background: !intg.disabled && isOn ? 'rgba(196,82,26,0.12)' : 'transparent',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                    cursor: intg.disabled ? 'default' : 'pointer',
-                    opacity: intg.disabled ? 0.3 : 1,
-                  }}
-                >
-                  <div style={{ color: isOn && !intg.disabled ? 'var(--accent)' : 'var(--text-tertiary)' }}>
-                    {intg.icon}
-                  </div>
-                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: isOn && !intg.disabled ? 'var(--accent)' : 'var(--text-tertiary)', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>
-                    {intg.label}
-                  </div>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: !intg.disabled && isOn ? 'var(--accent)' : 'var(--border)' }} />
-                </button>
-              )
-            })}
-          </div>
+        <div style={{ display: 'flex', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {[
+            { key: 'ecoflow',        label: 'Power'          },
+            { key: 'starlink',       label: 'Communications' },
+            { key: 'home_assistant', label: 'Environment'    },
+          ].map(intg => {
+            const isActive = activeIntegration === intg.key
+            const isOn = integrations[intg.key]
+            return (
+              <button
+                key={intg.key}
+                onClick={() => selectIntegration(intg.key)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '5px 14px', borderRadius: 20, flexShrink: 0,
+                  border: `1px solid ${isActive ? `${accent}99` : 'var(--border)'}`,
+                  background: isActive ? `${accent}22` : 'transparent',
+                  color: isActive ? accent : 'var(--text-secondary)',
+                  fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                }}
+              >
+                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, transition: 'background 0.2s', background: isOn ? '#22c55e' : 'var(--border)' }} />
+                {intg.label}
+              </button>
+            )
+          })}
         </div>
       )}
 
-      {/* Scrollable content */}
+      {/* Telemetry panel — driven by active integration */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
-          <RigHeader hasAlert={HAS_ALERT} />
-          {integrations.ecoflow && <EcoflowSection onShowInfo={setEcoInfo} />}
-          <TempZones haSensors={integrations.home_assistant ? ha.tempSensors : []} />
-          {integrations.starlink && <StarlinkSection />}
-          <HumiditySection haSensors={integrations.home_assistant ? ha.humiditySensors : []} />
-          <LightingSection
-            lights={lights} onToggle={toggleLight} onBrightness={setBrightness}
-            haLights={integrations.home_assistant ? ha.lights : []}
-            onHaToggle={haToggleLight} onHaBrightness={haSetBrightness}
-          />
-          <ScenesSection
-            onApply={applyScene}
-            haScenes={integrations.home_assistant ? ha.scenes : []}
-            onApplyHa={haApplyScene}
-          />
-          {integrations.home_assistant && <HomeAssistantSection vehicle={primaryVehicle} ha={ha} />}
+          {activeIntegration === 'ecoflow' && <EcoflowSection onShowInfo={setEcoInfo} />}
+          {activeIntegration === 'starlink' && <StarlinkSection />}
+          {activeIntegration === 'home_assistant' && (
+            <>
+              <TempZones haSensors={ha.tempSensors} />
+              <HumiditySection haSensors={ha.humiditySensors} />
+              <LightingSection
+                lights={lights} onToggle={toggleLight} onBrightness={setBrightness}
+                haLights={ha.lights} onHaToggle={haToggleLight} onHaBrightness={haSetBrightness}
+              />
+              <ScenesSection onApply={applyScene} haScenes={ha.scenes} onApplyHa={haApplyScene} />
+              <HomeAssistantSection vehicle={primaryVehicle} ha={ha} />
+            </>
+          )}
         </div>
       </div>
 
