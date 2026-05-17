@@ -6,7 +6,7 @@ import { UserAvatar } from '../components/UserAvatar'
 import {
   IconPeople, IconPaw, IconShield, IconBook,
   IconStar, IconBackpack, IconUtensils,
-  IconBell, IconFolder, IconWifi,
+  IconBell, IconFolder,
   IconSignal, IconChevronRight,
 } from '../components/icons'
 
@@ -36,12 +36,6 @@ const SECTIONS = [
       { id: 'pets',        title: 'Pets',             sub: 'Care, food, vets',                   Icon: IconPaw      },
     ],
   },
-  {
-    label: 'Admin',
-    items: [
-      { id: 'comms', title: 'Comms & Network', sub: 'Starlink, hotspots, radio', Icon: IconWifi },
-    ],
-  },
 ]
 
 export default function MorePage({ onNavigate }) {
@@ -49,7 +43,19 @@ export default function MorePage({ onNavigate }) {
   const displayName = profile?.name || user?.user_metadata?.full_name || user?.email || 'User'
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+      {/* Sticky header */}
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <UserAvatar profile={profile} user={user} size={36} />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>{displayName}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>{user?.email}</div>
+        </div>
+        <StatusBadge status="safe" label="PRO" />
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
 
         {/* Pending crew invites banner */}
@@ -69,35 +75,6 @@ export default function MorePage({ onNavigate }) {
           </div>
         )}
 
-        {/* Profile row */}
-        <div style={{ paddingTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <UserAvatar profile={profile} user={user} size={44} />
-              <div>
-                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{displayName}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{user?.email}</p>
-              </div>
-            </div>
-            <StatusBadge status="safe" label="PRO" />
-          </div>
-        </div>
-
-        {/* Vehicle profile */}
-        <div>
-          <SectionLabel>Vehicle</SectionLabel>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <IconSignal style={{ width: 20, height: 20, color: 'var(--text-secondary)' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>2014 Jeep JKU · Chomp</p>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, letterSpacing: '0.04em' }}>PRIMARY RIG · URSA MINOR</p>
-            </div>
-            <StatusBadge status="safe" label="READY" dot={false} />
-          </div>
-        </div>
-
         {SECTIONS.map(s => (
           <Section key={s.label} label={s.label}>
             {s.items.map(item => (
@@ -112,6 +89,7 @@ export default function MorePage({ onNavigate }) {
             ))}
           </Section>
         ))}
+      </div>
       </div>
     </div>
   )
