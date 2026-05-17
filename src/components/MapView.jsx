@@ -19,11 +19,11 @@ export default function MapView({ children }) {
       style={{ width: '100%', height: '100%' }}
     >
       <GeolocateControl
-        position="top-right"
+        position="bottom-right"
         trackUserLocation
         showUserHeading
       />
-      <NavigationControl position="top-right" showCompass showZoom={false} />
+      <NavigationControl position="bottom-right" showCompass showZoom={false} />
       {children}
     </Map>
   )

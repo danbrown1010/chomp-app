@@ -152,7 +152,7 @@ function GpsStatus() {
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
 function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
-  const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip, publishTrip, unpublishTrip } = useAppStore()
+  const { accent, refreshHomeData, syncStatus, user, profile, trips, activeTrip, setActiveTripById, deactivateTrip, deleteTrip, publishTrip, unpublishTrip, tripLabels } = useAppStore()
   const firstName = getFirstName(profile, user)
   const { scrollRef, pullY, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(refreshHomeData)
   const [watchTrip, setWatchTrip] = useState(null)
@@ -200,7 +200,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
                 <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
               )}
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-                GO FURTHER!
+                GO FURTHER.
               </span>
             </div>
           </div>
@@ -309,6 +309,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
                 key={trip.id}
                 trip={trip}
                 isActive={false}
+                showLabel={tripLabels}
                 onSetActive={() => setActiveTripById(trip.id)}
                 onDelete={() => deleteTrip(trip.id)}
                 onEdit={() => onEditTrip(trip)}
@@ -327,6 +328,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
                 key={trip.id}
                 trip={trip}
                 isActive={false}
+                showLabel={tripLabels}
                 onSetActive={() => setActiveTripById(trip.id)}
                 onDelete={() => deleteTrip(trip.id)}
                 onEdit={() => onEditTrip(trip)}
@@ -749,7 +751,7 @@ function PostTripHome({ activeTrip, totalDays }) {
 
 // ─── Trip card ────────────────────────────────────────────────────────────────
 
-function TripCard({ trip, onSetActive, onDeactivate, onDelete, onEdit, isActive }) {
+function TripCard({ trip, onSetActive, onDeactivate, onDelete, onEdit, isActive, showLabel = true }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const daysUntil = trip.departureDate
@@ -766,7 +768,7 @@ function TripCard({ trip, onSetActive, onDeactivate, onDelete, onEdit, isActive 
           )}
           {trip.types?.length > 0 && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 5 }}>
-              {trip.types.map(t => <TypeBadge key={t} type={t} />)}
+              {trip.types.map(t => <TypeBadge key={t} type={t} showLabel={showLabel} />)}
             </div>
           )}
         </div>

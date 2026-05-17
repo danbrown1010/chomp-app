@@ -37,9 +37,9 @@ const HA_URL         = import.meta.env.VITE_HA_URL         || null
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage({ onBack, onNavigateTab }) {
+export default function SettingsPage({ onBack, onNavigateTab, onClose, embedded = false }) {
   const [subPage, setSubPage] = useState(null)
-  const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled } = useAppStore()
+  const { accent, setAccent, theme, setTheme, user, profile, isPro, signOut, petsEnabled, setPetsEnabled, tripLabels, setTripLabels } = useAppStore()
 
   if (subPage === 'connectedApps') return <ConnectedAppsPage onBack={() => setSubPage(null)} onNavigateTab={onNavigateTab} />
 
@@ -94,6 +94,8 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
   const [showProNote, setShowProNote]   = useState(false)
   const [starlinkSheet, setStarlinkSheet] = useState(false)
   const [haSheet, setHaSheet]             = useState(false)
+  const [haUrl, setHaUrl]     = useState(() => localStorage.getItem('vela-ha-url') ?? '')
+  const [haToken, setHaToken] = useState(() => localStorage.getItem('vela-ha-token') ?? '')
 
   const handleFrequencyTap = (opt) => {
     if (opt.proOnly && !isPro) {
@@ -129,16 +131,18 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
     <div className="h-full overflow-y-auto">
       <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
 
-        {/* Header */}
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={onBack}
-            style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', flexShrink: 0 }}
-          >
-            <IconChevronLeft style={{ width: 16, height: 16, color: 'var(--text-primary)' }} />
-          </button>
-          <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Settings</h1>
-        </div>
+        {/* Header — hidden in embedded (overlay has its own header) */}
+        {!embedded && (
+          <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={onBack}
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', flexShrink: 0 }}
+            >
+              <IconChevronLeft style={{ width: 16, height: 16, color: 'var(--text-primary)' }} />
+            </button>
+            <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Settings</h1>
+          </div>
+        )}
 
         {/* ── Account ─────────────────────────────────────────────────────────── */}
         <Section label="Account" defaultOpen>
@@ -181,6 +185,7 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
             className="w-full flex items-center px-4 py-3 active:opacity-70 transition-opacity"
             onClick={async () => {
               await signOut()
+              onClose?.()
             }}
           >
             <span className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>Sign out</span>
@@ -355,6 +360,12 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
               ))}
             </div>
           </div>
+          <ToggleRow
+            label="Trip labels"
+            sub="Show type name on trip badges"
+            on={tripLabels}
+            onToggle={() => setTripLabels(!tripLabels)}
+          />
         </Section>
 
         {/* ── About ───────────────────────────────────────────────────────────── */}
@@ -415,15 +426,38 @@ export default function SettingsPage({ onBack, onNavigateTab }) {
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', padding: '24px 20px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 20px' }} />
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>Home Assistant</div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20, lineHeight: 1.5 }}>Trigger departure and arrival automations via Home Assistant webhooks.</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', marginBottom: 20, lineHeight: 1.5 }}>Connect to your HA instance on the Chomp WiFi network.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>HA URL</div>
-                <div style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: HA_URL ? 'var(--text-primary)' : 'var(--text-tertiary)', wordBreak: 'break-all' }}>{HA_URL || 'Not configured'}</div>
-              </div>
-              <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 10, border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>To enable</div>
-                <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', lineHeight: 1.7 }}>1. Set VITE_HA_URL in .env{'\n'}2. Add webhook IDs to config{'\n'}3. Rebuild and redeploy</div>
+              <input
+                value={haUrl}
+                onChange={e => setHaUrl(e.target.value)}
+                placeholder="http://homeassistant.local:8123"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <input
+                value={haToken}
+                onChange={e => setHaToken(e.target.value)}
+                placeholder="Long-lived access token"
+                type="password"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setHaSheet(false)}
+                  style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem('vela-ha-url', haUrl)
+                    localStorage.setItem('vela-ha-token', haToken)
+                    setHaSheet(false)
+                  }}
+                  style={{ flex: 2, padding: 8, borderRadius: 8, border: 'none', background: accent, color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>

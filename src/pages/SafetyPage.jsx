@@ -115,7 +115,7 @@ export default function SafetyPage() {
         )}
 
         {/* Page header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 16px 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 16px 4px', paddingRight: 48 }}>
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Safety</h1>
             {updatedStr && (

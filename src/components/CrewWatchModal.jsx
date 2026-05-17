@@ -106,7 +106,7 @@ export function CrewWatchModal({ trip, onClose }) {
             mapStyle="https://tiles.openfreemap.org/styles/liberty"
             style={{ width: '100%', height: '100%' }}
           >
-            <NavigationControl position="top-right" />
+            <NavigationControl position="bottom-right" />
             {position && (
               <Marker longitude={position.lng} latitude={position.lat} anchor="center">
                 <div style={{ position: 'relative', width: 16, height: 16 }}>

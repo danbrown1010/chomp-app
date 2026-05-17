@@ -86,7 +86,7 @@ const ChevronRight = () => (
 
 // ─── Fleet Roster ──────────────────────────────────────────────────────────────
 
-function FleetRoster({ vehicles, loading, isPro, canAddVehicle, onAdd, onSelect }) {
+function FleetRoster({ vehicles, loading, isPro, canAddVehicle, onAdd, onSelect, user }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
@@ -106,6 +106,18 @@ function FleetRoster({ vehicles, loading, isPro, canAddVehicle, onAdd, onSelect 
         <button onClick={onAdd} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '12px 28px', color: '#fff', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer' }}>
           Add your rig
         </button>
+        {import.meta.env.DEV && (
+          <button
+            onClick={async () => {
+              const { seedChomp } = await import('../utils/seedChomp')
+              await seedChomp(user.id)
+              window.location.reload()
+            }}
+            style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-tertiary)', fontSize: 11, fontFamily: 'var(--font-mono)', cursor: 'pointer', display: 'block', margin: '12px auto 0' }}
+          >
+            DEV: seed Chomp
+          </button>
+        )}
       </div>
     )
   }
@@ -791,6 +803,7 @@ export default function FleetPage({ onBack }) {
             canAddVehicle={canAddVehicle}
             onAdd={() => setView('setup')}
             onSelect={v => { setSelectedVehicle(v); setView('detail') }}
+            user={user}
           />
         </>
       )}

@@ -54,7 +54,7 @@ const COLORS = {
   Hiking:      '#84cc16',
 }
 
-export function TypeBadge({ type, size = 'sm' }) {
+export function TypeBadge({ type, size = 'sm', showLabel = true }) {
   const color = COLORS[type] ?? 'var(--text-tertiary)'
   const icon  = ICONS[type]
   const isSmall = size === 'sm'
@@ -63,8 +63,10 @@ export function TypeBadge({ type, size = 'sm' }) {
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: isSmall ? 3 : 5,
-      padding: isSmall ? '2px 7px 2px 5px' : '3px 10px 3px 7px',
+      gap: showLabel ? (isSmall ? 3 : 5) : 0,
+      padding: showLabel
+        ? (isSmall ? '2px 7px 2px 5px' : '3px 10px 3px 7px')
+        : (isSmall ? '3px 5px' : '4px 7px'),
       borderRadius: 20,
       background: `${color}18`,
       border: `1px solid ${color}40`,
@@ -75,7 +77,7 @@ export function TypeBadge({ type, size = 'sm' }) {
       whiteSpace: 'nowrap',
     }}>
       {icon}
-      {type}
+      {showLabel && type}
     </span>
   )
 }

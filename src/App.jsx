@@ -121,10 +121,11 @@ function AppShell({ user }) {
     return () => window.removeEventListener('online', handleOnline)
   }, [])
 
-  const [activeTab,   setActiveTab]   = useState('home')
-  const [showCreate,  setShowCreate]  = useState(false)
-  const [editingTrip, setEditingTrip] = useState(null)
-  const [moreSubview, setMoreSubview] = useState(null)
+  const [activeTab,    setActiveTab]    = useState('home')
+  const [showCreate,   setShowCreate]   = useState(false)
+  const [editingTrip,  setEditingTrip]  = useState(null)
+  const [moreSubview,  setMoreSubview]  = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const openCreate  = () => setShowCreate(true)
   const closeCreate = () => setShowCreate(false)
@@ -134,6 +135,7 @@ function AppShell({ user }) {
   const handleTabChange = (tab) => {
     setActiveTab(tab)
     setMoreSubview(null)
+    setShowSettings(false)
   }
 
   // Handle ?invite=xxx deep link
@@ -172,6 +174,73 @@ function AppShell({ user }) {
           {toast}
         </div>
       )}
+      {/* Side-pull settings tab */}
+      {user && (
+        <div
+          onClick={() => setShowSettings(s => !s)}
+          style={{
+            position: 'fixed',
+            right: showSettings ? -1 : 0,
+            top: 0,
+            zIndex: 200,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'flex-start',
+            transition: 'right 0.25s ease-out',
+          }}
+        >
+          <div style={{
+            background: showSettings ? 'var(--accent)' : 'var(--bg-card)',
+            border: `1px solid ${showSettings ? 'var(--accent)' : 'var(--border)'}`,
+            borderRight: 'none',
+            borderTop: 'none',
+            borderRadius: '0 0 0 8px',
+            width: 34,
+            height: 'calc(env(safe-area-inset-top, 0px) + 52px)',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            boxShadow: '-2px 2px 8px rgba(0,0,0,0.2)',
+            transition: 'background 0.2s, border-color 0.2s',
+          }}>
+            {/* Gear icon */}
+            <svg viewBox="0 0 24 24" fill="none"
+              stroke={showSettings ? '#fff' : 'var(--text-secondary)'}
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                width: 15, height: 15,
+                transition: 'transform 0.3s',
+                transform: showSettings ? 'rotate(90deg)' : 'none',
+                flexShrink: 0,
+              }}>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+
+            {/* Pull indicator chevron — always rendered to prevent gear jump */}
+            <svg viewBox="0 0 24 24" fill="none"
+              stroke="var(--text-tertiary)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                width: 8, height: 8,
+                flexShrink: 0,
+                opacity: showSettings ? 0 : 1,
+                animation: showSettings ? 'none' : 'pulseLeft 2s ease-in-out infinite',
+                transition: 'opacity 0.2s',
+              }}>
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
       <Suspense fallback={null}>
       {showCreate ? (
         <CreateTripPage
@@ -189,7 +258,6 @@ function AppShell({ user }) {
             {activeTab === 'rig'    && <RigPage />}
             {activeTab === 'pets'   && <PetsPage />}
             {activeTab === 'more'   && moreSubview === null        && <MorePage          onNavigate={setMoreSubview} />}
-            {activeTab === 'more'   && moreSubview === 'settings'  && <SettingsPage      onBack={() => setMoreSubview(null)} onNavigateTab={handleTabChange} />}
             {activeTab === 'more'   && moreSubview === 'survival'  && <SurvivalAgentPage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'knowledge' && <KnowledgeBasePage onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'meals'     && <MealPlanningPage  onBack={() => setMoreSubview(null)} />}
@@ -200,6 +268,45 @@ function AppShell({ user }) {
             {activeTab === 'more'   && moreSubview === 'fleet'        && <FleetPage         onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
+        </>
+      )}
+
+      {/* Settings overlay */}
+      {showSettings && (
+        <>
+          <div
+            onClick={() => setShowSettings(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 190, backdropFilter: 'blur(2px)' }}
+          />
+          <div style={{
+            position: 'fixed', top: 0, right: 0, bottom: 0,
+            width: 'min(420px, 100vw)',
+            background: 'var(--bg-primary)',
+            borderLeft: '1px solid var(--border)',
+            zIndex: 195,
+            display: 'flex', flexDirection: 'column',
+            animation: 'slideInRight 0.25s ease-out',
+          }}>
+            <div style={{
+              padding: '16px 16px 12px',
+              paddingTop: 'max(16px, env(safe-area-inset-top))',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--bg-secondary)',
+              display: 'flex', alignItems: 'center',
+              flexShrink: 0,
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                Settings
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <SettingsPage
+                embedded
+                onClose={() => setShowSettings(false)}
+                onNavigateTab={handleTabChange}
+              />
+            </div>
+          </div>
         </>
       )}
       </Suspense>

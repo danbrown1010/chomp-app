@@ -274,6 +274,12 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
     localStorage.setItem('vela-pets-enabled', v ? 'true' : 'false')
   }, [])
 
+  const [tripLabels, setTripLabelsState] = useState(() => localStorage.getItem('vela-trip-labels') !== 'false')
+  const setTripLabels = useCallback((v) => {
+    setTripLabelsState(v)
+    localStorage.setItem('vela-trip-labels', v ? 'true' : 'false')
+  }, [])
+
   const { location, status: gpsStatus } = useGeolocation()
   const { data: ecoflowData } = useEcoFlow(ECOFLOW_DEVICES.delta2Max.sn)
   const ecoflowSoc      = ecoflowData?.soc ?? null
@@ -302,6 +308,7 @@ export function AppProvider({ children, user = null, profile = null, signOut = (
       accent, setAccent, theme, setTheme,
       pendingInviteCount, setPendingInviteCount,
       petsEnabled, setPetsEnabled,
+      tripLabels, setTripLabels,
       location, gpsStatus,
       ecoflowSoc, ecoflowCharging,
       weather, weatherForecast, weatherLoading, weatherError,

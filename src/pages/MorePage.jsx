@@ -6,7 +6,7 @@ import { UserAvatar } from '../components/UserAvatar'
 import {
   IconPeople, IconPaw, IconShield, IconBook,
   IconStar, IconBackpack, IconUtensils,
-  IconBell, IconFolder, IconWifi, IconCog,
+  IconBell, IconFolder, IconWifi,
   IconSignal, IconChevronRight,
 } from '../components/icons'
 
@@ -39,8 +39,7 @@ const SECTIONS = [
   {
     label: 'Admin',
     items: [
-      { id: 'comms',    title: 'Comms & Network', sub: 'Starlink, hotspots, radio', Icon: IconWifi },
-      { id: 'settings', title: 'Settings',        sub: 'Appearance, account',       Icon: IconCog  },
+      { id: 'comms', title: 'Comms & Network', sub: 'Starlink, hotspots, radio', Icon: IconWifi },
     ],
   },
 ]

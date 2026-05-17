@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { IconSun, IconPlugZap, IconZap, IconCar, IconUsb, IconRefresh } from '../components/icons'
 import { useAppStore } from '../store/index'
+import { useFleet } from '../hooks/useFleet'
+import { useHomeAssistant } from '../hooks/useHomeAssistant'
+import { supabase } from '../lib/supabase'
 import { useEcoFlow } from '../hooks/useEcoFlow'
 import { ECOFLOW_DEVICES } from '../config/devices'
 import { useStarlink } from '../hooks/useStarlink'
@@ -59,6 +62,33 @@ export default function RigPage() {
   const currentDevice = ecoInfo?.device
   const batteryData = ecoInfo?.data
 
+  const { vehicles } = useFleet()
+  const primaryVehicle = vehicles.find(v => v.is_primary) ?? vehicles[0] ?? null
+
+  const [integrations, setIntegrations] = useState({ ecoflow: true, starlink: true, home_assistant: false })
+  useEffect(() => {
+    if (primaryVehicle?.integrations) setIntegrations(primaryVehicle.integrations)
+  }, [primaryVehicle?.id])
+
+  const toggleIntegration = async (key) => {
+    const updated = { ...integrations, [key]: !integrations[key] }
+    setIntegrations(updated)
+    if (primaryVehicle) {
+      await supabase.from('vehicles').update({ integrations: updated, updated_at: new Date().toISOString() }).eq('id', primaryVehicle.id)
+    }
+  }
+
+  const ha = useHomeAssistant(integrations.home_assistant)
+
+  const haToggleLight = (entityId, isOn) =>
+    ha.callService('light', isOn ? 'turn_off' : 'turn_on', { entity_id: entityId })
+
+  const haSetBrightness = (entityId, pct) =>
+    ha.callService('light', 'turn_on', { entity_id: entityId, brightness_pct: pct })
+
+  const haApplyScene = (entityId) =>
+    ha.callService('scene', 'turn_on', { entity_id: entityId })
+
   const toggleLight = (id) =>
     setLights(prev => ({ ...prev, [id]: { ...prev[id], on: !prev[id].on } }))
 
@@ -80,15 +110,139 @@ export default function RigPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
-        <RigHeader hasAlert={HAS_ALERT} />
-        <EcoflowSection onShowInfo={setEcoInfo} />
-        <TempZones />
-        <StarlinkSection />
-        <HumiditySection />
-        <LightingSection lights={lights} onToggle={toggleLight} onBrightness={setBrightness} />
-        <ScenesSection onApply={applyScene} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+
+      {/* Primary vehicle header */}
+      {primaryVehicle && (
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 10, background: 'var(--bg-secondary)', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {primaryVehicle.photo_url ? (
+              <img src={primaryVehicle.photo_url} alt={primaryVehicle.nickname} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
+                <rect x="1" y="3" width="15" height="13" rx="2"/>
+                <path d="M16 8h4l3 3v5h-7V8z"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
+              {primaryVehicle.nickname || primaryVehicle.make}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', marginTop: 1 }}>
+              {[primaryVehicle.year, primaryVehicle.make, primaryVehicle.model, primaryVehicle.trim].filter(Boolean).join(' ')}
+            </div>
+            {primaryVehicle.current_mileage && (
+              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2, letterSpacing: '0.04em' }}>
+                {primaryVehicle.current_mileage.toLocaleString()} MI
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 8, padding: '2px 6px', letterSpacing: '0.06em', flexShrink: 0 }}>
+            PRIMARY
+          </div>
+        </div>
+      )}
+
+      {/* Integration controls */}
+      {primaryVehicle && (
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+          <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+            Integrations
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              {
+                key: 'ecoflow', label: 'EcoFlow',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <rect x="1" y="6" width="18" height="12" rx="2"/>
+                    <line x1="23" y1="11" x2="23" y2="13"/>
+                    <line x1="6" y1="10" x2="6" y2="14"/>
+                    <line x1="10" y1="8" x2="10" y2="16"/>
+                    <line x1="14" y1="10" x2="14" y2="14"/>
+                  </svg>
+                ),
+              },
+              {
+                key: 'starlink', label: 'Starlink',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <path d="M1 6l11 6 11-6"/>
+                    <path d="M1 12l11 6 11-6"/>
+                  </svg>
+                ),
+              },
+              {
+                key: 'home_assistant', label: 'Home Asst',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                ),
+              },
+              {
+                key: 'reserved', label: 'Coming soon', disabled: true,
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                ),
+              },
+            ].map(intg => {
+              const isOn = intg.disabled ? false : integrations[intg.key]
+              return (
+                <button
+                  key={intg.key}
+                  onClick={() => { if (!intg.disabled) toggleIntegration(intg.key) }}
+                  style={{
+                    flex: 1, padding: '8px 6px', borderRadius: 10,
+                    border: `1px solid ${intg.disabled ? 'var(--border)' : isOn ? 'var(--accent)' : 'var(--border)'}`,
+                    background: !intg.disabled && isOn ? 'rgba(196,82,26,0.12)' : 'transparent',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    cursor: intg.disabled ? 'default' : 'pointer',
+                    opacity: intg.disabled ? 0.3 : 1,
+                  }}
+                >
+                  <div style={{ color: isOn && !intg.disabled ? 'var(--accent)' : 'var(--text-tertiary)' }}>
+                    {intg.icon}
+                  </div>
+                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: isOn && !intg.disabled ? 'var(--accent)' : 'var(--text-tertiary)', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>
+                    {intg.label}
+                  </div>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: !intg.disabled && isOn ? 'var(--accent)' : 'var(--border)' }} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="p-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
+          <RigHeader hasAlert={HAS_ALERT} />
+          {integrations.ecoflow && <EcoflowSection onShowInfo={setEcoInfo} />}
+          <TempZones haSensors={integrations.home_assistant ? ha.tempSensors : []} />
+          {integrations.starlink && <StarlinkSection />}
+          <HumiditySection haSensors={integrations.home_assistant ? ha.humiditySensors : []} />
+          <LightingSection
+            lights={lights} onToggle={toggleLight} onBrightness={setBrightness}
+            haLights={integrations.home_assistant ? ha.lights : []}
+            onHaToggle={haToggleLight} onHaBrightness={haSetBrightness}
+          />
+          <ScenesSection
+            onApply={applyScene}
+            haScenes={integrations.home_assistant ? ha.scenes : []}
+            onApplyHa={haApplyScene}
+          />
+          {integrations.home_assistant && <HomeAssistantSection vehicle={primaryVehicle} ha={ha} />}
+        </div>
       </div>
 
       {ecoInfo && (
@@ -245,6 +399,95 @@ export default function RigPage() {
   )
 }
 
+// ─── Home Assistant status card ───────────────────────────────────────────────
+
+function HomeAssistantSection({ vehicle, ha }) {
+  const haUrl   = localStorage.getItem('vela-ha-url')   ?? ''
+  const haToken = localStorage.getItem('vela-ha-token') ?? ''
+  const isConfigured = haUrl && haToken
+
+  if (!isConfigured) {
+    return (
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 6 }}>Home Assistant</div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', lineHeight: 1.7 }}>
+          Configure your HA URL and token in<br />Settings → Integrations → Home Assistant
+        </div>
+      </div>
+    )
+  }
+
+  if (ha.loading && !ha.connected) {
+    return (
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>Home Assistant</div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>Connecting to {haUrl}…</div>
+      </div>
+    )
+  }
+
+  if (ha.error) {
+    return (
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>Home Assistant</div>
+          <button
+            onClick={ha.refetch}
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+          >
+            Retry
+          </button>
+        </div>
+        <div style={{ fontSize: 12, color: '#f87171', fontFamily: 'var(--font-body)' }}>{ha.error}</div>
+      </div>
+    )
+  }
+
+  if (!ha.connected) return null
+
+  const entityCount = ha.tempSensors.length + ha.humiditySensors.length + ha.lights.length + ha.scenes.length
+
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>Home Assistant</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+            {vehicle?.nickname ? `${vehicle.nickname.toUpperCase()} WIFI NETWORK` : 'LOCAL NETWORK'}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
+          <button
+            onClick={ha.refetch}
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <IconRefresh style={{ width: 12, height: 12, color: 'var(--text-secondary)' }} />
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+        {[
+          { label: 'Sensors', count: ha.tempSensors.length + ha.humiditySensors.length },
+          { label: 'Lights',  count: ha.lights.length },
+          { label: 'Scenes',  count: ha.scenes.length },
+          { label: 'Total',   count: entityCount },
+        ].map(item => (
+          <div key={item.label} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', textAlign: 'center' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>{item.count}</div>
+            <div style={{ fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+      {ha.lastUpdated && (
+        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 8, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+          Updated {ha.lastUpdated.toLocaleTimeString()}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 function RigHeader({ hasAlert }) {
@@ -263,12 +506,16 @@ function RigHeader({ hasAlert }) {
 
 // ─── Temperature ──────────────────────────────────────────────────────────────
 
-function TempZones() {
+function TempZones({ haSensors = [] }) {
+  const zones = haSensors.length > 0 ? haSensors : TEMP_ZONES
+  const isHa = haSensors.length > 0
   return (
     <div>
-      <SectionLabel>Temperature</SectionLabel>
+      <SectionLabel>
+        Temperature{isHa && <span style={{ fontSize: 9, color: 'var(--accent)', marginLeft: 6, fontFamily: 'var(--font-mono)', verticalAlign: 'middle' }}>● HA</span>}
+      </SectionLabel>
       <div className="grid grid-cols-3 gap-2">
-        {TEMP_ZONES.map(z => (
+        {zones.map(z => (
           <div key={z.id} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-3">
             <div className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-1 leading-none">
               {z.label}
@@ -757,12 +1004,16 @@ function StarlinkSection() {
 
 // ─── Humidity ─────────────────────────────────────────────────────────────────
 
-function HumiditySection() {
+function HumiditySection({ haSensors = [] }) {
+  const zones = haSensors.length > 0 ? haSensors : HUMIDITY_ZONES
+  const isHa = haSensors.length > 0
   return (
     <div>
-      <SectionLabel>Humidity</SectionLabel>
+      <SectionLabel>
+        Humidity{isHa && <span style={{ fontSize: 9, color: 'var(--accent)', marginLeft: 6, fontFamily: 'var(--font-mono)', verticalAlign: 'middle' }}>● HA</span>}
+      </SectionLabel>
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
-        {HUMIDITY_ZONES.map(z => {
+        {zones.map(z => {
           const ok = z.value < 70
           return (
             <div key={z.id} className="flex items-center justify-between px-4 py-3">
@@ -781,22 +1032,39 @@ function HumiditySection() {
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 
-function LightingSection({ lights, onToggle, onBrightness }) {
+function LightingSection({ lights, onToggle, onBrightness, haLights = [], onHaToggle, onHaBrightness }) {
+  const isHa = haLights.length > 0
   return (
     <div>
-      <SectionLabel>Lighting</SectionLabel>
+      <SectionLabel>
+        Lighting{isHa && <span style={{ fontSize: 9, color: 'var(--accent)', marginLeft: 6, fontFamily: 'var(--font-mono)', verticalAlign: 'middle' }}>● HA</span>}
+      </SectionLabel>
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl divide-y divide-[var(--border)]">
-        {Object.keys(lights).map(id => (
-          <LightRow
-            key={id}
-            id={id}
-            label={LIGHT_LABELS[id]}
-            on={lights[id].on}
-            brightness={lights[id].brightness}
-            onToggle={() => onToggle(id)}
-            onBrightness={(v) => onBrightness(id, v)}
-          />
-        ))}
+        {isHa ? (
+          haLights.map(light => (
+            <LightRow
+              key={light.id}
+              id={light.id}
+              label={light.label}
+              on={light.on}
+              brightness={light.brightness}
+              onToggle={() => onHaToggle(light.id, light.on)}
+              onBrightness={(v) => onHaBrightness(light.id, v)}
+            />
+          ))
+        ) : (
+          Object.keys(lights).map(id => (
+            <LightRow
+              key={id}
+              id={id}
+              label={LIGHT_LABELS[id]}
+              on={lights[id].on}
+              brightness={lights[id].brightness}
+              onToggle={() => onToggle(id)}
+              onBrightness={(v) => onBrightness(id, v)}
+            />
+          ))
+        )}
       </div>
     </div>
   )
@@ -848,32 +1116,36 @@ function Toggle({ on, onToggle, accent }) {
 
 // ─── Scenes ───────────────────────────────────────────────────────────────────
 
-function ScenesSection({ onApply }) {
+function ScenesSection({ onApply, haScenes = [], onApplyHa }) {
   const { accent } = useAppStore()
   const chipInactive = { background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }
   const [active, setActive] = useState(null)
+  const isHa = haScenes.length > 0
 
-  const handle = (name) => {
+  const sceneList = isHa
+    ? haScenes.map(s => ({ name: s.label, haId: s.id }))
+    : Object.keys(SCENES).map(name => ({ name, haId: null }))
+
+  const handle = (name, haId) => {
     setActive(name)
-    onApply(name)
+    if (haId) onApplyHa(haId)
+    else onApply(name)
   }
 
   return (
     <div>
-      <SectionLabel>Scene presets</SectionLabel>
-      <div
-        className="flex gap-2 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {Object.keys(SCENES).map(name => (
+      <SectionLabel>
+        Scene presets{isHa && <span style={{ fontSize: 9, color: 'var(--accent)', marginLeft: 6, fontFamily: 'var(--font-mono)', verticalAlign: 'middle' }}>● HA</span>}
+      </SectionLabel>
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {sceneList.map(({ name, haId }) => (
           <button
             key={name}
-            onClick={() => handle(name)}
+            onClick={() => handle(name, haId)}
             className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-colors"
-            style={
-              active === name
-                ? { background: `${accent}26`, borderColor: `${accent}66`, color: accent }
-                : chipInactive
+            style={active === name
+              ? { background: `${accent}26`, borderColor: `${accent}66`, color: accent }
+              : chipInactive
             }
           >
             {name}

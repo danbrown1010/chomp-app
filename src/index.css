@@ -81,6 +81,16 @@ html, body, #root {
   animation: page-fade-in 0.18s ease-out both;
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes pulseLeft {
+  0%, 100% { transform: translateX(0);   opacity: 0.4; }
+  50%       { transform: translateX(-2px); opacity: 1;   }
+}
+
 @keyframes shimmer {
   from { background-position: -200% center; }
   to   { background-position:  200% center; }
