@@ -346,12 +346,6 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
           </div>
         )}
 
-        <button
-          onClick={onPlanTrip}
-          style={{ width: '100%', background: accent, color: '#fff', fontWeight: 700, fontSize: 14, borderRadius: 16, padding: '14px 0', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-        >
-          Plan a trip
-        </button>
       </div>
 
       <button
