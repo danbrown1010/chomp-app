@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { IconAlert } from '../components/icons'
+import { IconAlert, IconFlame } from '../components/icons'
 import { Skeleton } from '../components/Skeleton'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -9,6 +9,7 @@ import { useFireData } from '../hooks/useFireData'
 import { useFireWeather } from '../hooks/useWeather'
 import { useAppStore } from '../store/index'
 import { StatusBadge } from '../components/StatusBadge'
+import { GpsStatus } from '../components/GpsStatus'
 
 const SEED = {
   evac:       { yourZone: 'Clear', advisory: 2, warning: 1, order: 0 },
@@ -102,12 +103,16 @@ export default function SafetyPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Sticky page header */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>Safety</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>Keeping a check on things...</div>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <IconFlame style={{ width: 22, height: 22, color: 'var(--text-primary)', flexShrink: 0, alignSelf: 'center' }} />
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0, textTransform: 'uppercase' }}>Safety</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>Keeping a check on things...</div>
+          </div>
+          <StatusBadge status={monitorBadge} label={monitorLabel} />
         </div>
-        <StatusBadge status={monitorBadge} label={monitorLabel} />
+        <GpsStatus />
       </div>
       <div
         ref={scrollRef}

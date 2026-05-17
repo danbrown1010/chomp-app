@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { StatusBadge } from '../components/StatusBadge'
 import { useAppStore } from '../store/index'
-
+import { GpsStatus } from '../components/GpsStatus'
 import { UserAvatar } from '../components/UserAvatar'
 import {
   IconPeople, IconPaw, IconShield, IconBook,
@@ -46,13 +46,16 @@ export default function MorePage({ onNavigate }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       {/* Sticky header */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <UserAvatar profile={profile} user={user} size={36} />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>{displayName}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>{user?.email}</div>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <UserAvatar profile={profile} user={user} size={36} />
+          <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>{displayName}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>{user?.email}</div>
+          </div>
+          <StatusBadge status="safe" label="PRO" />
         </div>
-        <StatusBadge status="safe" label="PRO" />
+        <GpsStatus />
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>

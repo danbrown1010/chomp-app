@@ -9,6 +9,7 @@ import { ECOFLOW_DEVICES } from '../config/devices'
 import { useStarlink } from '../hooks/useStarlink'
 import { StatusBadge } from '../components/StatusBadge'
 import { Skeleton } from '../components/Skeleton'
+import { GpsStatus } from '../components/GpsStatus'
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
@@ -123,7 +124,8 @@ export default function RigPage() {
 
       {/* Primary vehicle header */}
       {primaryVehicle && (
-        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {primaryVehicle.photo_url ? (
               <img src={primaryVehicle.photo_url} alt={primaryVehicle.nickname} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -137,7 +139,7 @@ export default function RigPage() {
             )}
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, flexShrink: 0, textTransform: 'uppercase' }}>
               {primaryVehicle.nickname || primaryVehicle.make}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>
@@ -147,6 +149,8 @@ export default function RigPage() {
           <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 8, padding: '2px 6px', letterSpacing: '0.06em', flexShrink: 0 }}>
             PRIMARY
           </div>
+        </div>
+        <GpsStatus />
         </div>
       )}
 

@@ -11,6 +11,7 @@ import { getFirstName } from '../utils/userHelpers'
 import { TypeBadge } from '../components/TripTypeIcons'
 import { IconSun, IconCloud, IconCloudSun, IconCloudRain, IconCloudSnow, IconWind, IconPlus, IconEdit, IconTrash, IconCheck, IconChevronRight } from '../components/icons'
 import { CrewWatchModal } from '../components/CrewWatchModal'
+import { GpsStatus } from '../components/GpsStatus'
 
 export default function HomePage({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   const tripPhase = useTripPhase()
@@ -118,37 +119,6 @@ function WeatherCard() {
   )
 }
 
-// ─── GPS status ───────────────────────────────────────────────────────────────
-
-const GPS_COLORS = {
-  locked:      'var(--safe)',
-  requesting:  'var(--accent)',
-  unavailable: 'var(--accent)',
-  denied:      'var(--danger)',
-  'ip-based':  'var(--text-tertiary)',
-}
-
-const GPS_LABELS = {
-  locked:      (loc) => `GPS LOCKED · ±${Math.round(loc?.accuracy ?? 0)}M`,
-  requesting:  () => 'GPS ACQUIRING...',
-  unavailable: () => 'GPS UNAVAILABLE',
-  denied:      () => 'GPS DENIED · CHECK PERMISSIONS',
-  'ip-based':  (loc) => `${loc?.city ?? 'LOCATION'} · IP APPROXIMATE`,
-}
-
-function GpsStatus() {
-  const { location, gpsStatus } = useAppStore()
-  const color = GPS_COLORS[gpsStatus] ?? 'var(--text-tertiary)'
-  const label = GPS_LABELS[gpsStatus]?.(location) ?? ''
-  const pulsing = gpsStatus !== 'locked'
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: 11, fontFamily: 'var(--font-mono)', color, letterSpacing: '0.06em' }}>
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0, animation: pulsing ? 'pulse 1.5s ease-in-out infinite' : 'none' }} />
-      {label}
-    </div>
-  )
-}
-
 // ─── Idle home ────────────────────────────────────────────────────────────────
 
 function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
@@ -176,21 +146,24 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Sticky header */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <VelaLogo size={30} transparent />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
-            GO FURTHER.
-          </span>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '14px 16px', paddingRight: 48, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <VelaLogo size={30} transparent />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>
+              GO FURTHER.
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {syncStatus === 'syncing' && (
+              <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            )}
+            {syncStatus === 'error' && (
+              <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {syncStatus === 'syncing' && (
-            <div style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-          )}
-          {syncStatus === 'error' && (
-            <div title="Sync error — will retry" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
-          )}
-        </div>
+        <GpsStatus />
       </div>
       <div
         ref={scrollRef}
@@ -205,10 +178,7 @@ function IdleHome({ onPlanTrip, onEditTrip, onNavigateToDocs }) {
             <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid var(--text-tertiary)', borderTopColor: 'transparent', transform: `rotate(${(pullY / 64) * 270}deg)` }} />
           </div>
         )}
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, {firstName}</h1>
-          <GpsStatus />
-        </div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>Ready to roll, {firstName}</h1>
 
         <WeatherCard />
 
