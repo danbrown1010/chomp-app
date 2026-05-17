@@ -16,12 +16,19 @@ export async function uploadDocument(file, userId) {
 }
 
 export async function getSignedUrl(filePath) {
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(filePath, SIGNED_URL_EXPIRY)
-
-  if (error) throw error
-  return data.signedUrl
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(filePath, SIGNED_URL_EXPIRY)
+    if (error) {
+      console.error('Signed URL error:', error)
+      return null
+    }
+    return data?.signedUrl ?? null
+  } catch (err) {
+    console.error('Signed URL catch:', err)
+    return null
+  }
 }
 
 export async function deleteDocument(filePath) {

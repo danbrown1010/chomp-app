@@ -885,7 +885,7 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
           </div>
         )}
 
-        {/* PDF iframe */}
+        {/* PDF open link — no iframe (iframe auth interference breaks Supabase session) */}
         {doc.type === 'pdf' && (
           <div style={{ marginBottom: 16 }}>
             {loadingUrl ? (
@@ -893,17 +893,19 @@ function DocDetail({ doc, onBack, onDelete, getSignedUrl, onUpdate }) {
                 Loading secure document…
               </div>
             ) : signedUrl ? (
-              <>
-                <iframe src={signedUrl} title={doc.title}
-                  style={{ width: '100%', height: '60vh', border: 'none', borderRadius: 12, background: '#fff' }} />
-                <a href={signedUrl} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', textAlign: 'center', marginTop: 8, fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
-                  Open in new tab →
-                </a>
-              </>
+              <a href={signedUrl} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'var(--accent)', borderRadius: 10, padding: 14, color: '#fff', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'none', marginBottom: 12 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Open {doc.file_name}
+              </a>
             ) : (
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-                Could not load document preview.
+                Could not load document.
               </div>
             )}
           </div>
