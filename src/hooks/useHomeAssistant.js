@@ -1,107 +1,180 @@
 import { useState, useEffect, useCallback } from 'react'
 
-export function useHomeAssistant(enabled) {
-  const [states, setStates] = useState([])
+const HA_URL =
+  localStorage.getItem('vela-ha-url') ||
+  import.meta.env.VITE_HA_URL ||
+  'http://192.168.68.112:8123'
+
+export function useHomeAssistant() {
   const [connected, setConnected] = useState(false)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [connecting, setConnecting] = useState(true)
+  const [entities, setEntities] = useState({})
+  const [token, setToken] = useState(
+    localStorage.getItem('vela-ha-token') ?? ''
+  )
 
-  const haUrl  = (localStorage.getItem('vela-ha-url')   ?? '').replace(/\/$/, '')
-  const haToken = localStorage.getItem('vela-ha-token') ?? ''
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }
 
-  const fetchStates = useCallback(async () => {
-    if (!haUrl || !haToken) {
-      setError('HA URL or token not configured — check Settings → Integrations')
+  const loadEntities = useCallback(async () => {
+    const entityIds = [
+      'sensor.ursa_minor_temperature',
+      'sensor.ursa_minor_humidity',
+      'sensor.cabin_temperature',
+      'sensor.cabin_humidity',
+      'sensor.outside_temperature',
+      'sensor.outside_humidity',
+      'sensor.refrigerator_temperature',
+      'sensor.refrigerator_humidity',
+      'sensor.chomp_weather_station_inside_temperature',
+      'sensor.chomp_weather_station_inside_humidity',
+      'sensor.chomp_weather_station_outside_temperature',
+      'sensor.chomp_weather_station_outside_pressure',
+      'light.white_rock_lights',
+      'light.light_blue_rock_lights',
+      'light.pink_rock_lights',
+      'light.yellow_rock_light',
+      'light.rock_lights_red_light_switch',
+      'light.rock_lights_green_light_switch',
+      'light.rock_lights_blue_light_switch',
+      'light.rock_lights_white_light_switch',
+      'light.rock_lights_pink_light_switch',
+      'sensor.chomp_battery_battery_level',
+      'sensor.chomp_battery_ac_in_power',
+      'sensor.chomp_battery_ac_out_power',
+      'sensor.chomp_battery_dc_out_power',
+      'sensor.chomp_battery_solar_1_in_power',
+      'sensor.chomp_battery_status',
+      'sensor.chomp_battery_charge_remaining_time',
+      'sensor.chomp_battery_discharge_remaining_time',
+      'switch.chomp_battery_ac_enabled',
+      'switch.chomp_battery_dc_12v_enabled',
+      'switch.chomp_battery_usb_enabled',
+      'switch.chomp_battery_beeper',
+      'binary_sensor.cabin_power',
+      'binary_sensor.outside_power',
+      'binary_sensor.ursa_minor_power',
+      'binary_sensor.refrigerator_power',
+      'binary_sensor.starlink_connectivity',
+      'sensor.starlink_ping',
+      'sensor.starlink_downlink_throughput',
+      'sensor.starlink_uplink_throughput',
+      'switch.starlink_stowed',
+      'media_player.chomp_stereo',
+      'media_player.spotify_dan_brown',
+    ]
+
+    try {
+      const res = await fetch(`${HA_URL}/api/states`, {
+        headers,
+        signal: AbortSignal.timeout(8000),
+      })
+      const allStates = await res.json()
+
+      const filtered = {}
+      allStates
+        .filter(e => entityIds.includes(e.entity_id))
+        .forEach(e => { filtered[e.entity_id] = e })
+
+      setEntities(filtered)
+    } catch (err) {
+      console.error('HA entity load error:', err)
+    }
+  }, [token])
+
+  const connect = useCallback(async () => {
+    if (!token) {
+      setConnecting(false)
+      setConnected(false)
       return
     }
-    setLoading(true)
+
+    setConnecting(true)
     try {
-      const res = await fetch(`${haUrl}/api/states`, {
-        headers: { Authorization: `Bearer ${haToken}` },
+      const res = await fetch(`${HA_URL}/api/`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
       })
-      if (res.status === 401) throw new Error('Invalid token — check Settings')
-      if (!res.ok) throw new Error(`HA returned ${res.status}`)
-      const data = await res.json()
-      setStates(data)
+
+      if (!res.ok) {
+        setConnected(false)
+        setConnecting(false)
+        return
+      }
+
       setConnected(true)
-      setError(null)
-      setLastUpdated(new Date())
+      await loadEntities()
     } catch (err) {
+      console.warn('HA connection failed:', err.message)
       setConnected(false)
-      setError(
-        err.message.includes('fetch') || err.message.includes('Failed')
-          ? 'Cannot reach HA — connect to Chomp WiFi'
-          : err.message
-      )
     } finally {
-      setLoading(false)
+      setConnecting(false)
     }
-  }, [haUrl, haToken])
+  }, [token, loadEntities])
+
+  const callService = useCallback(async (domain, service, entityId, data = {}) => {
+    try {
+      const res = await fetch(`${HA_URL}/api/services/${domain}/${service}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ entity_id: entityId, ...data }),
+      })
+      if (res.ok) await loadEntities()
+    } catch (err) {
+      console.error('HA service call error:', err)
+    }
+  }, [token, loadEntities])
+
+  const toggle = (entityId) => {
+    const domain = entityId.split('.')[0]
+    return callService(domain, 'toggle', entityId)
+  }
+
+  const turnOn = (entityId, data = {}) => {
+    const domain = entityId.split('.')[0]
+    return callService(domain, 'turn_on', entityId, data)
+  }
+
+  const turnOff = (entityId) => {
+    const domain = entityId.split('.')[0]
+    return callService(domain, 'turn_off', entityId)
+  }
+
+  const getState = (entityId) => entities[entityId]?.state ?? null
+
+  const getAttr = (entityId, attr) => entities[entityId]?.attributes?.[attr] ?? null
+
+  const isOn = (entityId) => {
+    const state = getState(entityId)
+    return state === 'on' || state === 'playing' || state === 'home'
+  }
 
   useEffect(() => {
-    if (!enabled) {
-      setStates([])
-      setConnected(false)
-      setError(null)
-      return
-    }
-    fetchStates()
-    const id = setInterval(fetchStates, 30000)
-    return () => clearInterval(id)
-  }, [enabled, fetchStates])
-
-  const callService = useCallback(async (domain, service, serviceData = {}) => {
-    if (!haUrl || !haToken) return
-    try {
-      await fetch(`${haUrl}/api/services/${domain}/${service}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${haToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(serviceData),
-      })
-      setTimeout(fetchStates, 600)
-    } catch (err) {
-      console.error('HA service call failed:', err)
-    }
-  }, [haUrl, haToken, fetchStates])
-
-  const tempSensors = states
-    .filter(s => s.attributes?.device_class === 'temperature' && s.state !== 'unavailable' && s.state !== 'unknown')
-    .map(s => ({
-      id: s.entity_id,
-      label: s.attributes.friendly_name || s.entity_id.replace('sensor.', '').replace(/_/g, ' '),
-      value: Math.round(parseFloat(s.state) * 10) / 10,
-      unit: s.attributes.unit_of_measurement || '°F',
-      color: null,
-    }))
-
-  const humiditySensors = states
-    .filter(s => s.attributes?.device_class === 'humidity' && s.state !== 'unavailable' && s.state !== 'unknown')
-    .map(s => ({
-      id: s.entity_id,
-      label: s.attributes.friendly_name || s.entity_id.replace('sensor.', '').replace(/_/g, ' '),
-      value: Math.round(parseFloat(s.state)),
-    }))
-
-  const lights = states
-    .filter(s => s.entity_id.startsWith('light.') && s.state !== 'unavailable')
-    .map(s => ({
-      id: s.entity_id,
-      label: s.attributes.friendly_name || s.entity_id.replace('light.', '').replace(/_/g, ' '),
-      on: s.state === 'on',
-      brightness: s.attributes.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 100,
-    }))
-
-  const scenes = states
-    .filter(s => s.entity_id.startsWith('scene.'))
-    .map(s => ({
-      id: s.entity_id,
-      label: s.attributes.friendly_name || s.entity_id.replace('scene.', '').replace(/_/g, ' '),
-    }))
+    connect()
+    const interval = setInterval(loadEntities, 30000)
+    return () => clearInterval(interval)
+  }, [token])
 
   return {
-    connected, error, loading, lastUpdated,
-    tempSensors, humiditySensors, lights, scenes,
-    callService, refetch: fetchStates,
+    connected,
+    connecting,
+    entities,
+    token,
+    setToken: (t) => {
+      setToken(t)
+      localStorage.setItem('vela-ha-token', t)
+    },
+    connect,
+    callService,
+    toggle,
+    turnOn,
+    turnOff,
+    getState,
+    getAttr,
+    isOn,
+    reload: loadEntities,
+    HA_URL,
   }
 }

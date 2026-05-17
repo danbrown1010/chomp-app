@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { IconSun, IconPlugZap, IconZap, IconCar, IconUsb, IconRefresh } from '../components/icons'
 import { useAppStore } from '../store/index'
 import { useFleet } from '../hooks/useFleet'
-import { useHomeAssistant } from '../hooks/useHomeAssistant'
 import { supabase } from '../lib/supabase'
 import { useEcoFlow } from '../hooks/useEcoFlow'
 import { ECOFLOW_DEVICES } from '../config/devices'
@@ -10,6 +9,7 @@ import { useStarlink } from '../hooks/useStarlink'
 import { StatusBadge } from '../components/StatusBadge'
 import { Skeleton } from '../components/Skeleton'
 import { GpsStatus } from '../components/GpsStatus'
+import HomeAssistantCard from '../components/HomeAssistantCard'
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
@@ -87,17 +87,6 @@ export default function RigPage() {
     setActiveIntegration(key)
   }
   const { accent } = useAppStore()
-
-  const ha = useHomeAssistant(integrations.home_assistant || activeIntegration === 'home_assistant')
-
-  const haToggleLight = (entityId, isOn) =>
-    ha.callService('light', isOn ? 'turn_off' : 'turn_on', { entity_id: entityId })
-
-  const haSetBrightness = (entityId, pct) =>
-    ha.callService('light', 'turn_on', { entity_id: entityId, brightness_pct: pct })
-
-  const haApplyScene = (entityId) =>
-    ha.callService('scene', 'turn_on', { entity_id: entityId })
 
   const toggleLight = (id) =>
     setLights(prev => ({ ...prev, [id]: { ...prev[id], on: !prev[id].on } }))
@@ -193,16 +182,7 @@ export default function RigPage() {
           {activeIntegration === 'ecoflow' && <EcoflowSection onShowInfo={setEcoInfo} />}
           {activeIntegration === 'starlink' && <StarlinkSection />}
           {activeIntegration === 'home_assistant' && (
-            <>
-              <TempZones haSensors={ha.tempSensors} />
-              <HumiditySection haSensors={ha.humiditySensors} />
-              <LightingSection
-                lights={lights} onToggle={toggleLight} onBrightness={setBrightness}
-                haLights={ha.lights} onHaToggle={haToggleLight} onHaBrightness={haSetBrightness}
-              />
-              <ScenesSection onApply={applyScene} haScenes={ha.scenes} onApplyHa={haApplyScene} />
-              <HomeAssistantSection vehicle={primaryVehicle} ha={ha} />
-            </>
+            <HomeAssistantCard />
           )}
         </div>
       </div>
