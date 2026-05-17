@@ -152,9 +152,28 @@ export function useHomeAssistant() {
   }
 
   useEffect(() => {
+    if (!token) return
+
     connect()
-    const interval = setInterval(loadEntities, 30000)
-    return () => clearInterval(interval)
+
+    const keepAlive = setInterval(async () => {
+      if (!connected) return
+      try {
+        await fetch(`${HA_URL}/api/`, {
+          headers,
+          signal: AbortSignal.timeout(3000),
+        })
+      } catch (err) {
+        // Silently fail — full reconnect will handle it
+      }
+    }, 20000)
+
+    const refresh = setInterval(loadEntities, 45000)
+
+    return () => {
+      clearInterval(keepAlive)
+      clearInterval(refresh)
+    }
   }, [token])
 
   return {
