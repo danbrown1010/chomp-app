@@ -25,6 +25,7 @@ const GearRegistryPage = lazy(() => import('./pages/GearRegistryPage'))
 const CrewPage         = lazy(() => import('./pages/CrewPage'))
 const PetsPage         = lazy(() => import('./pages/PetsPage'))
 const GloveBoxPage     = lazy(() => import('./pages/GloveBoxPage'))
+const FleetPage        = lazy(() => import('./pages/FleetPage'))
 
 export default function App() {
   const { user, profile, isPro, signInWithGoogle, signOut, loading: authLoading, notAllowed } = useAuth()
@@ -196,6 +197,7 @@ function AppShell({ user }) {
             {activeTab === 'more'   && moreSubview === 'crew'        && <CrewPage          onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'pets'        && <PetsPage          onBack={() => setMoreSubview(null)} />}
             {activeTab === 'more'   && moreSubview === 'glove-box'   && <GloveBoxPage      onBack={() => setMoreSubview(null)} />}
+            {activeTab === 'more'   && moreSubview === 'fleet'        && <FleetPage         onBack={() => setMoreSubview(null)} />}
           </div>
           <BottomNav active={activeTab} onChange={handleTabChange} />
         </>

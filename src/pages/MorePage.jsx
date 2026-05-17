@@ -14,8 +14,9 @@ const SECTIONS = [
   {
     label: 'Expedition',
     items: [
-      { id: 'crew',   title: 'My Crew', sub: 'Invite copilots and observers', Icon: IconPeople },
-      { id: 'badges', title: 'Badges',  sub: 'Your trail record',             Icon: IconStar   },
+      { id: 'fleet',  title: 'Fleet',    sub: 'Vehicles · maintenance · build sheet', Icon: IconSignal },
+      { id: 'crew',   title: 'My Crew',  sub: 'Invite copilots and observers',        Icon: IconPeople },
+      { id: 'badges', title: 'Badges',   sub: 'Your trail record',                    Icon: IconStar   },
     ],
   },
   {
